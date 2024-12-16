@@ -53,8 +53,10 @@ class ConnectionManager {
             "trigger-bump",
             {
                 remotePlayer: remoteSession,
-                x: pacman.x,
-                y: pacman.y,
+                position: {
+                    x: pacman.x,
+                    y: pacman.y,
+                },
                 facingDirection: pacman.facingDirection.enumValue,
                 queuedDirection: pacman.queuedDirection.enumValue,
                 shouldMove: pacman.shouldMove,

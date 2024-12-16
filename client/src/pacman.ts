@@ -275,13 +275,14 @@ class Pacman {
         for (let remotePlayerSession in gameManager.remotePlayers) {
             let remotePlayer = gameManager.remotePlayers[remotePlayerSession];
 
-            // does not support multiple radiuses and I don't want to use dist bc of efficiency
-            if (Math.abs(remotePlayer.pacman.x-this.x) > this.radius || Math.abs(remotePlayer.pacman.y-this.y) > this.radius) {
+            let allowedDistance = this.radius + remotePlayer.pacman.radius;
+            if (Math.abs(remotePlayer.pacman.x-this.x) > allowedDistance || Math.abs(remotePlayer.pacman.y-this.y) > allowedDistance) {
                 continue;
             }
 
             console.log("BUMP");
-            this.triggerBump(remotePlayer.pacman.facingDirection);
+            gameManager.connectionManager.triggerBump(this, remotePlayer.session);
+            // this.triggerBump(remotePlayer.pacman.facingDirection);
             return true;
         }
 
@@ -376,6 +377,10 @@ class Pacman {
 
         [this.x, this.y] = this.getPositionAhead(this.movementSpeed * deltaTime);
         this.collideWalls();
+
+        if (this.isLocal) {
+            this.collideRemotePacman();
+        }
 
         const shouldSendUpdate = ((!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) || this.shouldMove != lastShouldMove) && this.isLocal;
         // const shouldSendUpdate = (!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) && this.isLocal;

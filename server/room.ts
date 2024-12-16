@@ -138,45 +138,6 @@ export class Room {
         }
     
         player.publishLocation();
-
-        for (let sessionsHash in player.pacman.nextCollisions) {
-            let otherSession = player.pacman.nextCollisions[sessionsHash];
-
-        // CLEAR SESSION            
-        }
-
-        for (let session in this.players) {
-            let otherPlayer = this.players[session];
-            
-            if (otherPlayer.session == player.session) continue;
-            
-            // TODO: clear timeout if 
-            const collisionTime = this.simulator.getPacmanCollision(player.pacman, otherPlayer.pacman);
-            if (collisionTime == null) continue;
-
-
-            const hash = utils.makeSessionsHash(player.session, session);
-
-            if (hash in this.nextCollisions) {
-                clearTimeout(this.nextCollisions[hash].timeout);
-            }
-
-            const timeout = setTimeout(() => {
-                console.log("bump");
-            }, collisionTime);
-
-            this.nextCollisions[hash] = {
-                collisionUnix: performance.now()+collisionTime,
-                session1: player.session,
-                session2: session,
-                timeout: timeout
-            };
-
-            player.pacman.nextCollisions[hash] = session;
-            otherPlayer.pacman.nextCollisions[hash] = player.session;
-            
-            break;
-        }
     }
 
     public handlePlayerBump(player: Player, data: {data: globals.PositionData}) {
@@ -188,11 +149,34 @@ export class Room {
         newPacmanPosition.x = data.data.position.x;
         newPacmanPosition.y = data.data.position.y;
 
-        if (!this.verifyNewPosition(player, data.data)) {
+        if (!this.checkPlayerMoveDistance(data.data.timestamp, player, newPacmanPosition)) {
             player.log("Moved too quickly while attempting to trigger a bump");
             player.ws.send(utils.makeMessage("bump-reject", {})); // TODO: implement
             return;
         }
+
+        let estimatedOtherPlayerPosition = otherPlayer.pacman.getEstimatedPosition(performance.now()-player.pacman.lastClientTimestamp);
+        
+        // change when radius is not constant
+        let allowedDistance = 40;
+
+        if (Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x) > allowedDistance ||
+            Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y) > allowedDistance) {
+                // TODO: do something here
+                player.log("Attempted to bump a pacman that was too far");
+                return;
+        }
+
+        console.log("Trigger the bump");
+
+        /*
+
+        We need to get the other player's position and see if they are actually close enough to bump
+        ^ Get offset and use that to calculate the deltatime instead of just using performance.now()
+
+        If so, trigger a bump
+
+        */
 
     }
 
