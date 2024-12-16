@@ -124,6 +124,7 @@ export class Room {
 
         player.pacman.lastClientTimestamp = newPosition.timestamp;
         player.pacman.lastKnownLocation = newPosition;
+        player.pacman.lastPosPacketTime = performance.now();
         return true;
     }
 
@@ -136,13 +137,14 @@ export class Room {
         if (!this.verifyNewPosition(player, data.data)) {
             return;
         }
-    
+
         player.publishLocation();
     }
 
     public handlePlayerBump(player: Player, data: {data: globals.PositionData}) {
         const otherPlayer = this.players[data.data.remotePlayer];
         if (otherPlayer == undefined) return;
+        console.log(player.pacman.color);
 
         // move the player to the new pos
         let newPacmanPosition: globals.PositionData = {...player.pacman.lastKnownLocation};
@@ -151,14 +153,16 @@ export class Room {
 
         if (!this.checkPlayerMoveDistance(data.data.timestamp, player, newPacmanPosition)) {
             player.log("Moved too quickly while attempting to trigger a bump");
-            player.ws.send(utils.makeMessage("bump-reject", {})); // TODO: implement
+            // player.ws.send(utils.makeMessage("bump-reject", {})); // TODO: implement
             return;
         }
 
-        let estimatedOtherPlayerPosition = otherPlayer.pacman.getEstimatedPosition(performance.now()-player.pacman.lastClientTimestamp);
+        let estimatedOtherPlayerPosition = otherPlayer.pacman.getEstimatedPosition(performance.now()-otherPlayer.pacman.lastPosPacketTime);
         
         // change when radius is not constant
         let allowedDistance = 40;
+
+        console.log(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x, player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y);
 
         if (Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x) > allowedDistance ||
             Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y) > allowedDistance) {

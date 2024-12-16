@@ -360,6 +360,10 @@ class Pacman {
         if (((!gameManager.performanceMode) || this.isLocal)) {
             this.checkQueuedDirection();
         }
+
+        if (this.isLocal) {
+            this.collideRemotePacman();
+        }
         
         if (this.bumpAnimation(deltaTime)) {
             this.collideWalls(false);
@@ -377,10 +381,6 @@ class Pacman {
 
         [this.x, this.y] = this.getPositionAhead(this.movementSpeed * deltaTime);
         this.collideWalls();
-
-        if (this.isLocal) {
-            this.collideRemotePacman();
-        }
 
         const shouldSendUpdate = ((!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) || this.shouldMove != lastShouldMove) && this.isLocal;
         // const shouldSendUpdate = (!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) && this.isLocal;

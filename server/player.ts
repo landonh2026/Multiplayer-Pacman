@@ -65,12 +65,15 @@ export class Pacman {
     lastClientTimestamp: number;
     player: Player;
 
+    lastPosPacketTime: number;
+
     constructor(color: globals.Colors, player: Player) {
         this.color = color;
         this.movementSpeed = 6;
         this.lastKnownLocation = {x: 60, y: 100, facingDirection: 1, queuedDirection: 0, shouldMove: true, packetIndex: -1};
         this.lastClientTimestamp = 0;
         this.player = player;
+        this.lastPosPacketTime = 0;
     }
 
     public getNextCollidingWall(): globals.PacmanNextWallCollision|null {
@@ -98,7 +101,9 @@ export class Pacman {
         return {wallObject: minDistanceObj.block, distance: minDistance, position: minDistanceObj.pos};
     }
 
-    public getEstimatedPosition(deltaTime: number) {
+    public getEstimatedPosition(deltaTime: number): {x: number, y: number} {
+        if (!this.lastKnownLocation.shouldMove) return {x: this.lastKnownLocation.x, y: this.lastKnownLocation.y};
+
         let delta = this.getDirectionDelta();
         let distance =  globals.target_client_fps * this.movementSpeed * (deltaTime/1000);
 
