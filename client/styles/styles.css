@@ -1,0 +1,59 @@
+@font-face {
+    font-family: "ArcadeClassic";
+    src: url("/assets/fonts/arcade_classic_2/ARCADECLASSIC.TTF");
+}
+
+:root {
+    --text-color: white;
+    --game-background: rgb(1, 1, 0);
+    --game-wall: rgb(33, 32, 254);
+    --pellet: rgb(250, 184, 177);
+}
+
+html, body {
+    padding: 0;
+    margin: 0;
+    
+    width: 100vw;
+    height: 100vh;
+
+    font-size: 1.5rem;
+    
+    overflow: hidden;
+
+    background-color: var(--game-background);
+    color: var(--text-color);
+}
+
+#fullscreen {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    height: 100%;
+
+    box-sizing: border-box;
+}
+
+#game {
+    width: 100%;
+    height: 100%;
+
+    box-sizing: border-box;
+}
+
+#header-display {
+    max-width: 720px;
+    width: 100%;
+
+    margin-left: auto;
+    margin-right: auto;
+
+    font-family: "ArcadeClassic", system-ui;
+    font-style: normal;
+}
+
+canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}

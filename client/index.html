@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pacman</title>
+
+        <!-- <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"> -->
+
+        <link rel="stylesheet" href="/styles/reset.css">
+        <link rel="stylesheet" href="/styles/styles.css">
+    </head>
+    <body>
+        <div id="fullscreen">
+            <table id="header-display">
+                <tr>
+                    <td>SCORE</td>
+                    <td>PLAYERS</td>
+                    <td>FPS</td>
+                </tr>
+                <tr>
+                    <td id="score">0</td>
+                    <td id="total-players">1</td>
+                    <td id="fps">...</td>
+                </tr>
+            </table>
+            <canvas id="game"></canvas>
+        </div>
+        
+        
+        <script src="/dist/pacman.js"></script>
+        <script src="/dist/ghost.js"></script>
+        <script src="/dist/gameBoard.js"></script>
+        
+        <script src="/dist/utils.js"></script>
+        <script src="/dist/remotePlayer.js"></script>
+        
+        <script src="/dist/colors.js"></script>
+        <script src="/dist/directions.js"></script>
+        
+        <script src="/dist/animationManager.js"></script>
+        <script src="/dist/eventHandler.js"></script>
+        <script src="/dist/drawManager.js"></script>
+        <script src="/dist/infoBoard.js"></script>
+        
+        <script src="/dist/debug.js"></script>
+        <script src="/dist/inputManager.js"></script>
+        <script src="/dist/gameManager.js"></script>
+        <script src="/dist/pathfinding.js"></script>
+        <script src="/dist/connectionManager.js"></script>
+        <script src="/dist/main.js" defer></script>
+    </body>
+</html>
