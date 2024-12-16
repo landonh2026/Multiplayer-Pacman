@@ -14,8 +14,6 @@ class Direction {
             case 2: return {dx: -1, dy: 0}
             case 3: return {dx: 0, dy: -1}
         }
-
-        return {dx: 0, dy: 0};
     }
 
     public getOpposite() {

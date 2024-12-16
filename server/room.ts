@@ -144,7 +144,6 @@ export class Room {
     public handlePlayerBump(player: Player, data: {data: globals.PositionData}) {
         const otherPlayer = this.players[data.data.remotePlayer];
         if (otherPlayer == undefined) return;
-        console.log(player.pacman.color);
 
         // move the player to the new pos
         let newPacmanPosition: globals.PositionData = {...player.pacman.lastKnownLocation};
@@ -162,25 +161,35 @@ export class Room {
         // change when radius is not constant
         let allowedDistance = 40;
 
-        console.log(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x, player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y);
+        let dx = Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x);
+        let dy = Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y);
 
-        if (Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x) > allowedDistance ||
-            Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y) > allowedDistance) {
-                // TODO: do something here
-                player.log("Attempted to bump a pacman that was too far");
-                return;
+        if (dx > allowedDistance || dy > allowedDistance) {
+            // TODO: do something here
+            // player.log("Attempted to bump a pacman that was too far");
+            return;
         }
 
-        console.log("Trigger the bump");
+        // TODO: calculate facing direction and tell clients which direction their pacman needs to be facing
+        // also calculate the direction they should launch
 
-        /*
+        let direction;
+        if (dx < dy) direction = player.pacman.lastKnownLocation.y - estimatedOtherPlayerPosition.y > 0 ? 1 : 3;
+        else direction = player.pacman.lastKnownLocation.x - estimatedOtherPlayerPosition.x > 0 ? 2 : 0;
+        
+        player.ws.send(utils.makeMessage("trigger-bump", {
+            collidedWith: otherPlayer.session,
+            x: player.pacman.lastKnownLocation.x,
+            y: player.pacman.lastKnownLocation.y,
+            from: direction
+        }));
 
-        We need to get the other player's position and see if they are actually close enough to bump
-        ^ Get offset and use that to calculate the deltatime instead of just using performance.now()
-
-        If so, trigger a bump
-
-        */
+        otherPlayer.ws.send(utils.makeMessage("trigger-bump", {
+            collidedWith: player.session,
+            x: estimatedOtherPlayerPosition.x,
+            y: estimatedOtherPlayerPosition.y,
+            from: (direction+2)%4
+        }));
 
     }
 

@@ -11,8 +11,13 @@ class EventHandler {
             "eat-pellet": this.eatPellet.bind(this),
             "pellet-reject": this.pelletRejected.bind(this),
             "score-update": this.scoreUpdate.bind(this),
-            "server-time-reset": this.resetServerTime.bind(this)
+            "server-time-reset": this.resetServerTime.bind(this),
+            "trigger-bump": this.triggerBump.bind(this)
         }
+    }
+
+    public triggerBump(parsedData: any) {
+        gameManager.localPacman.triggerBump(Direction.fromEnum(parsedData.data.from) as Direction);
     }
 
     public resetServerTime(parsedData: any) {

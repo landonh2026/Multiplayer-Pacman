@@ -272,15 +272,22 @@ class Pacman {
     }
 
     public collideRemotePacman() {
+        if (this.animationManager.animations.bumpAnimation.isActive()) {
+            return false;
+        }
+
         for (let remotePlayerSession in gameManager.remotePlayers) {
             let remotePlayer = gameManager.remotePlayers[remotePlayerSession];
+
+            if (remotePlayer.pacman.animationManager.animations.bumpAnimation.isActive()) {
+                continue;
+            }
 
             let allowedDistance = this.radius + remotePlayer.pacman.radius;
             if (Math.abs(remotePlayer.pacman.x-this.x) > allowedDistance || Math.abs(remotePlayer.pacman.y-this.y) > allowedDistance) {
                 continue;
             }
 
-            console.log("BUMP");
             gameManager.connectionManager.triggerBump(this, remotePlayer.session);
             // this.triggerBump(remotePlayer.pacman.facingDirection);
             return true;
