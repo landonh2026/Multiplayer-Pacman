@@ -11,6 +11,7 @@ export class Player {
     pacman: Pacman;
     timeStamp: number;
     room: Room;
+    lastBump: number;
 
     constructor(session: string, ws: ServerWebSocket<globals.SocketData>, color: globals.Colors, room: Room) {
         this.session = session;
@@ -18,6 +19,7 @@ export class Player {
         this.score = 0;
         this.timeStamp = performance.now();
         this.room = room;
+        this.lastBump = 0;
 
         this.pacman = new Pacman(color, this);
     }
@@ -26,6 +28,9 @@ export class Player {
         console.log(`[${this.session} (${this.pacman.color})]`, ...data);
     }
 
+    /**
+     * Sends this player's player state to the client
+     */
     public sendLocalPlayerState() {
         this.ws.send(
             utils.makeMessage(
@@ -40,18 +45,29 @@ export class Player {
         );
     }
 
+    /**
+     * Publish this player's location to other players
+     */
     public publishLocation() {
         const posData = utils.makeMessage("position", this.pacman.lastKnownLocation, false);
         posData["from-session"] = this.session;
         this.ws.publish(this.room.topics.event, JSON.stringify(posData));
     }
 
+    /**
+     * Determines if this client's timestamp is allowed
+     * @param timestamp The timestamp given by the client
+     * @returns Is this timestamp allowed?
+     */
     public isTimestampAllowed(timestamp: number) {
         const timeDifference = ((performance.now() - this.timeStamp) - (timestamp));
         // console.log(timeDifference);
         return timeDifference < 1000 && timeDifference > 0;
     }
 
+    /**
+     * Tell the client to reset their server time
+     */
     public resetTimestamp() {
         this.ws.send(utils.makeMessage("server-time-reset", undefined));
         this.timeStamp = performance.now();
@@ -76,6 +92,10 @@ export class Pacman {
         this.lastPosPacketTime = 0;
     }
 
+    /**
+     * Get the next wall that this pacman will run into
+     * @returns 
+     */
     public getNextCollidingWall(): globals.PacmanNextWallCollision|null {
         let collidingWalls = this.player.room.simulator.getPacmanWallCollisions(this, this.player.room.gameBoard.blockPositions);
 
@@ -101,6 +121,11 @@ export class Pacman {
         return {wallObject: minDistanceObj.block, distance: minDistance, position: minDistanceObj.pos};
     }
 
+    /**
+     * Get the estimated position of this client given their last packet
+     * @param deltaTime The time change since the client's last packet
+     * @returns The estimated x and y position of the client
+     */
     public getEstimatedPosition(deltaTime: number): {x: number, y: number} {
         if (!this.lastKnownLocation.shouldMove) return {x: this.lastKnownLocation.x, y: this.lastKnownLocation.y};
 
@@ -113,6 +138,10 @@ export class Pacman {
         return {x: this.lastKnownLocation.x + delta.dx, y: this.lastKnownLocation.y + delta.dy};
     }
 
+    /**
+     * Get the direction delta given a direction
+     * @returns 
+     */
     public getDirectionDelta() {
         switch (this.lastKnownLocation.facingDirection) {
             case 0: return {dx: 1, dy: 0}

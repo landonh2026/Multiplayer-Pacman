@@ -17,6 +17,7 @@ export class Room {
     messageHandlers: {[messageType: string]: (player: Player, data: any) => void};
     simulator: Simulator;
     nextCollisions: {[sessionsHash: number]: {collisionUnix: number, session1: string, session2: string, timeout: Timer}};
+    enable_lagback: boolean;
 
     constructor(server: Server, uuid: String) {
         this.server = server;
@@ -27,6 +28,7 @@ export class Room {
         this.availableColors = [...globals.colors] as Array<globals.Colors>;
         this.gameBoard = gameBoards.default.duplicate();
         this.nextCollisions = {};
+        this.enable_lagback = false;
 
         this.simulator = new Simulator();
 
@@ -39,6 +41,10 @@ export class Room {
         this.topics = this.makeTopics();
     }
 
+    /**
+     * Duplicate the topics from the global topics list
+     * @returns Returns the duplicated topics list
+     */
     private makeTopics() {
         this.topics = {};
         for (let topic in globals.topics) {
@@ -48,6 +54,10 @@ export class Room {
         return this.topics;
     }
 
+    /**
+     * Make a dict showing the score of each player
+     * @returns The scores of each player with the key being the session and value being the score
+     */
     private makeScoresList() {
         const out: {[session: string]: number} = {};
 
@@ -59,6 +69,10 @@ export class Room {
         return out;
     }
 
+    /**
+     * Make the board state as a json object
+     * @returns The board state in a dict
+     */
     public makeBoardState() {
         return {
             board: this.gameBoard.rawBlockPositions,
@@ -67,10 +81,18 @@ export class Room {
         }
     }
 
+    /**
+     * Gets the current player count
+     * @returns The player count
+     */
     public getPlayerCount() {
         return Object.keys(this.players).length
     }
 
+    /**
+     * Determines if this room is full
+     * @returns Is this room full?
+     */
     public isFull() { 
         return this.getPlayerCount() >= this.maxPlayers;
     }
@@ -79,11 +101,21 @@ export class Room {
         // ...
     }
 
+    /**
+     * Determines if this room should close
+     * @returns Should this room close?
+     */
     public shouldClose() {
         return this.getPlayerCount() == 0;
     }
 
+    /**
+     * Check to see if the player moved to far given a player and their new position
+     * @return Is the player able to move here since their last position packet
+     */
     public checkPlayerMoveDistance(now: number, player: Player, otherPosition: globals.PositionData, includeRadius: boolean = false, tolerance: number|null = null) {
+        if (!this.enable_lagback) return true;
+
         // const now = performance.now();
         const distances = [
             Math.abs(otherPosition.x-player.pacman.lastKnownLocation.x),
@@ -99,13 +131,19 @@ export class Room {
         // }
 
         if (distanceTraveled > shouldTravelDistance) {
-            console.log(`Player ${player.session} (${player.pacman.color}) moved too quickly!`, shouldTravelDistance, distances);
+            if (this.enable_lagback) console.log(`Player ${player.session} (${player.pacman.color}) moved too quickly!`, shouldTravelDistance, distances);
             return false;
         }
 
         return true;
     }
 
+    /**
+     * Verify the new position of a player
+     * @param player The player to check the position of
+     * @param newPosition The new position to check to see if the player can move here
+     * @returns Should the player be allowed to move here?
+     */
     public verifyNewPosition(player: Player, newPosition: globals.PositionData) {
         if (!player.isTimestampAllowed(newPosition.timestamp)) {
             player.log("Timestamp not allowed! Resetting timestamp.")
@@ -128,6 +166,11 @@ export class Room {
         return true;
     }
 
+    /**
+     * Handle the position packet sent from the client
+     * @param player 
+     * @param data 
+     */
     public handlePositionUpdate(player: Player, data: {data: globals.PositionData}) {
         if (player.pacman.lastKnownLocation.packetIndex > data.data.packetIndex) {
             player.log("Ignoring old movement packet");
@@ -141,9 +184,21 @@ export class Room {
         player.publishLocation();
     }
 
+    /**
+     * Handle the packet sent when a client bumps another player
+     * @param player The player that sent the packet
+     * @param data The data from the client
+     */
     public handlePlayerBump(player: Player, data: {data: globals.PositionData}) {
         const otherPlayer = this.players[data.data.remotePlayer];
         if (otherPlayer == undefined) return;
+
+        const now = performance.now();
+        // both players submitted this bump, only acknowledge one bump so we skip this one
+        if (now-player.lastBump < 500 && now-otherPlayer.lastBump < 500) {
+            console.log(`too quick bumps (${now-player.lastBump}, ${now-player.lastBump})`);
+            return;
+        }
 
         // move the player to the new pos
         let newPacmanPosition: globals.PositionData = {...player.pacman.lastKnownLocation};
@@ -156,6 +211,8 @@ export class Room {
             return;
         }
 
+        // if the stationary player bumps into the moving player by sending their packet first,
+        // this estimated position sometimes can teleport the moving player into walls. Fun
         let estimatedOtherPlayerPosition = otherPlayer.pacman.getEstimatedPosition(performance.now()-otherPlayer.pacman.lastPosPacketTime);
         
         // change when radius is not constant
@@ -164,35 +221,47 @@ export class Room {
         let dx = Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x);
         let dy = Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y);
 
+        console.log(player.pacman.color, dx, dy);
+
         if (dx > allowedDistance || dy > allowedDistance) {
             // TODO: do something here
-            // player.log("Attempted to bump a pacman that was too far");
+            player.log("Attempted to bump a pacman that was too far");
             return;
         }
 
-        // TODO: calculate facing direction and tell clients which direction their pacman needs to be facing
-        // also calculate the direction they should launch
-
+        // calculate the direction each player should launch
         let direction;
-        if (dx < dy) direction = player.pacman.lastKnownLocation.y - estimatedOtherPlayerPosition.y > 0 ? 1 : 3;
+        if (dx < dy) direction = player.pacman.lastKnownLocation.y - estimatedOtherPlayerPosition.y > 0 ? 3 : 1;
         else direction = player.pacman.lastKnownLocation.x - estimatedOtherPlayerPosition.x > 0 ? 2 : 0;
-        
-        player.ws.send(utils.makeMessage("trigger-bump", {
-            collidedWith: otherPlayer.session,
-            x: player.pacman.lastKnownLocation.x,
-            y: player.pacman.lastKnownLocation.y,
-            from: direction
-        }));
 
-        otherPlayer.ws.send(utils.makeMessage("trigger-bump", {
-            collidedWith: player.session,
-            x: estimatedOtherPlayerPosition.x,
-            y: estimatedOtherPlayerPosition.y,
-            from: (direction+2)%4
-        }));
+        // set the last bump time for each player to be now
+        player.lastBump = now;
+        otherPlayer.lastBump = now;
 
+        // send the collision data to each client
+        this.server.publish(this.topics.event, utils.makeMessage("trigger-bump", {
+            collisions: [
+                {
+                    session: player.session,
+                    x: player.pacman.lastKnownLocation.x,
+                    y: player.pacman.lastKnownLocation.y,
+                    from: direction
+                },
+                {
+                    session: otherPlayer.session,
+                    x: estimatedOtherPlayerPosition.x,
+                    y: estimatedOtherPlayerPosition.y,
+                    from: (direction+2)%4
+                }
+            ]
+        }));
     }
 
+    /**
+     * Handle the packet sent when a client wants to eat a pellet
+     * @param player 
+     * @param data 
+     */
     public handlePelletEat(player: Player, data: any) {
         // move the player to the new pos
         let newPacmanPosition: globals.PositionData = {...player.pacman.lastKnownLocation};
@@ -238,6 +307,7 @@ export class Room {
             return;
         }
 
+        // remake the gameboard if all the pellets are gone
         if (this.gameBoard.pellets.length == 1) {
             player.score += 10;
             this.gameBoard = gameBoards.default.duplicate();
@@ -251,6 +321,11 @@ export class Room {
         this.server.publish(this.topics.event, utils.makeMessage("eat-pellet", {pelletID: pellet[2], scores: this.makeScoresList()}));
     }
 
+    /**
+     * Handle the raw(er) packets from the client and choose which function to send the data to
+     * @param session The session that sent this packet
+     * @param data The data sent in this packet
+     */
     public handleMessage(session: string, data: any) {
         const player = this.players[session];
 
@@ -262,13 +337,20 @@ export class Room {
         this.messageHandlers[data.messageType](player, data);
     }
 
+    /**
+     * Handle a player joining this room
+     * @param ws The ws representing this player
+     */
     public handlePlayerJoin(ws: ServerWebSocket<globals.SocketData>) {
+        // make a new player from the list of available colors, then remove that color from available colors
         const newPlayer = new Player(ws.data.session, ws, utils.getRandomListItem(this.availableColors), this);
         utils.removeFromList(this.availableColors, newPlayer.pacman.color);
         
+        // subscribe this player's ws to the event topic and publish their joining
         newPlayer.ws.subscribe(this.topics.event);
         newPlayer.ws.publish(this.topics.event, utils.makeMessage("player-join", {"session": ws.data.session, "color": newPlayer.pacman.color}));
         
+        // tell the new player all the other players in the room
         for (let session in this.players) {
             let player = this.players[session];
     
@@ -288,11 +370,16 @@ export class Room {
 
         console.log(`Player ${newPlayer.session} (${newPlayer.pacman.color}) joined`);
 
+        // send the new player the current board state, and add the player to the dict of players
         newPlayer.sendLocalPlayerState();
         newPlayer.ws.send(utils.makeMessage("board-state", this.makeBoardState()));
         this.players[newPlayer.session] = newPlayer;
     }
 
+    /**
+     * Handle a player leaving the room
+     * @param session The session of the player that left the room
+     */
     public handlePlayerLeave(session: string) {
         const player = this.players[session];
 

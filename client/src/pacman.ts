@@ -176,9 +176,6 @@ class Pacman {
     }
 
     public checkQueuedDirection() {
-        // TODO: make it so you can only turn in directions that do not immediately face a wall.
-        // ^ Maybe precalculate which dirs an intersection can go to
-
         // get the next node if we were to continue this path
         const currentNode = gameManager.currentBoard.getNextIntersectionNode([this.x, this.y], this.facingDirection);
 
@@ -243,34 +240,6 @@ class Pacman {
         this.lastQueuedDirectionNode = currentNode;
     }
 
-    /**
-     * Checks the queued direction to see if the player can move in that direction.
-     * @returns 
-     * @deprecated
-     */
-    public deprecatedCheckQueuedDirection() {
-        if (this.facingDirection == this.queuedDirection) return;
-        // if (!currentBoard.isPositionWall(this.getPositionAhead(gameManager.tileSize, this.queuedDirection))) return;
-
-        let [collisionX, collisionY, horizontalOffset, verticalOffset] = this.getCollisionPoints(this.queuedDirection, 5);
-
-        // drawManager.drawWallCollision(collisionX, collisionY);
-        gameManager.drawManager.drawWallCollision(collisionX+horizontalOffset, collisionY+verticalOffset);
-        gameManager.drawManager.drawWallCollision(collisionX-horizontalOffset, collisionY-verticalOffset);
-
-        for (let i = 0; i < gameManager.currentBoard.blockPositions.length; i++) {
-            let blockData = gameManager.currentBoard.blockPositions[i];
-
-            if (pointIntersectsRect([collisionX+horizontalOffset, collisionY+verticalOffset], blockData) ||
-                pointIntersectsRect([collisionX-horizontalOffset, collisionY-verticalOffset], blockData)) {
-                    return;
-                }
-        }
-        
-        this.facingDirection = this.queuedDirection;
-        this.shouldMove = true;
-    }
-
     public collideRemotePacman() {
         if (this.animationManager.animations.bumpAnimation.isActive()) {
             return false;
@@ -300,6 +269,8 @@ class Pacman {
         this.animationManager.animations.bumpAnimation.reset();
         this.animationManager.animations.bumpAnimation.setActive(true);
 
+        this.facingDirection = collisionFrom;
+
         this.animationManager.animations.bumpAnimation.meta = {
             moveDirection: collisionFrom.getOpposite()
         };
@@ -317,6 +288,7 @@ class Pacman {
         [this.x, this.y] = this.getPositionAhead(frameChange);
 
         if (this.animationManager.animations.bumpAnimation.isDone()) {
+            this.collideWalls();
             gameManager.connectionManager.sendPosition(this);
             this.animationManager.animations.bumpAnimation.setActive(false);
             return false;

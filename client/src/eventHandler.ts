@@ -17,7 +17,26 @@ class EventHandler {
     }
 
     public triggerBump(parsedData: any) {
-        gameManager.localPacman.triggerBump(Direction.fromEnum(parsedData.data.from) as Direction);
+        // console.log(parsedData.data);
+        // gameManager.localPacman.triggerBump(Direction.fromEnum(parsedData.data.from) as Direction);
+
+        for (let i = 0; i < parsedData.data.collisions.length; i++) {
+            let collision = parsedData.data.collisions[i];
+
+            let pacman: Pacman;
+            if (gameManager.uuid == collision.session) pacman = gameManager.localPacman;
+            else pacman = gameManager.remotePlayers[collision.session].pacman;
+
+            if (gameManager.uuid == collision.session) {
+                console.log((Direction.fromEnum(collision.from) as Direction).asString, collision.x, collision.y);
+            }
+
+            pacman.x = collision.x;
+            pacman.y = collision.y;
+
+            pacman.triggerBump(Direction.fromEnum(collision.from) as Direction);
+         
+        }
     }
 
     public resetServerTime(parsedData: any) {
