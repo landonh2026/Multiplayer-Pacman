@@ -48,6 +48,11 @@ class ConnectionManager {
         return performance.now() - gameManager.serverTime;
     }
 
+    /**
+     * Sends the bump packet to the server at the location of the given pacman
+     * @param pacman The local pacman
+     * @param remoteSession The remote pacman that the client bumped into
+     */
     public triggerBump(pacman: Pacman, remoteSession: string) {
         this.socket.send(this.makeMessage(
             "trigger-bump",
@@ -66,6 +71,10 @@ class ConnectionManager {
         ))
     }
     
+    /**
+     * Send the position packet of the local pacman
+     * @param pacman The local pacman
+     */
     public sendPosition(pacman: Pacman) {
         if (this.socket.readyState == 0) return;
 
@@ -86,6 +95,11 @@ class ConnectionManager {
         ));
     }
     
+    /**
+     * Sends the eat pellet packet to the server
+     * @param pacman The local pacman
+     * @param pellet The pellet index that was eaten
+     */
     public eatPellet(pacman: Pacman, pellet: number) {
         this.socket.send(this.makeMessage(
             "eat-pellet",

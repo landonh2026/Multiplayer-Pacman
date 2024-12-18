@@ -52,9 +52,9 @@ class Pacman {
 
     /**
      * Get the position that is ahead a certain number of pixels
-     * @param distance 
-     * @param direction 
-     * @returns 
+     * @param distance The distance away to find
+     * @param direction The direction to find the distance away from
+     * @returns The position that is the given distance away in the given direction
      */
     public getPositionAhead(distance: number, direction: Direction|null = null): [number, number] {
         if (!direction) direction = this.movingDirection;
@@ -80,14 +80,15 @@ class Pacman {
         for (let i = 0; i < gameManager.currentBoard.pellets.length; i++) {
             let pellet = gameManager.currentBoard.pellets[i];
 
+            // if we are close enough to this pellet try eating it
             if (Math.abs(this.x-pellet[0]) < this.radius && Math.abs(this.y-pellet[1]) < this.radius) {
                 if (pellet[3] == PELLET_STATES.EAT_PENDING) {
                     break;
                 }
-                // gameManager.currentBoard.pellets.splice(i, 1);
+
+                // send to the server that we want to eat this pellet
                 pellet[3] = PELLET_STATES.EAT_PENDING;
                 gameManager.connectionManager.eatPellet(this, pellet[2]);
-                // gameManager.infoBoard.addScore(10);
                 break;
             }
         }
@@ -95,9 +96,9 @@ class Pacman {
 
     /**
      * Calculates 2 collision points to check to see if the pacman is colliding with a wall
-     * @param direction 
-     * @param distanceFromPacman 
-     * @returns 
+     * @param direction The direction pacman to check in
+     * @param distanceFromPacman The distance each collision point should be from pacman
+     * @returns The collision data for the 2 points
      */
     public getCollisionPoints(direction: Direction|null = null, distanceFromPacman: number = 0): [number, number, number, number] {
         if (!direction) direction = this.movingDirection;
@@ -112,23 +113,25 @@ class Pacman {
     }
 
     /**
-     * Collides this pacman with the walls on the current stage
+     * Collides this pacman with the walls in the current gameboard
      * @param stopMove If pacman touches a wall, should this.shouldMove be set to false?
-     * @returns 
      */
     public collideWalls(stopMove: boolean = true) {
         let [collisionX, collisionY, horizontalOffset, verticalOffset] = this.getCollisionPoints();
 
-        // drawManager.drawWallCollision(collisionX, collisionY);
+        // draw debug wall collision that pacman will collide with
         gameManager.drawManager.drawWallCollision(collisionX+horizontalOffset, collisionY+verticalOffset);
         gameManager.drawManager.drawWallCollision(collisionX-horizontalOffset, collisionY-verticalOffset);
 
+        // go through each block and see if we touch them
         for (let i = 0; i < gameManager.currentBoard.blockPositions.length; i++) {
             let blockData = gameManager.currentBoard.blockPositions[i];
 
+            // skip this block if we are not in it
             if (!(pointIntersectsRect([collisionX+horizontalOffset, collisionY+verticalOffset], blockData) ||
                 pointIntersectsRect([collisionX-horizontalOffset, collisionY-verticalOffset], blockData))) continue;
 
+            // move us to an end of the wall depending on our facing direction
             switch (this.movingDirection) {
                 case directions.UP:
                     this.y = blockData[1] + blockData[3] + this.radius;
@@ -144,9 +147,10 @@ class Pacman {
                     break;
             }
 
-            // console.log(this.x, this.y);
-            
+            // Set the pacman's current mouth frame to 0
             this.animationManager.animations.bodyAnimation.currentFrame = 0;
+
+            // stop the pacman's movement if stopMove is true
             if (stopMove) this.shouldMove = false;
 
             return;
@@ -162,7 +166,7 @@ class Pacman {
             this.animationManager.animations.bodyAnimation.step_frame(deltaTime);
         }
         
-        // ctx.fillStyle = this.color.color;
+        // create a gradient for this pacman
         const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);
         gradient.addColorStop(0, "white");
         gradient.addColorStop(0.225, this.color.gradient_start);
@@ -171,18 +175,18 @@ class Pacman {
         ctx.fillStyle = gradient;
         ctx.strokeStyle = "#FFFFFF";
         
-        // console.log(ctx.fillStyle, ctx.strokeStyle);
+        // actually draw the pacman shape
         gameManager.drawManager.drawPacman(this.x, this.y, this.radius, this.animationManager.animations.bodyAnimation.get_frame(), this.facingDirection);
     }
 
+    /**
+     * Check to see if this pacman should turn in the queued direction
+     */
     public checkQueuedDirection() {
         // get the next node if we were to continue this path
         const currentNode = gameManager.currentBoard.getNextIntersectionNode([this.x, this.y], this.facingDirection);
 
-        // console.log(currentNode, this.lastQueuedDirectionNode);
-        // console.log(this.facingDirection.asString, this.queuedDirection.asString);
-
-        // no reason to continue if we are not queueing a dir
+        // no reason to continue if we are not queueing a direction
         if (this.facingDirection == this.queuedDirection) {
             this.lastQueuedDirectionNode = currentNode;
             return;
@@ -191,13 +195,13 @@ class Pacman {
         // send a warning if we can't find a node
         if (currentNode == null) {
             console.warn("Unable to find a path intersection node! Player coords:", this.x, this.y);
-            // return;
         }
         
-        // no previous node -- probably just started
+        // no previous node -- this pacman obj was probably just created
         if (this.lastQueuedDirectionNode == null) {
             this.lastQueuedDirectionNode = currentNode;
 
+            // if we don't have a current node or a past node, allow any queued direction changes
             if (currentNode == null) {
                 this.facingDirection = this.queuedDirection;
                 this.shouldMove = true;
@@ -208,14 +212,13 @@ class Pacman {
         }
 
         // check if this node allows us to turn in our queued direction
+        // so we don't turn on a node that would make us face a wall
         if (!this.lastQueuedDirectionNode.node.directions[this.queuedDirection.enumValue]) {
             this.lastQueuedDirectionNode = currentNode;
             return;
         }
 
-        // if (this.lastQueuedDirectionNode)
-
-        // declare constants
+        // Get the direction that the next node would be in
         const checkDirection = this.facingDirection.enumValue % 2 == 0 ? "x" : "y" as "x"|"y";
         const otherCheckDirection =  this.facingDirection.enumValue % 2 == 0 ? "y" : "x" as "x"|"y";
         const checkOrientation = this.facingDirection.enumValue < 2 ? -1 : 1;
@@ -240,11 +243,17 @@ class Pacman {
         this.lastQueuedDirectionNode = currentNode;
     }
 
+    /**
+     * Handle collision with any remote pacman
+     * @returns Did we collide with another pacman?
+     */
     public collideRemotePacman() {
+        // skip if we are in our bump animation
         if (this.animationManager.animations.bumpAnimation.isActive()) {
             return false;
         }
 
+        // loop through each remote player
         for (let remotePlayerSession in gameManager.remotePlayers) {
             let remotePlayer = gameManager.remotePlayers[remotePlayerSession];
 
@@ -252,19 +261,24 @@ class Pacman {
                 continue;
             }
 
+            // determine if we should bump this remote pacman
             let allowedDistance = this.radius + remotePlayer.pacman.radius;
             if (Math.abs(remotePlayer.pacman.x-this.x) > allowedDistance || Math.abs(remotePlayer.pacman.y-this.y) > allowedDistance) {
                 continue;
             }
 
+            // tell the server that we just bumped this remote pacman
             gameManager.connectionManager.triggerBump(this, remotePlayer.session);
-            // this.triggerBump(remotePlayer.pacman.facingDirection);
             return true;
         }
 
         return false;
     }
 
+    /**
+     * Start the bump animation
+     * @param collisionFrom The direction that the collision came from
+     */
     public triggerBump(collisionFrom: Direction) {
         this.animationManager.animations.bumpAnimation.reset();
         this.animationManager.animations.bumpAnimation.setActive(true);
@@ -276,18 +290,28 @@ class Pacman {
         };
     }
 
+    /**
+     * Handle the bump animation
+     * @param deltaTime 
+     * @returns Is the bump animation still active?
+     */
     public bumpAnimation(deltaTime: number) {
         if (!this.animationManager.animations.bumpAnimation.isActive()) return;
 
+        // calculate the distance that we should move
         let beforeFrame = this.animationManager.animations.bumpAnimation.currentFrame;
         this.animationManager.animations.bumpAnimation.step_frame(deltaTime);
         let frameChange = this.animationManager.animations.bumpAnimation.currentFrame - beforeFrame;
 
+        // set our moving direction to the move direction of the animation
         this.movingDirection = this.animationManager.animations.bumpAnimation.meta.moveDirection;
 
+        // move the pacman in the moving direction
         [this.x, this.y] = this.getPositionAhead(frameChange);
 
+        // handle if we just finished the bump animation
         if (this.animationManager.animations.bumpAnimation.isDone()) {
+            // collide with walls, send our current position, and disable the animation
             this.collideWalls();
             gameManager.connectionManager.sendPosition(this);
             this.animationManager.animations.bumpAnimation.setActive(false);
@@ -297,33 +321,40 @@ class Pacman {
         return true;
     }
 
+    /**
+     * Handle user inputs to the pacman's movement
+     */
     public inputDirection() {
+        // go through each key and handle if we press it
         for (let i = 0; i < gameManager.inputManager.downKeys.length; i++) {
             let value = gameManager.inputManager.downKeys[i];
 
-            if (value) {
-                this.shouldMove = true;
-                const thisDirection = Direction.fromEnum(i) as Direction;
+            if (!value) continue;
 
-                if (thisDirection == this.facingDirection) {
-                    this.queuedDirection = thisDirection;
-                    break;
-                }
+            this.shouldMove = true;
+            const thisDirection = Direction.fromEnum(i) as Direction;
 
-                if (thisDirection.getOpposite()?.enumValue == this.facingDirection.enumValue) {
-                    this.facingDirection = thisDirection;
-                    this.queuedDirection = thisDirection;
-                    break;
-                }
-
+            // cancel any queued movement if we repress the direction we are moving in
+            if (thisDirection == this.facingDirection) {
                 this.queuedDirection = thisDirection;
                 break;
             }
+
+            // if we want to move in the opposite direction then do that
+            if (thisDirection.getOpposite()?.enumValue == this.facingDirection.enumValue) {
+                this.facingDirection = thisDirection;
+                this.queuedDirection = thisDirection;
+                break;
+            }
+
+            // queue this direction
+            this.queuedDirection = thisDirection;
+            break;
         }
     }
 
     /**
-     * Steps the movement one frame
+     * Steps the movement one frame and handles input
      * @param deltaTime 
      * @returns 
      */
@@ -332,41 +363,44 @@ class Pacman {
         const lastQueuedDirection = this.queuedDirection;
         const lastShouldMove = this.shouldMove;
         
+        // handle player input and remote pacman collision
         if (this.isLocal) {
             this.inputDirection();
+            this.collideRemotePacman();
         }
 
+        // weird bump mechanics caused by checking direction?
         if (((!gameManager.performanceMode) || this.isLocal)) {
             this.checkQueuedDirection();
         }
-
-        if (this.isLocal) {
-            this.collideRemotePacman();
-        }
         
+        // handle if we are active in the bump animation
         if (this.bumpAnimation(deltaTime)) {
             this.collideWalls(false);
             this.movingLastFrame = this.shouldMove;
             return;
         }
 
+        // if we shouldn't move, set our animation frame to 0
         if (!this.shouldMove) {
             this.animationManager.animations.bodyAnimation.currentFrame = 0;
             this.movingLastFrame = this.shouldMove;
             return;
         }
 
+        // set our moving direction to the facing direction
         this.movingDirection = this.facingDirection;
 
+        // Move this pacman ahead and collide with walls
         [this.x, this.y] = this.getPositionAhead(this.movementSpeed * deltaTime);
         this.collideWalls();
 
-        const shouldSendUpdate = ((!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) || this.shouldMove != lastShouldMove) && this.isLocal;
-        // const shouldSendUpdate = (!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) && this.isLocal;
-        if (shouldSendUpdate) {
+        // determine if we should send our new position
+        if (((!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) || this.shouldMove != lastShouldMove) && this.isLocal) {
             gameManager.connectionManager.sendPosition(this);
         }
 
+        // collide with pellets if this is our client's pacman
         if (this.isLocal) this.collidePellets();
 
         this.movingLastFrame = this.shouldMove;

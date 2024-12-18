@@ -7,13 +7,28 @@ function pointIntersectsRect(point: [number, number], rect: [number, number, num
     return (point[0] >= rect[0]) && (point[0] <= rect[0] + rect[2]) && (point[1] >= rect[1]) && (point[1] <= rect[1] + rect[3]);
 }
 
+/**
+ * Get a random integer between the two given values. Both values are included.
+ * @param min The minimum value in the range
+ * @param max The maximum value in the range
+ * @returns The random value between the given range
+ */
 function getRandomInt(min: number, max: number): number {
     const minCeiled = Math.ceil(min);
     const maxFloored = Math.floor(max);
     return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); // both inclusive
 }
 
-// from chatgpt because math is hard
+/**
+ * Calculate the intersection data of two lines
+ * @param p1 The point of the first line
+ * @param d1 The direction of the first line
+ * @param p2 The point of the second line 
+ * @param d2 The direction of the second line
+ * @param length1 The length of the first line
+ * @param length2 The length of the second line
+ * @returns The distances along the lines that the two lines intersect
+ */
 function lineIntersection(
     p1: {x: number, y: number}, d1: {dx: number, dy: number},
     p2: {x: number, y: number}, d2: {dx: number, dy: number},

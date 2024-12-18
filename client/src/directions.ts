@@ -7,7 +7,11 @@ class Direction {
         this.enumValue = enumValue;
     }
 
-    public getDeltas() {
+    /**
+     * Get the normalized direction delta for the given direction
+     * @returns The direction delta
+     */
+    public getDeltas(): {dx: number, dy: number} {
         switch (this.enumValue) {
             case 0: return {dx: 1, dy: 0}
             case 1: return {dx: 0, dy: 1}
@@ -15,11 +19,12 @@ class Direction {
             case 3: return {dx: 0, dy: -1}
         }
     }
-
-    public getOpposite() {
-        return Direction.fromEnum((this.enumValue+2)%4);
-    }
     
+    /**
+     * Get a direction object from a string
+     * @param value The string to get the direction of
+     * @returns The direction found
+     */
     static fromString(value: string): Direction|undefined {
         for (let key in directions) {
             let d = directions[key as keyof typeof directions];
@@ -30,6 +35,11 @@ class Direction {
         }
     }
 
+    /**
+     * Get a direction object form a number (0 is right, 1 is down, 2 is left, 3 is up)
+     * @param value The number representing the direction to search for
+     * @returns The direction found
+     */
     static fromEnum(value: number): Direction|undefined {
         for (let key in directions) {
             let d = directions[key as keyof typeof directions];
@@ -40,6 +50,16 @@ class Direction {
         }
     }
 
+    /**
+     * Get the opposite direction
+     */
+    public getOpposite() {
+        return Direction.fromEnum((this.enumValue+2)%4);
+    }
+
+    /**
+     * Get a random direction
+     */
     static getRandom(): Direction {
         return Direction.fromEnum(getRandomInt(0, 3)) as Direction;
     }

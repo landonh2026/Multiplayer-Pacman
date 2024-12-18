@@ -55,10 +55,16 @@ class GameManager {
         // this.connectionManager = new ConnectionManager("ws://0.tcp.us-cal-1.ngrok.io:17022/gamesocket");
     }
 
+    /**
+     * Begin the game
+     */
     public beginGame() {
         this.nextFrame();
     }
 
+    /**
+     * Handle drawing the next frame
+     */
     private nextFrame() {
         const now = performance.now();
         const ms_taken = (now-this.lastFrame);
@@ -78,10 +84,16 @@ class GameManager {
         requestAnimationFrame(this.nextFrame.bind(this));
     }
 
+    /**
+     * Draw the next frame given the time difference from the target fps
+     * @param deltaTime 
+     */
     private draw(deltaTime: number) {
+        // clear the canvas and draw the board
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         this.drawManager.drawBoard();
     
+        // step the movement and draw each remote player
         for (let session in this.remotePlayers) {
             let remotePlayer = this.remotePlayers[session as keyof typeof this.remotePlayers];
             
@@ -89,15 +101,17 @@ class GameManager {
             remotePlayer.pacman.draw(deltaTime);
         }
 
+        // step the ghost movement and draw each ghost
         for (let ghost of this.ghosts) {
             ghost.stepMovement(deltaTime);
             ghost.draw();
         }
     
+        // step and draw the local pacman
         this.localPacman.stepMovement(deltaTime);
         this.localPacman.draw(deltaTime);
 
-        // DEBUG FUNCTION
-        // this.debugger.onFrameUpdate();
+        // update the debugger
+        this.debugger.onFrameUpdate();
     }
 }

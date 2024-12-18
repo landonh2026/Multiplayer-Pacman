@@ -57,6 +57,12 @@ class GameBoard {
         this.pathfinder = new Pathfinder(this);
     }
 
+    /**
+     * Make the path intersections given path intersection data
+     * @param data The data from the server
+     * @param tileSize The tilesize to compute the pixels to put the tile
+     * @returns The path intersections
+     */
     public makePathIntersections(data: Array<{x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]}>, tileSize: number) {
         const intersections = [];
 
@@ -67,11 +73,26 @@ class GameBoard {
         return intersections;
     }
 
+    /**
+     * Determine if a line intersects a wall
+     * @param position The position to start the line
+     * @param direction The direction the line goes
+     * @param length The length of the line
+     * @returns Does this line intersect a wall?
+     */
     public lineIntersectsWall(position: {x: number, y: number}, direction: Direction, length: number = Infinity) {
         return this.lineWallCollisions(position, direction, length)?.length != 0;
     }
 
+    /**
+     * Find the collisions of a wall
+     * @param position The position to start the line
+     * @param direction The direction the line goes
+     * @param length The length of the line
+     * @returns All the collisions the line intersects
+     */
     public lineWallCollisions(position: {x: number, y: number}, direction: Direction, length: number = Infinity) {
+        // get the function which converts a wall into a line based on the given line's direction
         let directionCheck = this.wallCollisionFunctions[direction.enumValue];
         const directionDelta = direction.getDeltas();
 
@@ -80,23 +101,15 @@ class GameBoard {
             return null;
         }
 
+        // go through each block and decide if it intersects the l ine
         let intersections: Array<{pos: {x: number, y: number}, block: [number, number, number, number]}> = [];
         for (let i = 0; i < this.blockPositions.length; i++) {
             const thisWall = this.blockPositions[i];
 
+            // convert this wall into a line, used to use the lineIntersection function
             const directionData = directionCheck(thisWall);
-    
-            // ctx.beginPath();
-            // ctx.strokeStyle = "white";
-            // ctx.moveTo(directionData.pos.x, directionData.pos.y);
-            // ctx.lineTo(
-            //     directionData.pos.x + 
-            //         (direction.enumValue%2 == 1 ? (directionData.dir.dx * directionData.dist) : 0),
-            //     directionData.pos.y +
-            //         (direction.enumValue%2 == 0 ? (directionData.dir.dy * directionData.dist) : 0)
-            // );
-            // ctx.stroke();
 
+            // get the intersection data for the given line and the wall's line
             const intersection =  lineIntersection(
                 position, directionDelta,
                 directionData.pos, directionData.dir,
@@ -105,36 +118,71 @@ class GameBoard {
 
             if (intersection == null) continue;
 
+            // add this intersection to the list of intersections
             intersections.push({pos: directionData.pos, block: thisWall});
         }
 
         return intersections;
     }
 
+    /**
+     * The a tile's coordinates given a pixel position
+     * @param position The given pixel position
+     * @returns The tile's coordinates
+     */
     public getTileCoordinatesFromPosition(position: Array<number>): [number, number] {
         return [Math.ceil(position[0]/gameManager.tileSize-1), Math.ceil(position[1]/gameManager.tileSize-1)];
     }
 
-    public getTileAtPosition(position: [number, number], offset: Array<number> = [0, 0]): [number, number, number, number]|undefined {
+    /**
+     * Get the wall at a given pixel position
+     * @param position 
+     * @param offset 
+     * @returns 
+     */
+    public getWallAtPosition(position: [number, number], offset: Array<number> = [0, 0]): [number, number, number, number]|null {
+        // TODO: why are we using an offset?
+
+        // get the position given a location
         const tilePosition = this.getTileCoordinatesFromPosition([position[0]+offset[0],position[1]+offset[1]]);
+
+        // offset the given tile location so it will be in the center of the wall
         tilePosition[0] += 0.5;
         tilePosition[1] += 0.5;
 
+        // go through each wall
         for (let i = 0; i < this.blockPositions.length; i++) {
+            // if this point is not inside this wall, skip it
             if (!pointIntersectsRect(tilePosition, this.rawBlockPositions[i])) continue;
 
+            // return this wall
             return this.blockPositions[i] as [number, number, number, number];
         }
+
+        return null;
     }
 
+    /**
+     * Determines if a pixel position is a wall
+     * @param position The pixel position
+     * @param offset 
+     * @returns Is this position a wall?
+     */
     public isPositionWall(position: [number, number], offset: Array<number> = [0, 0]) {
-        return this.getTileAtPosition(position, offset) == undefined;
+        return this.getWallAtPosition(position, offset) == null;
     }
 
+    /**
+     * Get the next path intersection node given a position, direction, and tolerance
+     * @param position The position of the object
+     * @param direction The direction to find the next node in
+     * @param tolerance The tolerance either vertically or horizontally to the pathnodes
+     * @returns The next path intersection node
+     */
     public getNextIntersectionNode(position: [number, number], direction: Direction, tolerance: number = 0) {
-        const checkDirection = direction.enumValue % 2 == 0 ? 0 : 1;
-        const otherCheckDirection = (checkDirection + 1) % 2;
-        const checkOrientation = direction.enumValue < 2 ? -1 : 1;
+        const checkDirection = direction.enumValue % 2 == 0 ? 0 : 1;    // horizontal or vertical check
+        const otherCheckDirection = (checkDirection + 1) % 2;           // the other direction from above
+        const checkOrientation = direction.enumValue < 2 ? -1 : 1;      // The orientation (left vs right, up vs down). Used to skip nodes behind the object
 
         let minDistanceData = {
             distance: -1 as number,
@@ -142,15 +190,19 @@ class GameBoard {
             nodeIndex: -1 as number
         };
 
+        // go through each path intersection and decide if this node is on the correct direction and is closest
         for (let i = 0; i < this.pathIntersections.length; i++) {
             // duplicate the array * tile size
             // TODO: preprocess
             const node = [this.pathIntersections[i].x, this.pathIntersections[i].y] as [number, number];
 
+            // if the node is outside our tolerance, then ignore it
             if (Math.abs(position[otherCheckDirection]-node[otherCheckDirection]) > tolerance) continue;
             
             const distance = (position[checkDirection]-node[checkDirection]) * checkOrientation;
             
+            // decide if this node is closer than any previous nodes
+            // also skip distances that would make the node behind the object
             if (distance < 0) continue;
             if (minDistanceData.node == null || distance < minDistanceData.distance) {
                 minDistanceData.distance = distance;

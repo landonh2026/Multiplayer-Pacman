@@ -20,15 +20,12 @@ class InputManager {
 
         document.addEventListener("keydown", this.onKeyDown.bind(this));
         document.addEventListener("keyup", this.onKeyUp.bind(this));
-
-        // setInterval(() => {
-        //     for (let i = 0; i < this.downKeys.length; i++) {
-        //         this.downKeys[i] = false;
-        //     }
-        //     this.downKeys[Math.floor(Math.random()*4)] = true;
-        // }, 500);
     }
 
+    /**
+     * Event called when a key is pressed
+     * @param event The event telling us which key was pressed
+     */
     public onKeyDown(event: KeyboardEvent) {
         if (!(event.key.toLowerCase() in InputManager.keyRawToInput)) {
             return;
@@ -38,6 +35,10 @@ class InputManager {
         this.downKeys[key.enumValue] = true;
     }
 
+    /**
+     * Event called when a key is released
+     * @param event The event telling us which key was released
+     */
     public onKeyUp(event: KeyboardEvent) {
         if (!(event.key.toLowerCase() in InputManager.keyRawToInput)) {
             return;

@@ -216,7 +216,7 @@ export class Room {
         let estimatedOtherPlayerPosition = otherPlayer.pacman.getEstimatedPosition(performance.now()-otherPlayer.pacman.lastPosPacketTime);
         
         // change when radius is not constant
-        let allowedDistance = 40;
+        let allowedDistance = 50;
 
         let dx = Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x);
         let dy = Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y);
