@@ -2,10 +2,19 @@ import * as utils from "./utils.js";
 import * as globals from "./globals.js";
 
 export class GameBoard {
-    rawBlockPositions: Array<[number, number, number, number]>; // more clear name?
+    /** The raw block positions as tile positions */
+    rawBlockPositions: Array<[number, number, number, number]>;
+
+    /** The block positions as pixels */
     blockPositions: Array<[number, number, number, number]>;
-    pellets: Array<[number, number, number]>; // probably should have explicit index property instead of just an array
+
+    /** The pellet positions as tile positions */
+    pellets: Array<[number, number, number]>; // TODO: make an array of a class
+
+    /** Represents the bottom right position of this game board */
     bottomRight: [number, number];
+
+    /** Represents the path intersections of this game board where pacman and ghosts can turn */
     pathIntersections: Array<PathIntersection>;
 
     constructor(blockPositions: Array<[number, number, number, number]>) {
