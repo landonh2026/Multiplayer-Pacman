@@ -1,3 +1,6 @@
+/**
+ * Handles the info board that is above the canvas
+ */
 class InfoBoard {
     fpsDisplay: HTMLElement;
     playerCountDisplay: HTMLElement;

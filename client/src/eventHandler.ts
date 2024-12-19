@@ -1,4 +1,8 @@
+/**
+ * Handle events from the server
+ */
 class EventHandler {
+    /** A dictionary containing the event type as the key and the function as the value */
     typeHandlers: {[key: string]: CallableFunction};
 
     constructor() {

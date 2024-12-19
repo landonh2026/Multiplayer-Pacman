@@ -1,4 +1,8 @@
+/**
+ * The manager for handling user inputs through the webpage
+ */
 class InputManager {
+    /** The list of directional keys that are currently pressed. [right, down, left, up] */
     downKeys: [boolean, boolean, boolean, boolean];
 
     static keyRawToInput = {

@@ -1,5 +1,11 @@
+/**
+ * Represents a cardinal direction
+ */
 class Direction {
+    /** This direction as a string */
     asString: string;
+
+    /** This direction as an enumerable value */
     enumValue: 0|1|2|3;
 
     constructor(asString: string, enumValue: 0|1|2|3) {
@@ -65,6 +71,7 @@ class Direction {
     }
 }
 
+/** Contains the direction objects that can be used */
 var directions = {
     RIGHT: new Direction("right", 0),
     DOWN: new Direction("down", 1),

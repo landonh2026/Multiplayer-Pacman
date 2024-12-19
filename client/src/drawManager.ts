@@ -1,13 +1,14 @@
+/**
+ * Handles drawing various objects onto the canvas
+ */
 class DrawManager {
-    debug: boolean;
-
-    constructor(debug: boolean = false) {
-        this.debug = debug;
+    constructor() {
+        
     }
 
     /**
      * Draw the board onto the canvas
-     * @param board The current gameboard
+     * @param board The gameboard to draw onto. Leave null for the current board.
      */
     public drawBoard(board: GameBoard|null = null) {
         if (board == null) board = gameManager.currentBoard;
@@ -34,7 +35,7 @@ class DrawManager {
         }
 
         // only continue if debug is active
-        if (!this.debug) {
+        if (!gameManager.debug) {
             return;
         }
 
@@ -101,7 +102,7 @@ class DrawManager {
      * @param y Y position of the dot
      */
     public drawWallCollision(x: number, y: number) {
-        if (!this.debug) return;
+        if (!gameManager.debug) return;
 
         ctx.beginPath();
         ctx.fillStyle = "#FFFFFF";

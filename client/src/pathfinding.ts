@@ -1,5 +1,6 @@
 class Pathfinder
 {
+    /** The list of connected nodes used in the search algorithm */
     nodes: PathNode[];
 
     constructor(board: GameBoard|null = null, customNodes: PathNode[]|null = null) {
@@ -27,7 +28,6 @@ class Pathfinder
      */
     public findPathWithNodes(start: PathNode, goal: PathNode): Path | null {
         this.resetNodes();
-        // return this.customSearch(start, goal);
         return this.aStar(start, goal);
     }
 
@@ -247,12 +247,23 @@ class Pathfinder
 class PathNode {
     x: number;
     y: number;
+
+    /** A list of connections that this node has made */
     connections: { node: PathNode, weight: number }[];
+
+    /** The currently known cost of the cheapest path from start to this node */
     g: number;
+
+    /** The estimated cost for a path from start to finish */
     f: number;
+
+    /** The node that the current path came from in the search algorithm */
     cameFrom: PathNode | null;
+
+    /** The ID of this node */
     id: number
 
+    /** The current node ID used for creating nodes */
     static id_count = 0;
 
     constructor(x: number, y: number) {
@@ -277,6 +288,7 @@ class PathNode {
 }
 
 class Path {
+    /** A list of nodes in this path */
     nodes: PathNode[]
 
     constructor(nodes: PathNode[]) {

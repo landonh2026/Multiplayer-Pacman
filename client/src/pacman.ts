@@ -1,3 +1,6 @@
+/**
+ * Represents a Pacman
+ */
 class Pacman {
     x: number;
     y: number;

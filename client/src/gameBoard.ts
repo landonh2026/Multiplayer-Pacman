@@ -1,28 +1,42 @@
+/**
+ * Represents a Pacman game board with pellets, blocks, and path intersections where ghosts and pacman can turn
+ */
 class GameBoard {
+    /** The raw block positions in terms of tiles instead of pixels */
     rawBlockPositions: Array<[number, number, number, number]>;
+    /** The block positions in terms of pixels */
     blockPositions: Array<[number, number, number, number]>;
+    /** The raw pellet positions in terms of tiles instead of pixels */
     rawPellets: Array<[number, number, number]>;
+    /** The pellet positions in terms of pixels */
     pellets: Array<[number, number, number, PELLET_STATES]>;
+    /** The bottom right position of the board. Also represents the width and height of the board. */
     bottomRight: [number, number];
+    /** A list of path intersections where ghosts and pacman can turn */
     pathIntersections: Array<PathIntersection>;
+    /** A list of wall collision functions that turn a wall into a single line given a direction */
     wallCollisionFunctions: Array<(wall: [number, number, number, number]) => { pos: { x: number; y: number; }; dir: { dx: number; dy: number; }; dist: number; }>;
+    /** The pathfinder object for this gameboard */
     pathfinder: Pathfinder;
 
     constructor(
         rawBlockPositions: Array<[number, number, number, number]>,
         rawPellets: Array<[number, number, number]>,
         pathIntersections: Array<{x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]}>,
-        tileSize: number|null = null) {
+        tileSize: number|null = null
+    ) {
 
         if (tileSize == null) tileSize = gameManager.tileSize;
         // ^ TODO: change in the future to calc at render time or to remake tiles at their pos when resizing
         // Maybe cache in draw manager?
         
+        // duplicate the rawBlockPositions argument into the rawBlockPositions attriute
         this.rawBlockPositions = [...rawBlockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>;
         this.blockPositions = rawBlockPositions;
         this.bottomRight = [0, 0];
         this.pathIntersections = this.makePathIntersections(pathIntersections, tileSize);
 
+        // go through the block positions and multiply it by the tile size to get the pixel tile size
         for (let i = 0; i < this.blockPositions.length; i++) {
             let block = this.blockPositions[i];
             this.bottomRight = [Math.max(this.bottomRight[0], block[0]+block[2]), Math.max(block[1]+block[3])];
@@ -32,6 +46,7 @@ class GameBoard {
             }
         }
 
+        // do the same as above for pellets
         this.rawPellets = rawPellets;
         const pellets = [...rawPellets.map(innerArray => [...innerArray])] as Array<[number, number, number]>;
         this.pellets = [];
@@ -217,10 +232,15 @@ class GameBoard {
     }
 }
 
+/**
+ * Represents a path intersection where pacman and ghosts can turn
+ */
 class PathIntersection {
     x: number;
     y: number;
     id: number;
+
+    /** Which directions can a ghost or pacman turn here? [right, down, left, right] */
     directions: [boolean, boolean, boolean, boolean];
     
     constructor(x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]) {

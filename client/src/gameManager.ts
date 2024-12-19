@@ -1,22 +1,38 @@
 enum GAME_STATES { CONNECTING, DISCONNECTED, FINDING_ROOM, PREGAME, IN_GAME, AFTER_GAME }
 
+/**
+ * The primary game manager that manages the Pacman game
+ */
 class GameManager {
-    remotePlayers: {[item: string]: RemotePlayer};
     performanceMode: boolean;
+    debug: boolean;
+
+    /** A dictionary of remote players with the session being the key and the value being the RemotePlayer object */
+    remotePlayers: {[session: string]: RemotePlayer};
+    
+    /** A list of ghosts that are current active in the game */
     ghosts: Ghost[];
 
+    /** The current game state */
     currentState: GAME_STATES;
 
     lastFrame: number;
     target_fps: number;
     ms_per_frame: number;
 
+    /** The tile size in terms of pixels */
     tileSize: number;
+    
+    /** The time since the game has started */
     serverTime: number;
 
+    /** The currently active game board */
     currentBoard: GameBoard;
+
+    /** The local pacman */
     localPacman: Pacman;
 
+    // various managers that handle events
     inputManager: InputManager;
     drawManager: DrawManager;
     eventHandler: EventHandler;
@@ -24,11 +40,14 @@ class GameManager {
     connectionManager: ConnectionManager;
     debugger: Debugger;
 
+    /** The local session ID */
     uuid: string|null;
 
     static GAME_STATES = GAME_STATES;
 
     constructor(debug: boolean = false) {
+        this.debug = debug;
+
         this.tileSize = 40;
         this.serverTime = -1;
 
@@ -46,10 +65,10 @@ class GameManager {
 
         this.localPacman = new Pacman(this.tileSize*1.5, this.tileSize*2.5, PACMAN_COLORS.YELLOW, directions.DOWN, directions.DOWN, false, 0, true, this.tileSize);
         this.inputManager = new InputManager();
-        this.drawManager = new DrawManager(debug);
+        this.drawManager = new DrawManager();
         this.eventHandler = new EventHandler();
         this.infoBoard = new InfoBoard();
-        this.debugger = new Debugger(this.currentBoard);
+        this.debugger = new Debugger();
         
         this.connectionManager = new ConnectionManager();
         // this.connectionManager = new ConnectionManager("ws://0.tcp.us-cal-1.ngrok.io:17022/gamesocket");

@@ -1,3 +1,6 @@
+/**
+ * Represents a ghost
+ */
 class Ghost {
     x: number;
     y: number;

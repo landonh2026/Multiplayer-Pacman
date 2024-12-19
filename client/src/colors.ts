@@ -1,6 +1,14 @@
+/**
+ * Represents a color that a pacman can be
+ */
 class PacmanColor {
+    /** The fill color for this pacman */
     color: string;
+
+    /** The gradient start color for this pacman */
     gradient_start: string;
+
+    /** The gradient end color for this pacman */
     gradient_end: string;
 
     constructor(color: string, gradient_start: string, gradient_end: string) {
@@ -11,6 +19,7 @@ class PacmanColor {
     }
 }
 
+/** General environmental colors */
 const ENVIRONMENT_COLORS = {
     TEXT: "white",
     BACKGROUND: "rgb(1, 1, 0)",
@@ -18,10 +27,12 @@ const ENVIRONMENT_COLORS = {
     PELLET: "rgb(250, 184, 177)"
 };
 
+/** Ghost colors */
 const GHOST_COLORS = {
     PINKY: "rgb(253, 180, 255)"
 }
 
+/** Pacman colors */
 const PACMAN_COLORS = {
     PINK: new PacmanColor("#e36dda", "#e090d8", "#d32197"),
     RED: new PacmanColor("#dd1f09", "#e84333", "#8d0c0b"),

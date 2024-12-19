@@ -1,5 +1,8 @@
+/**
+ * A currently blank class that can be used for debugging purposes
+ */
 class Debugger {
-    constructor(board: GameBoard) {
+    constructor() {
 
     }
 

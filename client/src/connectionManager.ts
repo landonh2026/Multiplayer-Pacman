@@ -1,4 +1,8 @@
+/**
+ * Manages the connection with the remote server
+ */
 class ConnectionManager {
+    /** The websocket connection with the server */
     socket: WebSocket;
     movementPacketIndex: number;
     
@@ -12,21 +16,31 @@ class ConnectionManager {
         this.socket.addEventListener("error", this.onError.bind(this));
     }
 
+    /**
+     * Handles the connection with the server being opened
+     * @param event The open event context
+     */
     private onOpen(event: Event) {
         gameManager.currentState = GameManager.GAME_STATES.PREGAME;
         gameManager.serverTime = performance.now();
         console.log("[WSS] Connected to server.");
     }
 
+    /**
+     * Handles the connection with the server being closed
+     * @param event The close event context
+     */
     private onClose(event: CloseEvent) {
         gameManager.currentState = GameManager.GAME_STATES.DISCONNECTED;
         console.log(`[WSS] Closed connection to server. (${event.code})`);
     }
 
+    /**
+     * Handles a message from the server
+     * @param event The message/event context
+     */
     private onMessage(event: MessageEvent<any>) {
         const parsed = JSON.parse(event.data);
-
-        // console.log(parsed);
 
         if (parsed.messageType in gameManager.eventHandler.typeHandlers) {
             gameManager.eventHandler.typeHandlers[parsed.messageType](parsed);
@@ -36,14 +50,29 @@ class ConnectionManager {
         console.error("handler not found " + parsed.messageType);
     }
     
+    /**
+     * Handles an error occurring with the connection
+     * @param event The error context
+     */
     private onError(event: Event) {
         console.error("[WSS] Error occurred.");
+        console.error(event);
     }
 
+    /**
+     * Create a message to send to the server given a type and data to send
+     * @param type The message type
+     * @param data The data to send
+     * @returns The data as a string
+     */
     private makeMessage(type: string, data: any): string {
         return JSON.stringify({"messageType": type, "data": data});
     }
 
+    /**
+     * Calculates the time that has passed since the game has started
+     * @returns The time in ms
+     */
     private getTimestamp() {
         return performance.now() - gameManager.serverTime;
     }
