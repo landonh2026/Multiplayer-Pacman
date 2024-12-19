@@ -3,7 +3,10 @@ import * as utils from "./utils.js";
 import * as globals from "./globals.js";
 
 export class Simulator {
+    /** The tolerance to the distance that players are allowed to move */
     distanceChangeTolerance: number;
+
+    /** Collision wall functions that turn a wall into a line that can be intersected with */
     wallCollisionFunctions: Array<(wall: [number, number, number, number]) => { pos: { x: number; y: number; }; dir: { dx: number; dy: number; }; dist: number; }>;
     
     constructor() {

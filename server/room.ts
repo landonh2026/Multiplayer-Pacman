@@ -6,17 +6,34 @@ import {GameBoard, gameBoards} from "./gameBoard.js";
 import {Simulator} from "./simulator.ts";
 
 export class Room {
+    /** The server context that this room is under */
     server: Server;
-    players: Record<string, Player>;
+
+    /** The players that are in this server with the session as the key and the Player object as the value*/
+    players: {[session: string]: Player};
+
+    /** The UUID for this room */
     uuid: String;
+
+    /** The topics of this room */
     topics: {[topic: string]: string};
+    
+    /** The maximum number of players that are allowed in this room */
     maxPlayers: number;
-    canJoin: boolean;
+    
+    /** The available colors that could be taken if a new player joined the room */
     availableColors: Array<globals.Colors>;
+
+    /** The active game board for this room */
     gameBoard: GameBoard;
+
+    /** Message handlers for the player clients */
     messageHandlers: {[messageType: string]: (player: Player, data: any) => void};
+
+    /** The game simulator for the game */
     simulator: Simulator;
-    nextCollisions: {[sessionsHash: number]: {collisionUnix: number, session1: string, session2: string, timeout: Timer}};
+
+    /** Determines if lagbacks are enabled in this room */
     enable_lagback: boolean;
 
     constructor(server: Server, uuid: String) {
@@ -24,10 +41,8 @@ export class Room {
         this.players = {};
         this.uuid = uuid;
         this.maxPlayers = 4;
-        this.canJoin = true;
         this.availableColors = [...globals.colors] as Array<globals.Colors>;
         this.gameBoard = gameBoards.default.duplicate();
-        this.nextCollisions = {};
         this.enable_lagback = false;
 
         this.simulator = new Simulator();

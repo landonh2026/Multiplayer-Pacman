@@ -5,12 +5,24 @@ import {Simulator} from "./simulator.ts";
 import {Room} from "./room.ts";
 
 export class Player {
+    /** The session id for this player */
     session: string;
+
+    /** The ws context for this player */
     ws: ServerWebSocket<globals.SocketData>
+    
+    /** The active score of this player */
     score: number;
+
+    /** The pacman for this player */
     pacman: Pacman;
+    
     timeStamp: number;
+    
+    /** The room that this player is in */
     room: Room;
+    
+    /** The last time this player was bumped */
     lastBump: number;
 
     constructor(session: string, ws: ServerWebSocket<globals.SocketData>, color: globals.Colors, room: Room) {
