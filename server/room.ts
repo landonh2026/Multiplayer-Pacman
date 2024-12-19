@@ -125,11 +125,6 @@ export class Room {
 
         let shouldTravelDistance = this.simulator.getMaxDistanceChange(now-player.pacman.lastClientTimestamp, player.pacman.movementSpeed, tolerance);
 
-        // could potentially be looped in order to travel quickly with many packets (send not moving packet, then moving, etc)
-        // if (!player.pacman.lastKnownLocation.shouldMove) {
-        //     shouldTravelDistance = 5;
-        // }
-
         if (distanceTraveled > shouldTravelDistance) {
             if (this.enable_lagback) console.log(`Player ${player.session} (${player.pacman.color}) moved too quickly!`, shouldTravelDistance, distances);
             return false;

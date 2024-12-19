@@ -22,23 +22,18 @@ export class GameBoard {
             }
         }
 
-        // this.pellets = [...this.makePellets().map(innerArray => [...innerArray])] as Array<[number, number, number]>;
         this.pellets = this.makePellets();
         this.pathIntersections = this.findPathIntersections();
-        
-        // let i = 0;
-        // this.pellets = [...this.findPathIntersections().map(innerArray => [innerArray[0], innerArray[1], i++])] as Array<[number, number, number]>;
-        // this.pathIntersections = [];
     }
 
     /**
-     * Finds that path intersections that are used in multiple scenarios
-     * @returns The path intersections points as [x, y]
+     * Find the intersections between paths from the pellet positions
+     * @returns An array of path intersections
      */
     public findPathIntersections() {
         const pathIntersections: Array<PathIntersection> = [];
-        // check to see if the spaces around the pellet are open. If both axis (horizontal and vertical) are available, it is valid.
-        // let pellet of this.pellets
+
+        // check to see if the spaces around the pellet are open. If both axis (horizontal and vertical) are available, it is valid
         for (let i = 0; i < this.pellets.length; i++) {
             const pellet = this.pellets[i];
             let passedDirections = [false, false, false, false] as [boolean, boolean, boolean, boolean];
@@ -49,75 +44,69 @@ export class GameBoard {
                 // skip if pellet ids match
                 if (pellet[2] == otherPellet[2]) continue;
 
+
+                // do the y positions match?
                 if (Math.abs(pellet[1]-otherPellet[1]) == 0) {
+                    // are the pellets 1 tile away from each other in the left or right directions? If so, mark that
                     if (pellet[0]-otherPellet[0] == 1) {
                         passedDirections[2] = true;
                     } else if (pellet[0]-otherPellet[0] == -1) {
                         passedDirections[0] = true;
                     }
+
                 }
 
+                // do the x positions match?
                 if (Math.abs(pellet[0]-otherPellet[0]) == 0) {
+                    // are the pellets 1 tile away from each other in the up or down directions? If so, mark that
                     if (pellet[1]-otherPellet[1] == 1) {
                         passedDirections[3] = true;
                     } else if (pellet[1]-otherPellet[1] == -1) {
                         passedDirections[1] = true;
                     }
                 }
-
-                `
-                // check if the pellet is horizontally 1 unit away and vertically 0 units away
-                if (Math.abs(pellet[0]-otherPellet[0]) == 1 && Math.abs(pellet[1]-otherPellet[1]) == 0) {
-                    console.log("x", pellet[0], otherPellet[0]);
-                    horizontalCheck = true;
-                }
-
-                // check if the pellet is vertically 1 unit away and horizontally 0 units away
-                if (Math.abs(pellet[1]-otherPellet[1]) == 1 && Math.abs(pellet[0]-otherPellet[0]) == 0) {
-                    console.log("y", pellet[1], otherPellet[1]);
-                    verticalCheck = true;
-                }
-                `;
-
-                // if ((passedDirections[0] || passedDirections[2]) && (passedDirections[1] || passedDirections[3])) break;
             }
 
 
+            // If this node is not connected to at least 1 horizontal and vertical node, then it is not a path intersection node
             if (!((passedDirections[0] || passedDirections[2]) && (passedDirections[1] || passedDirections[3]))) continue;
-            // pathIntersections.push([pellet[0], pellet[1]]);
-            pathIntersections.push(
-                new PathIntersection(pellet[0], pellet[1], i, passedDirections)
-            );
+
+            pathIntersections.push(new PathIntersection(pellet[0], pellet[1], i, passedDirections));
         }
 
         return pathIntersections;
     }
 
+    /**
+     * Make the pellets for the gameboard
+     * @returns An array of three numbers, [x position, y position, id]
+     */
     public makePellets(): Array<[number, number, number]> {
         const pellets: Array<[number, number, number]> = [];
 
         let id = 0;
+        // loop through each tile
         for (let x = 0; x < this.bottomRight[0]; x++) {
-            for (let y = 0; y < this.bottomRight[1]+2; y++) {
-                let isAllowed = true;
-                
+            next_tile: for (let y = 0; y < this.bottomRight[1]+2; y++) {
+                // check to see if this pellet would be spawned inside a wall
                 for (let i = 0; i < this.rawBlockPositions.length; i++) {
                     if (utils.pointIntersectsRect([x+0.5, y+0.5], this.rawBlockPositions[i])) {
-                        isAllowed = false;
-                        break;
+                        continue next_tile;
                     }
                 }
 
-                if (isAllowed) {
-                    pellets.push([x+0.5, y+0.5, id]);
-                    id++;
-                }
+                pellets.push([x+0.5, y+0.5, id]);
+                id++;
             }
         }
 
         return pellets;
     }
 
+    /**
+     * Duplicate this game board
+     * @returns 
+     */
     public duplicate(): GameBoard {
         return new GameBoard([...this.rawBlockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>);
     }

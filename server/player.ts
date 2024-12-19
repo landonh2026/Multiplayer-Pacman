@@ -97,15 +97,18 @@ export class Pacman {
      * @returns 
      */
     public getNextCollidingWall(): globals.PacmanNextWallCollision|null {
+        // get the wall collisions that this pacman will run into
         let collidingWalls = this.player.room.simulator.getPacmanWallCollisions(this, this.player.room.gameBoard.blockPositions);
 
         if (collidingWalls == null) return null;
 
+        // get the axis that we should check the distance on
         let distanceDirectionCheck = this.lastKnownLocation.facingDirection % 2 == 0 ? "x" : "y" as "x"|"y";
 
         let minDistance = null;
         let minDistanceObj = null;
 
+        // go through each colliding wall and decide which one is closest
         for (let i = 0; i < collidingWalls.length; i++) {
             let thisCollision = collidingWalls[i];
             let distance = Math.abs(this.lastKnownLocation[distanceDirectionCheck] - thisCollision.pos[distanceDirectionCheck]);
@@ -129,6 +132,7 @@ export class Pacman {
     public getEstimatedPosition(deltaTime: number): {x: number, y: number} {
         if (!this.lastKnownLocation.shouldMove) return {x: this.lastKnownLocation.x, y: this.lastKnownLocation.y};
 
+        // get the direction delta and predicated distance for this pacman
         let delta = this.getDirectionDelta();
         let distance =  globals.target_client_fps * this.movementSpeed * (deltaTime/1000);
 

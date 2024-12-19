@@ -24,14 +24,25 @@ export class Simulator {
         ]
     }
 
+    /**
+     * Get the maximum distance change that we will allow form the pacman client
+     * @param timeChange The time change since the last packet sent
+     * @param movementSpeed The movement speed of this client
+     * @param tolerance The tolerance we are allowing for errors/ping
+     * @returns The maximum distance we are allowing the client to move
+     */
     public getMaxDistanceChange(timeChange: number, movementSpeed: number, tolerance: number|null = null) {
         if (tolerance === null) tolerance = this.distanceChangeTolerance;
-       
-        // console.log(timeChange, timeChange/1000);
 
         return globals.target_client_fps * (movementSpeed) * (timeChange/1000) * tolerance;
     }
 
+    /**
+     * Get a pacman's next wall collisions with the gameboard
+     * @param pacman The pacman to check for
+     * @param walls The walls of the gameboard
+     * @returns A list of object containing the position and wall data that this pacman could potentially run into
+     */
     public getPacmanWallCollisions(pacman: Pacman, walls: Array<[number, number, number, number]>) {
         const pacmanPosition = {x: pacman.lastKnownLocation.x, y: pacman.lastKnownLocation.y};
         let pacmanDirection = pacman.getDirectionDelta();

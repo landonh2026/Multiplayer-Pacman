@@ -6,6 +6,12 @@ class Pathfinder
         this.nodes = this.makeNodes(board, customNodes);
     }
 
+    /**
+     * Get the direction between a start node and another node. The given nodes should be in the same position in at least 1 axis.
+     * @param node The node which the direction is relative to
+     * @param otherNode The other node
+     * @returns The direction from the first node to the second node
+     */
     public getTurnDirection(node: PathNode|{x: number, y: number}, otherNode: PathNode|{x: number, y: number}): Direction|null {
         if (Math.abs(node.y-otherNode.y) == 0) return node.x - otherNode.x > 0 ? directions.LEFT : directions.RIGHT;
         if (Math.abs(node.x-otherNode.x) == 0) return node.y - otherNode.y > 0 ? directions.UP : directions.DOWN;
@@ -33,7 +39,9 @@ class Pathfinder
      */
     public findPathWithCoordinates(start: {x: number, y: number}, goal: {x: number, y: number}): Path | null {
         const customNodes: PathNode[] = [];
+        // create a copy of each path intersection
         for (let intersection of gameManager.currentBoard.pathIntersections) {
+            // skip this intersection if it matches the starting position
             if(start.x == intersection.x && start.y == intersection.y) {
                 continue;
             }
@@ -41,6 +49,7 @@ class Pathfinder
             customNodes.push(new PathNode(intersection.x, intersection.y));
         }
 
+        // make 2 more nodes which can be used in the search
         const startNode = new PathNode(start.x, start.y);
         const goalNode = new PathNode(goal.x, goal.y);
         customNodes.push(startNode);
@@ -52,6 +61,9 @@ class Pathfinder
         return path;
     }
 
+    /**
+     * Reset the nodes
+     */
     public resetNodes() {
         for (let node of this.nodes) {
             node.g = Infinity;
@@ -60,57 +72,13 @@ class Pathfinder
         }
     }
 
-    private customSearch(start: PathNode, goal: PathNode): Path | null {
-        const nodes: Set<PathNode> = new Set([start]);
-        start.cameFrom = null;
 
-        // let customSearch = (node: PathNode, depth: number, firstSearch: boolean = false) => {
-        //     console.log(depth);
-        //     // return;
-        //     if (depth == 0) return;
-        //     if ((!firstSearch) && (node.id == start.id || nodes.has(node))) return;
-
-        //     node.f = this.heuristic(node, goal);
-        //     nodes.add(node);
-
-        //     for (const { node: neighbor, weight } of node.connections) {
-        //         if (nodes.has(neighbor)) continue;
-
-        //         neighbor.cameFrom = node;
-        //         customSearch(neighbor, depth - 1);
-        //     }
-        // };
-
-        // customSearch(start, 4, true);
-
-        for (const { node: neighbor, weight } of start.connections) {
-            neighbor.cameFrom = start;
-
-            if (neighbor.id == start.id) continue;
-
-            if (!nodes.has(neighbor)) {
-                neighbor.f = this.heuristic(neighbor, goal);
-                nodes.add(neighbor);
-            }
-
-            for (const { node: neighbor2, weight: weight2 } of neighbor.connections) {
-                if (neighbor2.x == start.x && neighbor2.y == start.y) continue;
-                if (nodes.has(neighbor2)) continue;
-
-                neighbor2.f = this.heuristic(neighbor2, goal);
-                neighbor2.cameFrom = neighbor;
-                nodes.add(neighbor2);
-            }
-        }
-
-        if (nodes.size == 1) { return null; }
-
-        nodes.delete(start);
-        const bestEndNode = Array.from(nodes).reduce((a, b) => (a.f < b.f? a : b));
-
-        return new Path(this.reconstructPath(bestEndNode));
-    }
-
+    /**
+     * The A* search algorithm
+     * @param start The beginning node
+     * @param goal The goal node
+     * @returns The Path to the goal node
+     */
     private aStar(start: PathNode, goal: PathNode): Path | null {
         const openSet: Set<PathNode> = new Set([start]);
         start.g = 0;
@@ -147,12 +115,21 @@ class Pathfinder
         return null; // Path not found
     }
 
+    /**
+     * The Heuristic Function determining the score between two nodes
+     * @param a The first node
+     * @param b The second node
+     * @returns The score for this path
+     */
     private heuristic(a: PathNode, b: PathNode): number {
-        // Manhattan distance heuristic, favoring horizontal movement first
-        // return Math.abs(a.x - b.x) + Math.pow(Math.abs(a.y - b.y), 2);
         return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
+    /**
+     * Reconstruct the path used in the A* search algorithm
+     * @param current The current node
+     * @returns The entire path
+     */
     private reconstructPath(current: PathNode): PathNode[] {
         const totalPath: PathNode[] = [current];
         while (current.cameFrom) {
@@ -169,11 +146,18 @@ class Pathfinder
         return totalPath;
     }
 
+    /**
+     * Make the nodes used in the search algorithm
+     * @param board The current gameboard
+     * @param customNodes Should we use custom nodes? Leave null if no.
+     * @returns The created nodes
+     */
     private makeNodes(board: GameBoard|null = null, customNodes: PathNode[]|null = null) {
         if (board == null) board = gameManager.currentBoard;
 
         let nodes: PathNode[] = [];
     
+        // use default nodes if customNodes is null
         if (customNodes == null) {
             for (let intersection of board.pathIntersections) {
                 nodes.push(new PathNode(intersection.x, intersection.y));
@@ -182,7 +166,9 @@ class Pathfinder
             nodes = customNodes;
         }
     
+        // go through each node and connect them to all other nodes that are visible in each cardinal direction
         for (let node of nodes) {
+            // the closest nodes by direction (right, down, left, up)
             let closestNodesByDirection: Array<null|{distance: number, node: PathNode}> = [null, null, null, null];
     
             for (let otherNode of nodes) {
@@ -198,7 +184,6 @@ class Pathfinder
                         continue;
                     }
     
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                     // @ts-ignore
                     if (closestNodesByDirection[direction.enumValue] == null || closestNodesByDirection[direction.enumValue].distance > distance) {
                         closestNodesByDirection[direction.enumValue] = {
@@ -209,6 +194,8 @@ class Pathfinder
                 }
             }
     
+            // go through each cardinal direction and add a connection
+            // TODO: check to see if they are already connected?
             for (let object of closestNodesByDirection) {
                 if (object == null) continue;
     
@@ -220,10 +207,18 @@ class Pathfinder
         return nodes;
     }
 
+    /**
+     * Perform a line-of-sight check between two nodes
+     * @param node The first node
+     * @param otherNode The second node
+     * @param board The gameboard used for wall detection
+     * @returns Can the two nodes see each other?
+     */
     private lineOfSightCheck(node: PathNode, otherNode: PathNode, board: GameBoard|null = null) {
         if (board == null) board = gameManager.currentBoard;
         if (otherNode.id == node.id) return false;
     
+        // do they have the same x position?
         if (Math.abs(node.x-otherNode.x) == 0) {
             const direction = node.y - otherNode.y > 0 ? directions.UP : directions.DOWN;
     
@@ -234,6 +229,7 @@ class Pathfinder
             return true;
         }
     
+        // do they have the same y position?
         if (Math.abs(node.y-otherNode.y) == 0) {
             const direction = node.x - otherNode.x > 0 ? directions.LEFT : directions.RIGHT;
             
@@ -270,6 +266,11 @@ class PathNode {
         this.id = PathNode.id_count++;
     }
 
+    /**
+     * Add a connection that the A* Search algorithm can use when pathfinding
+     * @param node The other node to add a connection to
+     * @param weight The weight of this connection
+     */
     addConnection(node: PathNode, weight: number = 1): void {
         this.connections.push({ node, weight });
     }
@@ -282,6 +283,9 @@ class Path {
         this.nodes = nodes;
     }
 
+    /**
+     * Draw this path to the gameboard
+     */
     public draw() {
         ctx.lineWidth = 2;
 
