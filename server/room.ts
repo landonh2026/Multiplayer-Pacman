@@ -207,15 +207,17 @@ export class Room {
         // both players submitted this bump, only acknowledge one bump so we skip this one
         if (now-player.lastBump < 500 && now-otherPlayer.lastBump < 500) {
             console.log(`too quick bumps (${now-player.lastBump}, ${now-player.lastBump})`);
-            return;
+            return; 
         }
 
         // move the player to the new pos
         let newPacmanPosition: globals.PositionData = {...player.pacman.lastKnownLocation};
         newPacmanPosition.x = data.data.position.x;
         newPacmanPosition.y = data.data.position.y;
+        newPacmanPosition.timestamp = data.data.timestamp;
 
-        if (!this.checkPlayerMoveDistance(data.data.timestamp, player, newPacmanPosition)) {
+        // if (!this.checkPlayerMoveDistance(data.data.timestamp, player, newPacmanPosition)) {
+        if (!this.verifyNewPosition(player, newPacmanPosition)) {
             player.log("Moved too quickly while attempting to trigger a bump");
             // player.ws.send(utils.makeMessage("bump-reject", {})); // TODO: implement
             return;
@@ -226,7 +228,7 @@ export class Room {
         let estimatedOtherPlayerPosition = otherPlayer.pacman.getEstimatedPosition(performance.now()-otherPlayer.pacman.lastPosPacketTime);
         
         // change when radius is not constant
-        let allowedDistance = 50;
+        let allowedDistance = 150;
 
         let dx = Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x);
         let dy = Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y);
