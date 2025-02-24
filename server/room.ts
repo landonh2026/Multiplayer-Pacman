@@ -125,7 +125,7 @@ export class Room {
     }
 
     /**
-     * Check to see if the player moved to far given a player and their new position
+     * Check to see if the player moved too far given a player and their new position
      * @return Is the player able to move here since their last position packet
      */
     public checkPlayerMoveDistance(now: number, player: Player, otherPosition: globals.PositionData, includeRadius: boolean = false, tolerance: number|null = null) {
