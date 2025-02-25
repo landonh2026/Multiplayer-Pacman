@@ -389,7 +389,8 @@ export class Room {
         this.players[newPlayer.session] = newPlayer;
 
         const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
-        ghost.getPathToNextTarget();
+        ghost.findPathToNextTarget();
+        console.log("path " + ghost.path);
         ghost.setTurnTimeout();
 
         // const path = this.gameBoard.pathfinder.findPathWithCoordinates(

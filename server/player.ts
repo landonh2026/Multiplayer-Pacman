@@ -146,10 +146,6 @@ export class Pacman {
 
         const nextWall = this.getNextCollidingWall();
 
-        if (nextWall == null) {
-            
-        }
-
         // get the direction delta and predicated distance for this pacman
         let delta = this.getDirectionDelta();
         let distance =  globals.target_client_fps * this.movementSpeed * (deltaTime/1000);
@@ -162,7 +158,16 @@ export class Pacman {
                 Make sure that we set the pacman to be on the correct side of the wall
             */
 
+            const negativeMultiplier = this.lastKnownLocation.facingDirection > 1 ? 1 : -1;
+            console.log(nextWall.distance);
+
+            if (this.lastKnownLocation.facingDirection % 2 == 0) {
+                console.log("horizontal stuff", this.lastKnownLocation.x, nextWall.distance, nextWall.wallObject[(this.lastKnownLocation.facingDirection + 2) % 4])
+                return {x: this.lastKnownLocation.x + (nextWall.distance*-negativeMultiplier) + (20*negativeMultiplier), y: this.lastKnownLocation.y};
+            }
             
+            console.log("vertical stuff", this.lastKnownLocation.y, nextWall.distance, nextWall.wallObject[(this.lastKnownLocation.facingDirection + 2) % 4])
+            return {x: this.lastKnownLocation.x, y: this.lastKnownLocation.y + (nextWall.distance*-negativeMultiplier) + (20*negativeMultiplier)};
         }
 
         delta.dx *= distance;

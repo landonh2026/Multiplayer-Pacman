@@ -2,6 +2,7 @@ import { Player } from "./player.ts";
 import { Path } from "./pathfinding.ts";
 import { Room } from "./room.ts";
 import * as globals from "./globals.ts";
+import * as utils from "./utils.ts";
 
 export class Ghost {
     x: number;
@@ -23,6 +24,18 @@ export class Ghost {
         this.path = null;
         this.room = room;
         this.nextTurnTimeout = null;
+
+        this.sendLocation();
+    }
+
+    public sendLocation() {
+        // this.room.server.publish(
+        //     this.room.topics.event,
+        //     utils.makeMessage("ghost-position",
+        //     {
+        //         position: [this.x, this.y]
+        //     }
+        // ));
     }
 
     public determineTarget(players: Array<Player>) {
@@ -32,17 +45,29 @@ export class Ghost {
         return players[0];
     }
 
-    public getPathToNextTarget() {
+    public findPathToNextTarget() {
         this.currentTarget = this.determineTarget(Object.values(this.room.players));
 
-        console.log({x: this.x, y: this.y}, {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y});
+        // const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
+        const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(10000);
+        console.log("facing", this.currentTarget.pacman.lastKnownLocation.facingDirection);
+        
+        console.log(
+            {x: this.x, y: this.y},
+            {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y},
+            {x: estimatedPos.x, y: estimatedPos.y},
+        );
 
-        const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
+        this.room.server.publish(
+            this.room.topics.event,
+            utils.makeMessage("ghost-position",
+            {
+                position: [estimatedPos.x, estimatedPos.y]
+            }
+        ));
 
         // this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y})
-        this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: estimatedPos.x, y: estimatedPos.y})
-
-        return this.path;
+        this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
     }
 
     public getTimeToTurn() {
@@ -55,19 +80,21 @@ export class Ghost {
     }
 
     public onTurn() {
+        this.findPathToNextTarget();
+
         if (this.path == null) throw new Error("Path property is null");
 
         console.log("We turned incredible");
         console.log(this.path.nodes.length);
 
         [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
-
+        this.sendLocation();
         
         this.path.nodes.shift();
         if (this.path.nodes.length === 0) {
             // we reached the end of this path
             // get a new path
-            this.getPathToNextTarget();
+            this.findPathToNextTarget();
             console.log("got new path");
 
             // @ts-ignore

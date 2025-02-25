@@ -16,8 +16,13 @@ class EventHandler {
             "pellet-reject": this.pelletRejected.bind(this),
             "score-update": this.scoreUpdate.bind(this),
             "server-time-reset": this.resetServerTime.bind(this),
-            "trigger-bump": this.handleBump.bind(this)
+            "trigger-bump": this.handleBump.bind(this),
+            "ghost-position": this.updateGhostPosition.bind(this)
         }
+    }
+
+    public updateGhostPosition(parsedData: any) {
+        gameManager.debugger.ghost_pos = parsedData.data.position;
     }
 
     /**
