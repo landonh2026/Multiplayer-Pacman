@@ -1,7 +1,7 @@
 type SocketData = { session: string, log: Function };
 type Colors = "YELLOW"|"RED"|"PINK"|"BLUE";
 type PositionData = {
-    [x: string]: any; x: number, y: number, facingDirection: number, queuedDirection: number, shouldMove: boolean, packetIndex: number
+    [x: string]: any; x: number, y: number, facingDirection: 0|1|2|3, queuedDirection: number, shouldMove: boolean, packetIndex: number
 };
 type PacmanNextWallCollision = {
     wallObject: [number, number, number, number], distance: number, position: {x: number, y: number}

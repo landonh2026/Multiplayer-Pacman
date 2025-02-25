@@ -1,9 +1,9 @@
 import type { Server, ServerWebSocket } from "bun";
 const crypto = require("crypto");
-import * as utils from "./utils.js";
-import * as globals from "./globals.js";
-import {GameBoard, gameBoards} from "./gameBoard.js";
-import {Room} from "./room.js";
+import * as utils from "./utils.ts";
+import * as globals from "./globals.ts";
+import {GameBoard, gameBoards} from "./gameBoard.ts";
+import {Room} from "./room.ts";
 
 // the rooms and a dictionary for client sessions to rooms
 const rooms: Room[] = [];

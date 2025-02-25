@@ -78,7 +78,16 @@ export function makeSessionsHash(session1: string, session2: string) {
 }
 
 
-// from chatgpt because math is hard
+/**
+ * Calculate the intersection data of two lines
+ * @param p1 The point of the first line
+ * @param d1 The direction of the first line
+ * @param p2 The point of the second line 
+ * @param d2 The direction of the second line
+ * @param length1 The length of the first line
+ * @param length2 The length of the second line
+ * @returns The distances along the lines that the two lines intersect
+ */
 export function lineIntersection(
     p1: {x: number, y: number}, d1: {dx: number, dy: number},
     p2: {x: number, y: number}, d2: {dx: number, dy: number},
@@ -102,4 +111,18 @@ export function lineIntersection(
     }
 
     return null; // No intersection
+}
+
+/**
+ * Get the direction delta given a direction
+ * @param direction
+ * @returns 
+ */
+export function getDirectionDelta(direction: 0|1|2|3) {
+    switch (direction) {
+        case 0: return {dx: 1, dy: 0}
+        case 1: return {dx: 0, dy: 1}
+        case 2: return {dx: -1, dy: 0}
+        case 3: return {dx: 0, dy: -1}
+    }
 }

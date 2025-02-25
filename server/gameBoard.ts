@@ -1,5 +1,6 @@
-import * as utils from "./utils.js";
-import * as globals from "./globals.js";
+import * as utils from "./utils.ts";
+import * as globals from "./globals.ts";
+import {Pathfinder} from "./pathfinding.ts";
 
 export class GameBoard {
     /** The raw block positions as tile positions */
@@ -17,6 +18,11 @@ export class GameBoard {
     /** Represents the path intersections of this game board where pacman and ghosts can turn */
     pathIntersections: Array<PathIntersection>;
 
+    /** A list of wall collision functions that turn a wall into a single line given a direction */
+    wallCollisionFunctions: Array<(wall: [number, number, number, number]) => { pos: { x: number; y: number; }; dir: { dx: number; dy: number; }; dist: number; }>;
+
+    pathfinder: Pathfinder;
+
     constructor(blockPositions: Array<[number, number, number, number]>) {
         this.rawBlockPositions = [...blockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>;
         this.blockPositions = blockPositions;
@@ -33,6 +39,19 @@ export class GameBoard {
 
         this.pellets = this.makePellets();
         this.pathIntersections = this.findPathIntersections();
+
+        this.wallCollisionFunctions = [
+            // left of wall check
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]}, dir: {dx: 0, dy: 1}, dist: wall[3] }; },
+            // up of wall check
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]}, dir: {dx: 1, dy: 0}, dist: wall[2] }; },
+            // right of wall check
+            (wall: [number, number, number, number]) => { return { pos: {x: (wall[0])+(wall[2]), y: wall[1]}, dir: {dx: 0, dy: 1}, dist: wall[3] }; },
+            // bottom of wall check
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]+(wall[3])}, dir: {dx: 1, dy: 0}, dist: wall[2] }; },
+        ];
+
+        this.pathfinder = new Pathfinder(this);
     }
 
     /**
@@ -111,6 +130,58 @@ export class GameBoard {
 
         return pellets;
     }
+
+        /**
+     * Determine if a line intersects a wall
+     * @param position The position to start the line
+     * @param direction The direction the line goes
+     * @param length The length of the line
+     * @returns Does this line intersect a wall?
+     */
+        public lineIntersectsWall(position: {x: number, y: number}, direction: 0|1|2|3, length: number = Infinity) {
+            return this.lineWallCollisions(position, direction, length)?.length != 0;
+        }
+    
+        /**
+         * Find the collisions of a wall
+         * @param position The position to start the line
+         * @param direction The direction the line goes
+         * @param length The length of the line
+         * @returns All the collisions the line intersects
+         */
+        public lineWallCollisions(position: {x: number, y: number}, direction: 0|1|2|3, length: number = Infinity) {
+            // get the function which converts a wall into a line based on the given line's direction
+            let directionCheck = this.wallCollisionFunctions[direction];
+            const directionDelta = utils.getDirectionDelta(direction);
+    
+            if (directionCheck == undefined) {
+                console.error("Direction was invalid!");
+                return null;
+            }
+    
+            // go through each block and decide if it intersects the l ine
+            let intersections: Array<{pos: {x: number, y: number}, block: [number, number, number, number]}> = [];
+            for (let i = 0; i < this.blockPositions.length; i++) {
+                const thisWall = this.blockPositions[i];
+    
+                // convert this wall into a line, used to use the lineIntersection function
+                const directionData = directionCheck(thisWall);
+    
+                // get the intersection data for the given line and the wall's line
+                const intersection =  utils.lineIntersection(
+                    position, directionDelta,
+                    directionData.pos, directionData.dir,
+                    length, directionData.dist
+                );
+    
+                if (intersection == null) continue;
+    
+                // add this intersection to the list of intersections
+                intersections.push({pos: directionData.pos, block: thisWall});
+            }
+    
+            return intersections;
+        }
 
     /**
      * Duplicate this game board

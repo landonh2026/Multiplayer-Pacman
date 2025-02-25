@@ -1,6 +1,6 @@
 import {Pacman} from "./player.ts";
-import * as utils from "./utils.js";
-import * as globals from "./globals.js";
+import * as utils from "./utils.ts";
+import * as globals from "./globals.ts";
 
 export class Simulator {
     /** The tolerance to the distance that players are allowed to move */

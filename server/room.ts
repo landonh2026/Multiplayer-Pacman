@@ -1,9 +1,10 @@
 import type { Server, ServerWebSocket } from "bun";
 import { Player } from "./player.ts";
-import * as utils from "./utils.js";
-import * as globals from "./globals.js";
-import {GameBoard, gameBoards} from "./gameBoard.js";
+import * as utils from "./utils.ts";
+import * as globals from "./globals.ts";
+import {GameBoard, gameBoards} from "./gameBoard.ts";
 import {Simulator} from "./simulator.ts";
+import { Ghost } from "./ghost.ts";
 
 export class Room {
     /** The server context that this room is under */
@@ -386,6 +387,22 @@ export class Room {
         newPlayer.sendLocalPlayerState();
         newPlayer.ws.send(utils.makeMessage("board-state", this.makeBoardState()));
         this.players[newPlayer.session] = newPlayer;
+
+        const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
+        ghost.getPathToNextTarget();
+        ghost.setTurnTimeout();
+
+        // const path = this.gameBoard.pathfinder.findPathWithCoordinates(
+        //     {x: newPlayer.pacman.lastKnownLocation.x, y: newPlayer.pacman.lastKnownLocation.y},
+        //     this.gameBoard.pathfinder.nodes[15]
+        // );
+
+        // if (path == null) {
+        //     console.log(null);
+        //     return;
+        // }
+
+        // console.log(path.nodes.map((value) => value.x + " " + value.y).join(" -> "))
     }
 
     /**

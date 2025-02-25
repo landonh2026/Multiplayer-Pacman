@@ -1,8 +1,8 @@
 import type { ServerWebSocket } from "bun";
-import * as utils from "./utils.js";
-import * as globals from "./globals.js";
-import {Simulator} from "./simulator.ts";
+import * as utils from "./utils.ts";
+import * as globals from "./globals.ts";
 import {Room} from "./room.ts";
+// import {Simulator} from "./simulator.ts";
 
 export class Player {
     /** The session id for this player */
@@ -144,9 +144,26 @@ export class Pacman {
     public getEstimatedPosition(deltaTime: number): {x: number, y: number} {
         if (!this.lastKnownLocation.shouldMove) return {x: this.lastKnownLocation.x, y: this.lastKnownLocation.y};
 
+        const nextWall = this.getNextCollidingWall();
+
+        if (nextWall == null) {
+            
+        }
+
         // get the direction delta and predicated distance for this pacman
         let delta = this.getDirectionDelta();
         let distance =  globals.target_client_fps * this.movementSpeed * (deltaTime/1000);
+
+        // we made it to the next wall
+        if (nextWall != null && nextWall.distance < distance) {
+            /*
+                WHAT WE NEED TO DO:
+                Get the direction the pacman is moving and use that the determine if we should set the x or y to the wall
+                Make sure that we set the pacman to be on the correct side of the wall
+            */
+
+            
+        }
 
         delta.dx *= distance;
         delta.dy *= distance;
@@ -159,14 +176,6 @@ export class Pacman {
      * @returns 
      */
     public getDirectionDelta() {
-        switch (this.lastKnownLocation.facingDirection) {
-            case 0: return {dx: 1, dy: 0}
-            case 1: return {dx: 0, dy: 1}
-            case 2: return {dx: -1, dy: 0}
-            case 3: return {dx: 0, dy: -1}
-        }
-
-        console.error("Invalid pacman direction");
-        return {dx: 0, dy: 0}
+        return utils.getDirectionDelta(this.lastKnownLocation.facingDirection);
     }
 }
