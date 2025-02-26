@@ -147,6 +147,7 @@ export class Pacman {
         const nextWall = this.getNextCollidingWall();
 
         // get the direction delta and predicated distance for this pacman
+        console.log(deltaTime, globals.target_client_fps, this.movementSpeed);
         let delta = this.getDirectionDelta();
         let distance =  globals.target_client_fps * this.movementSpeed * (deltaTime/1000);
 

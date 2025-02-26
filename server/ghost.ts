@@ -48,9 +48,7 @@ export class Ghost {
     public findPathToNextTarget() {
         this.currentTarget = this.determineTarget(Object.values(this.room.players));
 
-        // const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
-        const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(10000);
-        console.log("facing", this.currentTarget.pacman.lastKnownLocation.facingDirection);
+        const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
         
         console.log(
             {x: this.x, y: this.y},
