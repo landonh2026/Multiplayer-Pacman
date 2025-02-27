@@ -26,6 +26,26 @@ export class Ghost {
         this.nextTurnTimeout = null;
 
         this.sendLocation();
+
+        setInterval(() => {
+            if (this.currentTarget == null) return;
+
+            const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
+        
+            // console.log(
+            //     {x: this.x, y: this.y},
+            //     {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y},
+            //     {x: estimatedPos.x, y: estimatedPos.y},
+            // );
+
+            this.room.server.publish(
+                this.room.topics.event,
+                utils.makeMessage("ghost-position",
+                {
+                    position: [estimatedPos.x, estimatedPos.y]
+                }
+            ));
+        }, 100);
     }
 
     public sendLocation() {
