@@ -19,7 +19,7 @@ export class Ghost {
         this.y = y;
         this.movementSpeed = 4;
 
-        this.facingDirection = null;
+        this.facingDirection = 0;
         this.currentTarget = null;
         this.path = null;
         this.room = room;
@@ -33,7 +33,7 @@ export class Ghost {
             this.room.topics.event,
             utils.makeMessage("ghost-position",
             {
-                position: [this.x, this.y]
+                position: [this.x, this.y, this.facingDirection]
             }
         ));
     }
@@ -48,6 +48,10 @@ export class Ghost {
     public findPathToNextTarget() {
         this.currentTarget = this.determineTarget(Object.values(this.room.players));
 
+        if (this.currentTarget == undefined) {
+            return;
+        }
+
         const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
 
         // this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y})
@@ -57,7 +61,7 @@ export class Ghost {
             this.path.nodes.shift();
         }
 
-        console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> "));
+        // console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> "));
     }
 
     public getTimeToTurn() {
@@ -70,19 +74,31 @@ export class Ghost {
     }
 
     public onTurn() {
-        this.findPathToNextTarget();
-
         if (this.path == null) throw new Error("Path property is null");
 
-        if (this.path.nodes.length === 0) {
+        if (this.path.nodes.length === 0 || this.currentTarget == undefined) {
             setTimeout(this.onTurn.bind(this), 50);
             return;
         }
 
         [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
-        this.sendLocation();
-        
         this.path.nodes.shift();
+
+        const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
+        this.facingDirection = this.room.gameBoard.pathfinder.getTurnDirection(
+            {x: this.x, y: this.y},
+            this.path.nodes[0] ?? estimatedPos
+        );
+        console.log(this.facingDirection);
+
+        this.sendLocation();
+
+        this.findPathToNextTarget();
+
+        if (this.path.nodes.length === 0) {
+            setTimeout(this.onTurn.bind(this), 50);
+            return;
+        }
 
         if (this.path.nodes.length === 0) {
             this.onTurn();
@@ -90,8 +106,8 @@ export class Ghost {
         }
 
         // change the direction of this ghost
-        console.log(this.path.nodes[0].x, this.path.nodes[0].y);
-        this.room.gameBoard.pathfinder.getTurnDirection({x: this.x, y: this.y}, this.path.nodes[0]);
+        // console.log(this.path.nodes[0].x, this.path.nodes[0].y);
+        
                 
         // set a new timeout for when the ghost passes the next turn
         this.setTurnTimeout();

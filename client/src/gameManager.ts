@@ -131,6 +131,6 @@ class GameManager {
         this.localPacman.draw(deltaTime);
 
         // update the debugger
-        this.debugger.onFrameUpdate();
+        this.debugger.onFrameUpdate(deltaTime);
     }
 }
