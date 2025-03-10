@@ -22,7 +22,7 @@ class EventHandler {
     }
 
     public updateGhostPosition(parsedData: any) {
-        gameManager.debugger.ghost_pos = parsedData.data.position;
+        gameManager.debugger.ghost_pos = [parsedData.data.position[0], parsedData.data.position[1], Direction.fromEnum(parsedData.data.position[2])];
     }
 
     /**

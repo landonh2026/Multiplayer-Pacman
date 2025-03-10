@@ -26,36 +26,16 @@ export class Ghost {
         this.nextTurnTimeout = null;
 
         this.sendLocation();
-
-        setInterval(() => {
-            if (this.currentTarget == null) return;
-
-            const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
-        
-            // console.log(
-            //     {x: this.x, y: this.y},
-            //     {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y},
-            //     {x: estimatedPos.x, y: estimatedPos.y},
-            // );
-
-            this.room.server.publish(
-                this.room.topics.event,
-                utils.makeMessage("ghost-position",
-                {
-                    position: [estimatedPos.x, estimatedPos.y]
-                }
-            ));
-        }, 100);
     }
 
     public sendLocation() {
-        // this.room.server.publish(
-        //     this.room.topics.event,
-        //     utils.makeMessage("ghost-position",
-        //     {
-        //         position: [this.x, this.y]
-        //     }
-        // ));
+        this.room.server.publish(
+            this.room.topics.event,
+            utils.makeMessage("ghost-position",
+            {
+                position: [this.x, this.y]
+            }
+        ));
     }
 
     public determineTarget(players: Array<Player>) {
@@ -69,23 +49,15 @@ export class Ghost {
         this.currentTarget = this.determineTarget(Object.values(this.room.players));
 
         const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
-        
-        console.log(
-            {x: this.x, y: this.y},
-            {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y},
-            {x: estimatedPos.x, y: estimatedPos.y},
-        );
-
-        this.room.server.publish(
-            this.room.topics.event,
-            utils.makeMessage("ghost-position",
-            {
-                position: [estimatedPos.x, estimatedPos.y]
-            }
-        ));
 
         // this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y})
         this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
+        
+        if (this.path?.nodes[0].x == this.x && this.path?.nodes[0].y == this.y) {
+            this.path.nodes.shift();
+        }
+
+        console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> "));
     }
 
     public getTimeToTurn() {
@@ -102,27 +74,23 @@ export class Ghost {
 
         if (this.path == null) throw new Error("Path property is null");
 
-        console.log("We turned incredible");
-        console.log(this.path.nodes.length);
+        if (this.path.nodes.length === 0) {
+            setTimeout(this.onTurn.bind(this), 50);
+            return;
+        }
 
         [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
         this.sendLocation();
         
         this.path.nodes.shift();
-        if (this.path.nodes.length === 0) {
-            // we reached the end of this path
-            // get a new path
-            this.findPathToNextTarget();
-            console.log("got new path");
 
-            // @ts-ignore
-            if (this.path.nodes.length == 1) {
-                // we are on top of the target node
-                return;
-            }
+        if (this.path.nodes.length === 0) {
+            this.onTurn();
+            return;
         }
 
         // change the direction of this ghost
+        console.log(this.path.nodes[0].x, this.path.nodes[0].y);
         this.room.gameBoard.pathfinder.getTurnDirection({x: this.x, y: this.y}, this.path.nodes[0]);
                 
         // set a new timeout for when the ghost passes the next turn

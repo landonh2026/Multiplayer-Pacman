@@ -150,15 +150,10 @@ export class Pacman {
         // console.log(deltaTime, globals.target_client_fps, this.movementSpeed);
         let delta = this.getDirectionDelta();
         let distance =  globals.target_client_fps * this.movementSpeed * (deltaTime/1000);
+        // console.log("Distance moved: " + distance);
 
         // we made it to the next wall
         if (nextWall != null && nextWall.distance < distance) {
-            /*
-                WHAT WE NEED TO DO:
-                Get the direction the pacman is moving and use that the determine if we should set the x or y to the wall
-                Make sure that we set the pacman to be on the correct side of the wall
-            */
-
             const negativeMultiplier = this.lastKnownLocation.facingDirection > 1 ? 1 : -1;
             // console.log(nextWall.distance);
 

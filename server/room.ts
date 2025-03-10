@@ -290,6 +290,7 @@ export class Room {
         }
 
         player.pacman.lastKnownLocation = newPacmanPosition;
+        player.pacman.lastPosPacketTime = performance.now();
 
         // get the current pellet and pellet index
         let pellet, pellet_index;

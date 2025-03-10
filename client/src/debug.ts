@@ -2,10 +2,10 @@
  * A currently blank class that can be used for debugging purposes
  */
 class Debugger {
-    ghost_pos: [number, number]
+    ghost_pos: [number, number, Direction]
 
     constructor() {
-        this.ghost_pos = [100, 100];
+        this.ghost_pos = [100, 100, directions.UP];
     }
 
     public onFrameUpdate() {
