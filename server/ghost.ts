@@ -43,6 +43,8 @@ export class Ghost {
         const heuristic = (x1: number, y1: number, x2: number, y2: number) => { return Math.abs(x1-x2) + Math.abs(y1-y2) };
         players.sort((a, b) => heuristic(a.pacman.lastKnownLocation.x, a.pacman.lastKnownLocation.y, b.pacman.lastKnownLocation.x, b.pacman.lastKnownLocation.y));
 
+        console.log(players.map((p) => p.pacman.color));
+
         return players[0];
     }
 
