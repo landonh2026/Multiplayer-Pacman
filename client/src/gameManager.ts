@@ -52,7 +52,7 @@ class GameManager {
         this.serverTime = -1;
 
         this.remotePlayers = {};
-        this.ghosts = [new Ghost(60, 140)];
+        this.ghosts = [];
         this.performanceMode = false;
 
         this.lastFrame = 0;

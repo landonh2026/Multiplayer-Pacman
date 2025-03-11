@@ -14,5 +14,7 @@ const topics = {
     event: "game-event"
 };
 
-export {colors, topics, target_client_fps, tile_size};
+const debug = true;
+
+export {colors, topics, target_client_fps, tile_size, debug};
 export type {SocketData, Colors, PositionData, PacmanNextWallCollision};

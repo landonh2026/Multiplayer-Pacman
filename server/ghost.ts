@@ -33,7 +33,8 @@ export class Ghost {
             this.room.topics.event,
             utils.makeMessage("ghost-position",
             {
-                position: [this.x, this.y, this.facingDirection]
+                position: {x: this.x, y: this.y, direction: this.facingDirection},
+                debug_path: globals.debug ? this.path?.nodes.map((n) => { return {x: n.x, y: n.y} }) : null
             }
         ));
     }
@@ -58,10 +59,11 @@ export class Ghost {
         this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
         
         if (this.path?.nodes[0].x == this.x && this.path?.nodes[0].y == this.y) {
+            console.log("Removing duplicate path node", this.x, this.y);
             this.path.nodes.shift();
         }
 
-        // console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> "));
+        console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> ") ?? "No path");
     }
 
     public getTimeToTurn() {
@@ -84,6 +86,8 @@ export class Ghost {
         [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
         this.path.nodes.shift();
 
+        this.findPathToNextTarget();
+
         const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
         this.facingDirection = this.room.gameBoard.pathfinder.getTurnDirection(
             {x: this.x, y: this.y},
@@ -92,8 +96,6 @@ export class Ghost {
         console.log(this.facingDirection);
 
         this.sendLocation();
-
-        this.findPathToNextTarget();
 
         if (this.path.nodes.length === 0) {
             setTimeout(this.onTurn.bind(this), 50);

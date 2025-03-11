@@ -224,7 +224,7 @@ class Ghost {
         }
 
         // draw the path
-        this.path?.draw();
+        // this.path?.draw();
 
         // check to see if we passed a movement node
         this.checkPassedNode();

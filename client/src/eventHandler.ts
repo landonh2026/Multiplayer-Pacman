@@ -22,7 +22,14 @@ class EventHandler {
     }
 
     public updateGhostPosition(parsedData: any) {
-        gameManager.debugger.ghost_pos = [parsedData.data.position[0], parsedData.data.position[1], Direction.fromEnum(parsedData.data.position[2] as 0|1|2|3) as Direction];
+        gameManager.debugger.ghost_pos = [parsedData.data.position.x, parsedData.data.position.y, Direction.fromEnum(parsedData.data.position.direction) as Direction];
+        
+        if (!parsedData.data.debug_path) {
+            gameManager.debugger.ghost_debug_path = null;
+            return;
+        }
+
+        gameManager.debugger.ghost_debug_path = new Path(parsedData.data.debug_path.map((n: {x: number, y: number}) => new PathNode(n.x, n.y)));
     }
 
     /**
