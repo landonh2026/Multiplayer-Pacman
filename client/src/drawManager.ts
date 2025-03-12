@@ -88,7 +88,7 @@ class DrawManager {
      * @param y The y position of the ghost
      * @param direction The direction that the ghost is facing
      */
-    public drawGhost(x: number, y: number, direction: Direction) {
+    public drawGhost(x: number, y: number, direction: Direction|null) {
         ctx.beginPath();
         ctx.fillStyle = "rgb(255, 0, 0)";
         ctx.strokeStyle = "rgb(255, 0, 0)";
