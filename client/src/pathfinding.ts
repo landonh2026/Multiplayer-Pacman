@@ -301,14 +301,14 @@ class Path {
     public draw() {
         ctx.lineWidth = 2;
 
-        for (let i = 0; i < this.nodes.length; i++) {
-            const node = this.nodes[i];
+        // for (let i = 0; i < this.nodes.length; i++) {
+        //     const node = this.nodes[i];
             
-            ctx.strokeStyle = "green";
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 10 * (gameManager.tileSize / 40), 0, 2*Math.PI);
-            ctx.stroke();
-        }
+        //     ctx.strokeStyle = "green";
+        //     ctx.beginPath();
+        //     ctx.arc(node.x, node.y, 10 * (gameManager.tileSize / 40), 0, 2*Math.PI);
+        //     ctx.stroke();
+        // }
 
         ctx.beginPath();
         ctx.strokeStyle = "green";

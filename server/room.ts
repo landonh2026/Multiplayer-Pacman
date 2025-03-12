@@ -55,9 +55,6 @@ export class Room {
         };
 
         this.topics = this.makeTopics();
-
-        const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
-        ghost.startPathing();
     }
 
     /**
@@ -392,21 +389,8 @@ export class Room {
         newPlayer.ws.send(utils.makeMessage("board-state", this.makeBoardState()));
         this.players[newPlayer.session] = newPlayer;
 
-        // const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
-        // ghost.findPathToNextTarget();
-        // ghost.startPathing();
-
-        // const path = this.gameBoard.pathfinder.findPathWithCoordinates(
-        //     {x: newPlayer.pacman.lastKnownLocation.x, y: newPlayer.pacman.lastKnownLocation.y},
-        //     this.gameBoard.pathfinder.nodes[15]
-        // );
-
-        // if (path == null) {
-        //     console.log(null);
-        //     return;
-        // }
-
-        // console.log(path.nodes.map((value) => value.x + " " + value.y).join(" -> "))
+        const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
+        ghost.startPathing();
     }
 
     /**

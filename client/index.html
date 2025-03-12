@@ -5,12 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Pacman</title>
 
-        <!-- <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"> -->
-
-        <link rel="stylesheet" href="/styles/reset.css">
-        <link rel="stylesheet" href="/styles/styles.css">
+        <link rel="stylesheet" href="styles/reset.css">
+        <link rel="stylesheet" href="styles/styles.css">
     </head>
     <body>
         <div id="fullscreen">
@@ -21,14 +17,13 @@
                     <td>FPS</td>
                 </tr>
                 <tr>
-                    <td id="score">0</td>
-                    <td id="total-players">1</td>
-                    <td id="fps">...</td>
+                    <td id="score"></td>
+                    <td id="total-players"></td>
+                    <td id="fps"></td>
                 </tr>
             </table>
             <canvas id="game"></canvas>
         </div>
-        
         
         <script src="/dist/pacman.js"></script>
         <script src="/dist/ghost.js"></script>

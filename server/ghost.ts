@@ -15,6 +15,7 @@ export class Ghost {
     nextTurnTimeout: Timer|null;
     id: string;
     color: globals.Colors;
+    fallback_last: boolean;
 
     constructor(x: number, y: number, room: Room) {
         this.x = x;
@@ -29,6 +30,8 @@ export class Ghost {
         this.path = null;
         this.room = room;
         this.nextTurnTimeout = null;
+
+        this.fallback_last = false;
 
         this.sendLocation();
     }
@@ -81,13 +84,13 @@ export class Ghost {
         this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
         
         if (this.path?.nodes[0].x == this.x && this.path?.nodes[0].y == this.y) {
-            console.log("Removing duplicate path node", this.x, this.y);
+            // console.log("Removing duplicate path node", this.x, this.y);
             this.path.nodes.shift();
         }
 
         if (this.path?.nodes.length == 0) this.facingDirection = null;
 
-        console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> ") ?? "No path");
+        // console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> ") ?? "No path");
     }
 
     public getTimeToTurn() {
@@ -100,16 +103,16 @@ export class Ghost {
     }
 
     public onTurn() {
+        // if the path is null set the fallback timer
         if (this.path == null) {
-            console.error("Path is null");
             this.findPathToNextTarget();
-            setTimeout(this.onTurn.bind(this), 150);
+            this.setFallbackTimeout();
             return;
         }
 
         if (this.path.nodes.length === 0 || this.currentTarget == undefined) {
             this.findPathToNextTarget();
-            setTimeout(this.onTurn.bind(this), 150);
+            this.setFallbackTimeout();
             return;
         }
 
@@ -120,7 +123,7 @@ export class Ghost {
 
         if (this.path.nodes.length === 0 || this.currentTarget == undefined) {
             this.findPathToNextTarget();
-            setTimeout(this.onTurn.bind(this), 150);
+            this.setFallbackTimeout();
             return;
         }
 
@@ -134,32 +137,31 @@ export class Ghost {
         this.sendLocation();
 
         if (this.path.nodes.length === 0) {
-            // console.log("setting 0 length timeout");
-            setTimeout(this.onTurn.bind(this), 50);
+            this.setFallbackTimeout();
             return;
         }
 
-
-        // change the direction of this ghost
-        // console.log(this.path.nodes[0].x, this.path.nodes[0].y);
-        
-                
         // set a new timeout for when the ghost passes the next turn
         this.setTurnTimeout();
     }
 
+    private setFallbackTimeout() {
+        if (!this.fallback_last) this.sendLocation();
+        this.fallback_last = true;
+
+        setTimeout(this.onTurn.bind(this), 150);
+    }
+
     private setTurnTimeout() {
+        this.fallback_last = false;
         setTimeout(this.onTurn.bind(this), this.getTimeToTurn());
     }
 
     public startPathing() {
         this.findPathToNextTarget();
         
-        if (this.path) {
-            this.setTurnTimeout();
-        } else {
-            setTimeout(this.onTurn.bind(this), 150);
-        }
+        if (this.path) this.setTurnTimeout();
+        else setTimeout(this.onTurn.bind(this), 150);
 
         this.sendLocation();
     }

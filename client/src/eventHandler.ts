@@ -30,9 +30,11 @@ class EventHandler {
             return;
         }
 
+        console.log(parsedData.data.position.direction);
+
         localGhost.x = parsedData.data.position.x;
         localGhost.y = parsedData.data.position.y;
-        localGhost.facingDirection = Direction.fromEnum(parsedData.data.position.direction) as Direction;
+        localGhost.facingDirection = parsedData.data.position.direction == null ? null : Direction.fromEnum(parsedData.data.position.direction) as Direction;
         localGhost.path = new Path(parsedData.data.debug_path.map((n: {x: number, y: number}) => new PathNode(n.x, n.y)));
     }
 
