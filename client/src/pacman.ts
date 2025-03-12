@@ -4,18 +4,22 @@
 class Pacman {
     x: number;
     y: number;
+    radius: number;
     color: PacmanColor;
+
     facingDirection: Direction;
     movingDirection: Direction;
     queuedDirection: Direction;
-    radius: number;
+
     visualRadius: number;
     movementSpeed: number;
     shouldMove: boolean;
     movingLastFrame: boolean;
+    
     isDead: boolean;
-    score: number;
     isLocal: boolean;
+
+    score: number;
     lastQueuedDirectionNode: { distance: number, node: PathIntersection, nodeIndex: number } | null;
     animationManager: AnimationManager;
 
@@ -49,6 +53,7 @@ class Pacman {
 
         this.animationManager.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animationManager.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
+        this.animationManager.animations.killAnimation = new GameAnimation(180, false, 1, false);
 
         this.animationManager.animations.bodyAnimation.setActive(true);
     }
@@ -168,6 +173,12 @@ class Pacman {
         if (this.shouldMove) {
             this.animationManager.animations.bodyAnimation.step_frame(deltaTime);
         }
+
+        if (this.isDead) {
+            this.animationManager.animations.killAnimation.step_frame(deltaTime);
+            gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animationManager.animations.killAnimation.get_frame());
+            return;
+        }
         
         // create a gradient for this pacman
         const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);
@@ -278,6 +289,11 @@ class Pacman {
         return false;
     }
 
+    public kill() {
+        this.isDead = true;
+        this.animationManager.animations.killAnimation.reset();
+    }
+
     /**
      * Start the bump animation
      * @param collisionFrom The direction that the collision came from
@@ -365,6 +381,8 @@ class Pacman {
         const lastDirection = this.facingDirection;
         const lastQueuedDirection = this.queuedDirection;
         const lastShouldMove = this.shouldMove;
+
+        if (this.isDead) this.shouldMove = false;
         
         // handle player input and remote pacman collision
         if (this.isLocal) {
@@ -397,6 +415,19 @@ class Pacman {
         // Move this pacman ahead and collide with walls
         [this.x, this.y] = this.getPositionAhead(this.movementSpeed * deltaTime);
         this.collideWalls();
+
+        if (this.isLocal) {
+            // todo: find a server side way of doing this
+            for (let id of Object.keys(gameManager.ghosts)) {
+                const ghost = gameManager.ghosts[id];
+    
+                // todo: include ghost radius
+                if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
+                    this.kill();
+                    break;
+                }
+            }
+        }
 
         // determine if we should send our new position
         if (((!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) || this.shouldMove != lastShouldMove) && this.isLocal) {

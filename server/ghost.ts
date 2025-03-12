@@ -20,7 +20,7 @@ export class Ghost {
     constructor(x: number, y: number, room: Room) {
         this.x = x;
         this.y = y;
-        this.movementSpeed = 4;
+        this.movementSpeed = 5;
 
         this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
         this.id = crypto.randomUUID().toString();
@@ -121,7 +121,7 @@ export class Ghost {
 
         this.findPathToNextTarget();
 
-        if (this.path.nodes.length === 0 || this.currentTarget == undefined) {
+        if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
             this.findPathToNextTarget();
             this.setFallbackTimeout();
             return;

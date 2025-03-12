@@ -12,7 +12,7 @@ class Ghost {
     constructor(x: number, y: number, id: string, color: string, add_to_list: boolean = true) {
         this.x = x;
         this.y = y;
-        this.movementSpeed = 4;
+        this.movementSpeed = 5;
         this.facingDirection = null;
         this.color = color; // TODO: make this an object
 

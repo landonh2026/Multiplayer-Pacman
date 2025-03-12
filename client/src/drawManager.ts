@@ -50,6 +50,14 @@ class DrawManager {
         }
     }
 
+    public drawDeadPacman(x: number, y: number, radius: number, frame: number) {
+        // actually draw the pacman
+        ctx.beginPath();
+        ctx.arc(x, y, radius, Math.PI * 0.5, Math.PI, false);
+        ctx.lineTo(x, y);
+        ctx.fill();
+    }
+
     /**
      * Draw a pacman given many arguments
      * @param x The x position that is the center of the pacman
