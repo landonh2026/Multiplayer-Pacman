@@ -39,6 +39,8 @@ export class Ghost {
             utils.makeMessage("ghost-position",
             {
                 position: {x: this.x, y: this.y, direction: this.facingDirection},
+                id: this.id,
+                color: this.color,
                 debug_path: globals.debug ? this.path?.nodes.map((n) => { return {x: n.x, y: n.y} }) : null
             }
         ));

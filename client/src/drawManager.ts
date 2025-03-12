@@ -90,8 +90,6 @@ class DrawManager {
      */
     public drawGhost(x: number, y: number, direction: Direction|null) {
         ctx.beginPath();
-        ctx.fillStyle = "rgb(255, 0, 0)";
-        ctx.strokeStyle = "rgb(255, 0, 0)";
         ctx.arc(x, y, 5, 0, 2*Math.PI);
         ctx.fill();
     }

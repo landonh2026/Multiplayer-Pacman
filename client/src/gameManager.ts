@@ -11,7 +11,7 @@ class GameManager {
     remotePlayers: {[session: string]: RemotePlayer};
     
     /** A list of ghosts that are current active in the game */
-    ghosts: Ghost[];
+    ghosts: {[id: string]: Ghost};
 
     /** The current game state */
     currentState: GAME_STATES;
@@ -52,7 +52,7 @@ class GameManager {
         this.serverTime = -1;
 
         this.remotePlayers = {};
-        this.ghosts = [];
+        this.ghosts = {};
         this.performanceMode = false;
 
         this.lastFrame = 0;
@@ -121,9 +121,14 @@ class GameManager {
         }
 
         // step the ghost movement and draw each ghost
-        for (let ghost of this.ghosts) {
+        for (let id of Object.keys(this.ghosts)) {
+            const ghost = this.ghosts[id];
+
             ghost.stepMovement(deltaTime);
             ghost.draw();
+
+            // debug
+            ghost.path?.draw();
         }
     
         // step and draw the local pacman

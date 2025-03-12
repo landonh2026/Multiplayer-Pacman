@@ -22,14 +22,18 @@ class EventHandler {
     }
 
     public updateGhostPosition(parsedData: any) {
-        gameManager.debugger.ghost_pos = [parsedData.data.position.x, parsedData.data.position.y, Direction.fromEnum(parsedData.data.position.direction) as Direction];
-        
-        if (!parsedData.data.debug_path) {
-            gameManager.debugger.ghost_debug_path = null;
+        const localGhost = gameManager.ghosts[parsedData.data.id];
+
+        if (!localGhost) {
+            const ghost = new Ghost(parsedData.data.position.x, parsedData.data.position.y, parsedData.data.id, parsedData.data.color, true);
+            ghost.facingDirection = Direction.fromEnum(parsedData.data.position.direction) as Direction;
             return;
         }
 
-        gameManager.debugger.ghost_debug_path = new Path(parsedData.data.debug_path.map((n: {x: number, y: number}) => new PathNode(n.x, n.y)));
+        localGhost.x = parsedData.data.position.x;
+        localGhost.y = parsedData.data.position.y;
+        localGhost.facingDirection = Direction.fromEnum(parsedData.data.position.direction) as Direction;
+        localGhost.path = new Path(parsedData.data.debug_path.map((n: {x: number, y: number}) => new PathNode(n.x, n.y)));
     }
 
     /**
@@ -47,9 +51,9 @@ class EventHandler {
             else pacman = gameManager.remotePlayers[collision.session].pacman;
 
             // debug
-            if (gameManager.uuid == collision.session) {
-                console.log((Direction.fromEnum(collision.from) as Direction).asString, collision.x, collision.y);
-            }
+            // if (gameManager.uuid == collision.session) {
+            //     console.log((Direction.fromEnum(collision.from) as Direction).asString, collision.x, collision.y);
+            // }
 
             // move the pacman to the collision
             pacman.x = collision.x;
