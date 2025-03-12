@@ -43,10 +43,10 @@ class DrawManager {
         for (let i = 0; i < gameManager.currentBoard.pathIntersections.length; i++) {
             let intersectionData = gameManager.currentBoard.pathIntersections[i];
             
-            ctx.strokeStyle = "red";
-            ctx.beginPath();
-            ctx.arc(intersectionData.x, intersectionData.y, 10, 0, 2*Math.PI);
-            ctx.stroke();
+            // ctx.strokeStyle = "red";
+            // ctx.beginPath();
+            // ctx.arc(intersectionData.x, intersectionData.y, 10, 0, 2*Math.PI);
+            // ctx.stroke();
         }
     }
 
