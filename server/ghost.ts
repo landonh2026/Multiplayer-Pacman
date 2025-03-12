@@ -13,11 +13,16 @@ export class Ghost {
     path: Path|null;
     room: Room;
     nextTurnTimeout: Timer|null;
+    id: string;
+    color: globals.Colors;
 
     constructor(x: number, y: number, room: Room) {
         this.x = x;
         this.y = y;
         this.movementSpeed = 4;
+
+        this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
+        this.id = crypto.randomUUID().toString();
 
         this.facingDirection = 0;
         this.currentTarget = null;
@@ -77,6 +82,8 @@ export class Ghost {
             console.log("Removing duplicate path node", this.x, this.y);
             this.path.nodes.shift();
         }
+
+        if (this.path?.nodes.length == 0) this.facingDirection = null;
 
         console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> ") ?? "No path");
     }
