@@ -53,7 +53,7 @@ class Pacman {
 
         this.animationManager.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animationManager.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
-        this.animationManager.animations.killAnimation = new GameAnimation(180, false, 1, false);
+        this.animationManager.animations.killAnimation = new GameAnimation(180, false, 10, false);
 
         this.animationManager.animations.bodyAnimation.setActive(true);
     }
