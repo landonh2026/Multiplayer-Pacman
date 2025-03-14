@@ -197,7 +197,16 @@ export class Room {
     }
 
     public handlePlayerDead(player: Player, data: {data: {position: globals.PositionData}}) {
-        
+        player.pacman.isAlive = false;
+
+        player.pacman.lastKnownLocation.x = data.data.position.x;
+        player.pacman.lastKnownLocation.y = data.data.position.y;
+        player.score = 0;
+
+        player.ws.publish(this.topics.event, utils.makeMessage("kill-pacman", { id: player.session }));
+
+        this.server.publish(this.topics.event, utils.makeMessage("update-scores", {scores: this.makeScoresList()}));        
+        console.log("player died");
     }
 
     /**
@@ -212,7 +221,7 @@ export class Room {
         const now = performance.now();
         // both players submitted this bump, only acknowledge one bump so we skip this one
         if (now-player.lastBump < 500 && now-otherPlayer.lastBump < 500) {
-            console.log(`too quick bumps (${now-player.lastBump}, ${now-player.lastBump})`);
+            // console.log(`too quick bumps (${now-player.lastBump}, ${now-otherPlayer.lastBump})`);
             return; 
         }
 

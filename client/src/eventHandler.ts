@@ -17,8 +17,15 @@ class EventHandler {
             "score-update": this.scoreUpdate.bind(this),
             "server-time-reset": this.resetServerTime.bind(this),
             "trigger-bump": this.handleBump.bind(this),
-            "ghost-position": this.updateGhostPosition.bind(this)
+            "ghost-position": this.updateGhostPosition.bind(this),
+            "update-scores": this.updateScores.bind(this),
+            "kill-pacman": this.remotePacmanDied.bind(this)
         }
+    }
+
+    public remotePacmanDied(parsedData: any) {
+        console.log(parsedData.data.id);
+        gameManager.remotePlayers[parsedData.data.id].pacman.kill();
     }
 
     public updateGhostPosition(parsedData: any) {
@@ -95,11 +102,7 @@ class EventHandler {
         }
     }
 
-    /**
-     * Handle a pellet being eaten
-     * @param parsedData The parsed data from the server
-     */
-    public eatPellet(parsedData: any) {
+    public updateScores(parsedData: any) {
         // get the scores for each player
         for (let key in parsedData.data.scores) {
             const value = parsedData.data.scores[key];
@@ -113,6 +116,14 @@ class EventHandler {
 
             gameManager.remotePlayers[key].pacman.score = value;
         }
+    }
+
+    /**
+     * Handle a pellet being eaten
+     * @param parsedData The parsed data from the server
+     */
+    public eatPellet(parsedData: any) {
+        this.updateScores(parsedData);
 
         // go through every pellet and remove the one that matches this pellet ID
         for (let i = 0; i < gameManager.currentBoard.pellets.length; i++) {

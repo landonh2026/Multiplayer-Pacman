@@ -301,6 +301,7 @@ class Pacman {
 
     public kill() {
         if (this.isDead) return;
+        if (this.isLocal) gameManager.connectionManager.killLocalPacman();
 
         this.isDead = true;
 
