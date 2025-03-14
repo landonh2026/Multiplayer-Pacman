@@ -52,13 +52,37 @@ class DrawManager {
 
     public drawDeadPacman(x: number, y: number, radius: number, frame: number) {
         if (frame > 35) {
-            // ctx.beginPath();
+            ctx.strokeStyle = "white";
+
+            frame -= 35;
+            ctx.beginPath();
             
+            const particlePositions = [[-1, -1], [-1, 1], [1, 1], [1, -1]];
+
+            const start_shrinking_frame = 3;
+            const starting_distance = 5;
+
+            for (let particle of particlePositions) {
+                let p_start = [particle[0]*starting_distance, particle[1]*starting_distance];
+                let distance = frame;
+
+                if (distance > start_shrinking_frame) {
+                    p_start = [particle[0]*(starting_distance+start_shrinking_frame+1), particle[1]*(starting_distance+start_shrinking_frame+1)];
+                    particle = [-particle[0], -particle[1]];
+                    distance = (start_shrinking_frame - (frame-start_shrinking_frame));
+                }
+
+                distance *= 1.5;
+
+                ctx.moveTo(x + p_start[0], y + p_start[1]);
+                ctx.lineTo(x + p_start[0] + (particle[0] * distance), y + p_start[1] + (particle[1] * distance));
+            }
+
             
-            // const oldWidth = ctx.lineWidth;
-            // ctx.lineWidth
-            // ctx.stroke();
-            // ctx.lineWidth = oldWidth;
+            const oldWidth = ctx.lineWidth;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.lineWidth = oldWidth;
             return;
         }
 

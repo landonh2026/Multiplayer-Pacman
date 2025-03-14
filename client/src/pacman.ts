@@ -53,7 +53,7 @@ class Pacman {
 
         this.animationManager.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animationManager.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
-        this.animationManager.animations.killAnimation = new GameAnimation(45, true, 1, false);
+        this.animationManager.animations.killAnimation = new GameAnimation(41, true, 1, false);
 
         this.animationManager.animations.bodyAnimation.setActive(true);
     }
@@ -187,8 +187,13 @@ class Pacman {
             this.animationManager.animations.killAnimation.step_frame(deltaTime);
             gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animationManager.animations.killAnimation.get_frame());
 
+            // temp
             if (this.animationManager.animations.killAnimation.isDone()) {
-                // todo: do stuff
+                this.x = 60;
+                this.y = 120;
+
+                this.animationManager.animations.killAnimation.setActive(false);
+                this.isDead = false;
             }
 
             return;

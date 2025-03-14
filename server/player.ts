@@ -92,6 +92,7 @@ export class Pacman {
     lastKnownLocation: globals.PositionData;
     lastClientTimestamp: number;
     player: Player;
+    isAlive: boolean;
 
     lastPosPacketTime: number;
 
@@ -102,6 +103,7 @@ export class Pacman {
         this.lastClientTimestamp = 0;
         this.player = player;
         this.lastPosPacketTime = 0;
+        this.isAlive = true;
     }
 
     /**

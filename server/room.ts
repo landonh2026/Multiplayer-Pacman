@@ -51,7 +51,8 @@ export class Room {
         this.messageHandlers = {
             "position": this.handlePositionUpdate.bind(this),
             "eat-pellet": this.handlePelletEat.bind(this),
-            "trigger-bump": this.handlePlayerBump.bind(this)
+            "trigger-bump": this.handlePlayerBump.bind(this),
+            "kill-pacman": this.handlePlayerDead.bind(this)
         };
 
         this.topics = this.makeTopics();
@@ -193,6 +194,10 @@ export class Room {
         }
 
         player.publishLocation();
+    }
+
+    public handlePlayerDead(player: Player, data: {data: {position: globals.PositionData}}) {
+        
     }
 
     /**

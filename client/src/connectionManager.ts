@@ -140,10 +140,19 @@ class ConnectionManager {
                 },
                 timestamp: this.getTimestamp()
             }
-        ))
+        ));
     }
 
     public killLocalPacman() {
-        // TODO: implement
+        this.socket.send(this.makeMessage(
+            "kill-pacman",
+            {
+                "position": {
+                    x: gameManager.localPacman.x,
+                    y: gameManager.localPacman.y
+                },
+                timestamp: this.getTimestamp()
+            }
+        ));
     }
 }
