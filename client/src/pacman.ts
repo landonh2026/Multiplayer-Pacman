@@ -53,7 +53,7 @@ class Pacman {
 
         this.animationManager.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animationManager.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
-        this.animationManager.animations.killAnimation = new GameAnimation(180, false, 10, false);
+        this.animationManager.animations.killAnimation = new GameAnimation(40, true, 1, false);
 
         this.animationManager.animations.bodyAnimation.setActive(true);
     }
@@ -170,6 +170,15 @@ class Pacman {
      * @param deltaTime 
      */
     public draw(deltaTime: number) {
+        // create a gradient for this pacman
+        const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);
+        gradient.addColorStop(0, "white");
+        gradient.addColorStop(0.225, this.color.gradient_start);
+        gradient.addColorStop(0.875,  this.color.gradient_end);
+        gradient.addColorStop(1, "black");
+        ctx.fillStyle = gradient;
+        ctx.strokeStyle = "#FFFFFF";
+        
         if (this.shouldMove) {
             this.animationManager.animations.bodyAnimation.step_frame(deltaTime);
         }
@@ -179,15 +188,6 @@ class Pacman {
             gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animationManager.animations.killAnimation.get_frame());
             return;
         }
-        
-        // create a gradient for this pacman
-        const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);
-        gradient.addColorStop(0, "white");
-        gradient.addColorStop(0.225, this.color.gradient_start);
-        gradient.addColorStop(0.875,  this.color.gradient_end);
-        gradient.addColorStop(1, "black");
-        ctx.fillStyle = gradient;
-        ctx.strokeStyle = "#FFFFFF";
         
         // actually draw the pacman shape
         gameManager.drawManager.drawPacman(this.x, this.y, this.radius, this.animationManager.animations.bodyAnimation.get_frame(), this.facingDirection);
@@ -271,7 +271,7 @@ class Pacman {
         for (let remotePlayerSession in gameManager.remotePlayers) {
             let remotePlayer = gameManager.remotePlayers[remotePlayerSession];
 
-            if (remotePlayer.pacman.animationManager.animations.bumpAnimation.isActive()) {
+            if (remotePlayer.pacman.animationManager.animations.bumpAnimation.isActive() || remotePlayer.pacman.isDead) {
                 continue;
             }
 
@@ -385,7 +385,7 @@ class Pacman {
         if (this.isDead) this.shouldMove = false;
         
         // handle player input and remote pacman collision
-        if (this.isLocal) {
+        if (this.isLocal && !this.isDead) {
             this.inputDirection();
             this.collideRemotePacman();
         }

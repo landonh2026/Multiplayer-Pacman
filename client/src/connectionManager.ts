@@ -142,5 +142,8 @@ class ConnectionManager {
             }
         ))
     }
-    
+
+    public killLocalPacman() {
+        // TODO: implement
+    }
 }

@@ -51,7 +51,13 @@ class DrawManager {
     }
 
     public drawDeadPacman(x: number, y: number, radius: number, frame: number) {
-        const rad = Math.PI * frame / 180;
+        if (frame > 30) {
+            ctx.arc(x, y, radius+10, 0, 2*Math.PI);
+            return;
+        }
+
+        frame = Math.round(frame / 3);
+        const rad = Math.PI * frame * 18 / 180;
 
         // actually draw the pacman
         ctx.beginPath();
