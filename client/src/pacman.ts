@@ -53,7 +53,7 @@ class Pacman {
 
         this.animationManager.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animationManager.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
-        this.animationManager.animations.killAnimation = new GameAnimation(40, true, 1, false);
+        this.animationManager.animations.killAnimation = new GameAnimation(45, true, 1, false);
 
         this.animationManager.animations.bodyAnimation.setActive(true);
     }
@@ -186,6 +186,11 @@ class Pacman {
         if (this.isDead) {
             this.animationManager.animations.killAnimation.step_frame(deltaTime);
             gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animationManager.animations.killAnimation.get_frame());
+
+            if (this.animationManager.animations.killAnimation.isDone()) {
+                // todo: do stuff
+            }
+
             return;
         }
         
@@ -290,8 +295,12 @@ class Pacman {
     }
 
     public kill() {
+        if (this.isDead) return;
+
         this.isDead = true;
+
         this.animationManager.animations.killAnimation.reset();
+        this.animationManager.animations.killAnimation.setActive(true);
     }
 
     /**
@@ -402,6 +411,19 @@ class Pacman {
             return;
         }
 
+        if (this.isLocal) {
+            // todo: find a server side way of doing this
+            for (let id of Object.keys(gameManager.ghosts)) {
+                const ghost = gameManager.ghosts[id];
+    
+                // todo: include ghost radius
+                if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
+                    this.kill();
+                    break;
+                }
+            }
+        }
+
         // if we shouldn't move, set our animation frame to 0
         if (!this.shouldMove) {
             this.animationManager.animations.bodyAnimation.currentFrame = 0;
@@ -415,19 +437,6 @@ class Pacman {
         // Move this pacman ahead and collide with walls
         [this.x, this.y] = this.getPositionAhead(this.movementSpeed * deltaTime);
         this.collideWalls();
-
-        if (this.isLocal) {
-            // todo: find a server side way of doing this
-            for (let id of Object.keys(gameManager.ghosts)) {
-                const ghost = gameManager.ghosts[id];
-    
-                // todo: include ghost radius
-                if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
-                    this.kill();
-                    break;
-                }
-            }
-        }
 
         // determine if we should send our new position
         if (((!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) || this.shouldMove != lastShouldMove) && this.isLocal) {
