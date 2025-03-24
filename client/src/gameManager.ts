@@ -1,4 +1,12 @@
-enum GAME_STATES { CONNECTING, DISCONNECTED, FINDING_ROOM, PREGAME, IN_GAME, AFTER_GAME }
+enum GAME_STATES {
+    
+    CONNECTING,
+    DISCONNECTED,
+    FINDING_ROOM,
+    PREGAME,
+    IN_GAME,
+    AFTER_GAME
+}
 
 /**
  * The primary game manager that manages the Pacman game
@@ -87,9 +95,7 @@ class GameManager {
     private nextFrame() {
         const now = performance.now();
         const ms_taken = (now-this.lastFrame);
-        const fps = 1/(ms_taken/1000);
-        
-        this.infoBoard.setFPS(fps);
+        this.infoBoard.updateFPS();        
         
         let deltaTime = ms_taken / this.ms_per_frame;
         if (ms_taken > this.ms_per_frame*3) {
