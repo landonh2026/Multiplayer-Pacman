@@ -7,7 +7,8 @@ import {Room} from "./room.ts";
 
 // the rooms and a dictionary for client sessions to rooms
 const rooms: Room[] = [];
-const sessionToRoom: {[session: string]: Room} = {};
+const sessionToRoom: Map<string, Room> = new Map();
+const codeToRoom: Map<string, Room> = new Map();
 
 // the ws url
 const socketURL = "/gamesocket";
@@ -87,7 +88,7 @@ function open(ws: ServerWebSocket<globals.SocketData>) {
 
     // handle a player joining this room in the server's context
     roomToJoin.handlePlayerJoin(ws);
-    sessionToRoom[ws.data.session] = roomToJoin;
+    sessionToRoom.set(ws.data.session, roomToJoin);
 }
 
 /**
@@ -100,17 +101,21 @@ function close(ws: ServerWebSocket<globals.SocketData>, code: number, message: s
     ws.data.log(`Closed connection (${code}).`);
 
     // get the room that this client was associated with
-    const room = sessionToRoom[ws.data.session];
+    const room = sessionToRoom.get(ws.data.session);
+
+    if (room == undefined) return;
 
     // handle the player leaving this room and delete the session to room key/value pair
     room.handlePlayerLeave(ws.data.session);
-    delete sessionToRoom[ws.data.session];
+    sessionToRoom.delete(ws.data.session);
 
     // if this room should close, remove it from the rooms list
     if (room.shouldClose()) {
         console.log(`[${room.uuid}] Room closing ...`);
+        
         room.closeRoom();
         utils.removeFromList(rooms, room);
+        codeToRoom.delete(room.joinCode);
     }
 }
 
@@ -127,8 +132,8 @@ function message(ws: ServerWebSocket<globals.SocketData>, message: string | Buff
     parsed["from-session"] = ws.data.session;
 
     // find the room this session is associated with and handle the message
-    const room = sessionToRoom[ws.data.session];
-    room.handleMessage(ws.data.session, parsed);
+    const room = sessionToRoom.get(ws.data.session);
+    room?.handleMessage(ws.data.session, parsed);
 }
 
 function drain(ws: ServerWebSocket<globals.SocketData>) {

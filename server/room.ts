@@ -14,7 +14,9 @@ export class Room {
     players: {[session: string]: Player};
 
     /** The UUID for this room */
-    uuid: String;
+    uuid: string;
+
+    joinCode: string;
 
     /** The topics of this room */
     topics: {[topic: string]: string};
@@ -37,7 +39,7 @@ export class Room {
     /** Determines if lagbacks are enabled in this room */
     enable_lagback: boolean;
 
-    constructor(server: Server, uuid: String) {
+    constructor(server: Server, uuid: string) {
         this.server = server;
         this.players = {};
         this.uuid = uuid;
@@ -45,6 +47,9 @@ export class Room {
         this.availableColors = [...globals.colors] as Array<globals.Colors>;
         this.gameBoard = gameBoards.default.duplicate();
         this.enable_lagback = false;
+
+        // todo: change later to actual join code system
+        this.joinCode = this.uuid;
 
         this.simulator = new Simulator();
 
