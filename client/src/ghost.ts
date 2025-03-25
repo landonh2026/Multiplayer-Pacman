@@ -28,7 +28,6 @@ class Ghost {
      */
     public draw() {
         ctx.fillStyle = this.color;
-        // ctx.strokeStyle = "rgb(255, 0, 0)";
         gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
     }
 

@@ -62,7 +62,7 @@ export class Player {
      * Publish this player's location to other players
      */
     public publishLocation() {
-        const posData = utils.makeMessage("position", this.pacman.lastKnownLocation, false);
+        const posData = utils.makeMessage("position", {...this.pacman.lastKnownLocation, isAlive: this.pacman.isAlive}, false);
         posData["from-session"] = this.session;
         this.ws.publish(this.room.topics.event, JSON.stringify(posData));
     }

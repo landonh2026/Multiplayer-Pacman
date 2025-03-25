@@ -34,19 +34,16 @@ class DrawManager {
             ctx.fill();
         }
 
-        // only continue if debug is active
-        if (!gameManager.debug) {
-            return;
-        }
-
-        // draw path intersections
-        for (let i = 0; i < gameManager.currentBoard.pathIntersections.length; i++) {
-            let intersectionData = gameManager.currentBoard.pathIntersections[i];
-            
-            // ctx.strokeStyle = "red";
-            // ctx.beginPath();
-            // ctx.arc(intersectionData.x, intersectionData.y, 10, 0, 2*Math.PI);
-            // ctx.stroke();
+        if (gameManager.debug.intersectionPoints) {
+            // draw path intersections
+            for (let i = 0; i < gameManager.currentBoard.pathIntersections.length; i++) {
+                let intersectionData = gameManager.currentBoard.pathIntersections[i];
+                
+                ctx.strokeStyle = "red";
+                ctx.beginPath();
+                ctx.arc(intersectionData.x, intersectionData.y, 10, 0, 2*Math.PI);
+                ctx.stroke();
+            }
         }
     }
 
@@ -148,7 +145,7 @@ class DrawManager {
      * @param y Y position of the dot
      */
     public drawWallCollision(x: number, y: number) {
-        if (!gameManager.debug) return;
+        if (!gameManager.debug.pacmanWallCollision) return;
 
         ctx.beginPath();
         ctx.fillStyle = "#FFFFFF";

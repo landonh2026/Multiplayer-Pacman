@@ -13,7 +13,8 @@ enum GAME_STATES {
  */
 class GameManager {
     performanceMode: boolean;
-    debug: boolean;
+
+    debug: {[identifier: string]: boolean};
 
     /** A dictionary of remote players with the session being the key and the value being the RemotePlayer object */
     remotePlayers: {[session: string]: RemotePlayer};
@@ -53,8 +54,12 @@ class GameManager {
 
     static GAME_STATES = GAME_STATES;
 
-    constructor(debug: boolean = false) {
-        this.debug = debug;
+    constructor() {
+        this.debug = {
+            intersectionPoints: false,
+            pacmanWallCollision: false,
+            ghostPath: false
+        };
 
         this.tileSize = 40;
         this.serverTime = -1;
@@ -133,8 +138,7 @@ class GameManager {
             ghost.stepMovement(deltaTime);
             ghost.draw();
 
-            // debug
-            ghost.path?.draw();
+            if (this.debug.ghostPath) ghost.path?.draw();
         }
     
         // step and draw the local pacman

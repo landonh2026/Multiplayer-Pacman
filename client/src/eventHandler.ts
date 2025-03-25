@@ -210,6 +210,7 @@ class EventHandler {
         const workingPacman = gameManager.remotePlayers[parsedData["from-session"] as keyof typeof gameManager.remotePlayers].pacman;
         workingPacman.x = parsedData.data.x;
         workingPacman.y = parsedData.data.y;
+        workingPacman.isDead = !parsedData.data.isAlive;
         workingPacman.facingDirection = Direction.fromEnum(parsedData.data.facingDirection) as Direction;
         workingPacman.queuedDirection = Direction.fromEnum(parsedData.data.queuedDirection) as Direction;
         workingPacman.shouldMove = parsedData.data.shouldMove;

@@ -203,6 +203,7 @@ export class Room {
         player.pacman.lastKnownLocation.y = data.data.position.y;
         player.score = 0;
 
+        player.sendLocalPlayerState();
         player.ws.publish(this.topics.event, utils.makeMessage("kill-pacman", { id: player.session }));
 
         this.server.publish(this.topics.event, utils.makeMessage("update-scores", {scores: this.makeScoresList()}));        

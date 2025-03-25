@@ -11,7 +11,7 @@ if (ctx === null) { throw new Error("ctx is null! Something catastrophic must ha
 
 // wait for the window to load before fitting the canvas and beginning the game
 window.addEventListener('load', function() {
-    gameManager = new GameManager(true);
+    gameManager = new GameManager();
 
     fitCanvas();
 
