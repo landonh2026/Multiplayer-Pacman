@@ -7,6 +7,6 @@ class Debugger {
     }
 
     public onFrameUpdate(deltaTime: number) {
-
+        
     }
 }
