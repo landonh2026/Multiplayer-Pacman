@@ -170,7 +170,7 @@ class Pacman {
      * @param deltaTime 
      */
     public draw(deltaTime: number) {
-        // create a gradient for this pacman
+        // create the gradient for this pacman
         const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);
         gradient.addColorStop(0, "white");
         gradient.addColorStop(0.225, this.color.gradient_start);
@@ -179,27 +179,20 @@ class Pacman {
         ctx.fillStyle = gradient;
         ctx.strokeStyle = "#FFFFFF";
         
+        // if we are moving step the mouth animation
         if (this.shouldMove) {
             this.animationManager.animations.bodyAnimation.step_frame(deltaTime);
         }
 
+        // if we are dead draw the dead pacman animation
         if (this.isDead) {
             this.animationManager.animations.killAnimation.step_frame(deltaTime);
             gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animationManager.animations.killAnimation.get_frame());
 
-            // temp
-            if (this.animationManager.animations.killAnimation.isDone()) {
-                this.x = 60;
-                this.y = 120;
-
-                this.animationManager.animations.killAnimation.setActive(false);
-                this.isDead = false;
-            }
-
             return;
         }
         
-        // actually draw the pacman shape
+        // draw the pacman
         gameManager.drawManager.drawPacman(this.x, this.y, this.radius, this.animationManager.animations.bodyAnimation.get_frame(), this.facingDirection);
     }
 
@@ -387,6 +380,19 @@ class Pacman {
         }
     }
 
+    public checkShouldDie() {
+        // todo: find a server side way of doing this
+        for (let id of Object.keys(gameManager.ghosts)) {
+            const ghost = gameManager.ghosts[id];
+
+            // todo: include ghost size instead of just client
+            if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
+                this.kill();
+                break;
+            }
+        }
+    }
+
     /**
      * Steps the movement one frame and handles input
      * @param deltaTime 
@@ -418,16 +424,7 @@ class Pacman {
         }
 
         if (this.isLocal) {
-            // todo: find a server side way of doing this
-            for (let id of Object.keys(gameManager.ghosts)) {
-                const ghost = gameManager.ghosts[id];
-    
-                // todo: include ghost radius
-                if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
-                    this.kill();
-                    break;
-                }
-            }
+            this.checkShouldDie();
         }
 
         // if we shouldn't move, set our animation frame to 0

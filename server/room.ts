@@ -207,6 +207,16 @@ export class Room {
 
         this.server.publish(this.topics.event, utils.makeMessage("update-scores", {scores: this.makeScoresList()}));        
         console.log("player died");
+
+        // debug
+        setTimeout(() => {
+            player.pacman.lastKnownLocation.x = 60;
+            player.pacman.lastKnownLocation.y = 120;
+            player.pacman.isAlive = true;
+
+            player.sendLocalPlayerState();
+            player.publishLocation();
+        }, globals.animation_timings.kill * 1.3);
     }
 
     /**

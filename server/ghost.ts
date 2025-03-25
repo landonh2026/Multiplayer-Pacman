@@ -58,6 +58,8 @@ export class Ghost {
         };
 
         for (let player of players) {
+            if (!player.pacman.isAlive) continue;
+
             const distance = heuristic(this.x, this.y, player.pacman.lastKnownLocation.x, player.pacman.lastKnownLocation.y);
 
             if (distance < closest.distance) {
@@ -75,6 +77,7 @@ export class Ghost {
         this.currentTarget = this.determineTarget(Object.values(this.room.players));
 
         if (this.currentTarget == undefined) {
+            this.facingDirection = null;
             return;
         }
 
@@ -104,20 +107,18 @@ export class Ghost {
 
     public onTurn() {
         // if the path is null set the fallback timer
-        if (this.path == null) {
+        if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
             this.findPathToNextTarget();
             this.setFallbackTimeout();
             return;
         }
 
-        if (this.path.nodes.length === 0 || this.currentTarget == undefined) {
-            this.findPathToNextTarget();
-            this.setFallbackTimeout();
-            return;
+        // TODO: don't do this if we didn't have a target before
+        // because we snap to this next node
+        if (this.facingDirection != null) {
+            [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
+            this.path.nodes.shift();
         }
-
-        [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
-        this.path.nodes.shift();
 
         this.findPathToNextTarget();
 
@@ -132,7 +133,6 @@ export class Ghost {
             {x: this.x, y: this.y},
             this.path.nodes[0] ?? estimatedPos
         );
-        // console.log(this.facingDirection);
 
         this.sendLocation();
 

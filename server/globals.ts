@@ -14,7 +14,11 @@ const topics = {
     event: "game-event"
 };
 
+const animation_timings = {
+    kill: 41 / target_client_fps * 1000
+};
+
 const debug = true;
 
-export {colors, topics, target_client_fps, tile_size, debug};
+export {colors, topics, target_client_fps, tile_size, debug, animation_timings};
 export type {SocketData, Colors, PositionData, PacmanNextWallCollision};

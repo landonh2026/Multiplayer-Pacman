@@ -151,12 +151,16 @@ class EventHandler {
     public localInfo(parsedData: any) {
         gameManager.localPacman.color = PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS];
 
+        gameManager.localPacman.isDead = !parsedData.data.isAlive;
         gameManager.localPacman.x = parsedData.data.loc.x;
         gameManager.localPacman.y = parsedData.data.loc.y;
         gameManager.localPacman.facingDirection = Direction.fromEnum(parsedData.data.loc.facingDirection) as Direction;
         gameManager.localPacman.queuedDirection = Direction.fromEnum(parsedData.data.loc.queuedDirection) as Direction;
         gameManager.localPacman.shouldMove = parsedData.data.loc.shouldMove;
         gameManager.localPacman.movementSpeed = parsedData.data.moveSpeed;
+
+        gameManager.localPacman.animationManager.animations.killAnimation.reset();
+        gameManager.localPacman.animationManager.animations.killAnimation.setActive(false);
 
         gameManager.uuid = parsedData.data.session;
     }

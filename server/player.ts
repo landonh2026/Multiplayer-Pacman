@@ -48,6 +48,7 @@ export class Player {
             utils.makeMessage(
                 "local-player-info",
                 {
+                    isAlive: this.pacman.isAlive,
                     color: this.pacman.color,
                     loc: this.pacman.lastKnownLocation,
                     moveSpeed: this.pacman.movementSpeed,
