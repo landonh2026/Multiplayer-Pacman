@@ -82,7 +82,10 @@ function open(ws: ServerWebSocket<globals.SocketData>) {
     // if this room does not exist or is full, make a new one
     if (roomToJoin == undefined || roomToJoin.isFull()) {
         roomToJoin = new Room(server, crypto.randomUUID().toString());
+        
+        codeToRoom.set(roomToJoin.joinCode, roomToJoin);
         rooms.push(roomToJoin);
+        
         console.log(`[${roomToJoin.uuid}] Created new room!`);
     }
 
