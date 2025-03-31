@@ -2,9 +2,9 @@ import type { Server, ServerWebSocket } from "bun";
 import { Player } from "./player.ts";
 import * as utils from "./utils.ts";
 import * as globals from "./globals.ts";
-import {GameBoard, gameBoards} from "./gameBoard.ts";
+import {GameBoard, gameBoards, PELLET_TYPES} from "./gameBoard.ts";
 import {Simulator} from "./simulator.ts";
-import { Ghost } from "./ghost.ts";
+import {Ghost} from "./ghost.ts";
 
 enum GAME_STATES {
     WAITING_FOR_PLAYERS,
@@ -328,7 +328,7 @@ export class Room {
 
         // get the pellet position and the distance the pacman is from the pellet
         const pellet_pos = [pellet.x*40, pellet.y*40];
-        const distance_from_pellet = [Math.abs(player.pacman.lastKnownLocation.x - pellet_pos[0]), Math.abs(player.pacman.lastKnownLocation.y - pellet_pos[1])]
+        const distance_from_pellet = [Math.abs(player.pacman.lastKnownLocation.x - pellet_pos[0]), Math.abs(player.pacman.lastKnownLocation.y - pellet_pos[1])];
         // const distance_from_pellet = [Math.abs(newPacmanPosition.x - pellet_pos[0]), Math.abs(newPacmanPosition.y - pellet_pos[1])]
         
         // reject the pellet if the player is too far
@@ -336,6 +336,23 @@ export class Room {
             player.log("Attempted to eat pellet too far away from new pos: ", distance_from_pellet);
             player.ws.send(utils.makeMessage("pellet-reject", {pelletID: data.data.pelletID}));
             return;
+        }
+
+        // power up the player if appropriate
+        if (pellet.type == PELLET_TYPES.power) {
+            player.pacman.isPoweredUp = true;
+
+            player.sendLocalPlayerState();
+
+            setInterval(() => {
+                player.pacman.isPoweredUp = false;
+
+                const estimated_pos = player.pacman.getEstimatedPosition(performance.now()-player.pacman.lastPosPacketTime);
+                player.pacman.lastKnownLocation.x = estimated_pos.x;
+                player.pacman.lastKnownLocation.y = estimated_pos.y;
+
+                player.sendLocalPlayerState();
+            }, globals.animation_timings.power_up);
         }
 
         // remake the gameboard if all the pellets are gone

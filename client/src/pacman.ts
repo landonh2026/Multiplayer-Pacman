@@ -18,6 +18,7 @@ class Pacman {
     
     isDead: boolean;
     isLocal: boolean;
+    isPoweredUp: boolean;
 
     score: number;
     lastQueuedDirectionNode: { distance: number, node: PathIntersection, nodeIndex: number } | null;
@@ -43,14 +44,13 @@ class Pacman {
         this.movingLastFrame = true;
         
         this.isDead = isDead;
+        this.isLocal = isLocal;
+        this.isPoweredUp = false;
 
         this.score = score;
-        this.isLocal = isLocal;
-
         this.lastQueuedDirectionNode = null;
-
+        
         this.animationManager = new AnimationManager();
-
         this.animationManager.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animationManager.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
         this.animationManager.animations.killAnimation = new GameAnimation(41, true, 1, false);
@@ -89,14 +89,14 @@ class Pacman {
             let pellet = gameManager.currentBoard.pellets[i];
 
             // if we are close enough to this pellet try eating it
-            if (Math.abs(this.x-pellet[0]) < this.radius && Math.abs(this.y-pellet[1]) < this.radius) {
-                if (pellet[3] == PELLET_STATES.EAT_PENDING) {
+            if (Math.abs(this.x-pellet.x) < this.radius && Math.abs(this.y-pellet.y) < this.radius) {
+                if (pellet.local_state == PELLET_STATES.EAT_PENDING) {
                     break;
                 }
 
                 // send to the server that we want to eat this pellet
-                pellet[3] = PELLET_STATES.EAT_PENDING;
-                gameManager.connectionManager.eatPellet(this, pellet[2]);
+                pellet.local_state = PELLET_STATES.EAT_PENDING;
+                gameManager.connectionManager.eatPellet(this, pellet.id);
                 break;
             }
         }

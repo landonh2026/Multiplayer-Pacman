@@ -14,8 +14,11 @@ const topics = {
     event: "game-event"
 };
 
+// TODO: power up should last a variable amount of time depending on how long the round has been going
+//  ^ also movement speed eventually
 const animation_timings = {
-    kill: 41 / target_client_fps * 1000
+    kill: 41 / target_client_fps * 1000,
+    power_up: 3 * 1000,
 };
 
 const debug = true;

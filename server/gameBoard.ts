@@ -108,7 +108,7 @@ export class GameBoard {
 
     /**
      * Make the pellets for the gameboard
-     * @returns An array of three numbers, [x position, y position, id]
+     * @returns An array of pellets
      */
     public makePellets(): Array<Pellet> {
         const pellets: Array<Pellet> = [];
@@ -124,8 +124,10 @@ export class GameBoard {
                     }
                 }
 
-                pellets.push(new Pellet(x+0.5, y+0.5, id));
-                id++;
+                pellets.push(new Pellet(
+                    x+0.5, y+0.5, id++,
+                    Math.random() > 0.9 ? PELLET_TYPES.power : PELLET_TYPES.normal
+                ));
             }
         }
 
@@ -281,4 +283,4 @@ let gameBoards: any = {
     ])
 };
 
-export {gameBoards};
+export {gameBoards, PELLET_TYPES};

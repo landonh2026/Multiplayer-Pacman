@@ -24,13 +24,15 @@ class DrawManager {
         }
 
         // draw the pellets from the pellet data
-        for (let i = 0; i < gameManager.currentBoard.pellets.length; i++) {
-            let pelletData = gameManager.currentBoard.pellets[i];
-            if (pelletData[3] == PELLET_STATES.EAT_PENDING) continue;
+        for (let pellet of gameManager.currentBoard.pellets) {
+            if (pellet.local_state == PELLET_STATES.EAT_PENDING) continue;
             
+            let radius = Math.max(2.5 * (gameManager.tileSize / 40), 1.25);
+            if (pellet.type == PELLET_TYPES.power) radius *= 2;
+
             ctx.fillStyle = ENVIRONMENT_COLORS.PELLET;
             ctx.beginPath();
-            ctx.arc(pelletData[0], pelletData[1], Math.max(3 * (gameManager.tileSize / 40), 1.5), 0, 2*Math.PI);
+            ctx.arc(pellet.x, pellet.y, radius, 0, 2*Math.PI);
             ctx.fill();
         }
 

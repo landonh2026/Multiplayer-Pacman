@@ -93,11 +93,10 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public pelletRejected(parsedData: any) {
-        for (let i = 0; i < gameManager.currentBoard.pellets.length; i++) {
-            let pellet = gameManager.currentBoard.pellets[i];
-
-            if (pellet[2] == parsedData.data.pelletID) {
-                pellet[3] = PELLET_STATES.NONE;
+        for (let pellet of gameManager.currentBoard.pellets) {
+            if (pellet.id == parsedData.data.pelletID) {
+                pellet.local_state = PELLET_STATES.NONE;
+                return;
             }
         }
     }
@@ -129,7 +128,7 @@ class EventHandler {
         for (let i = 0; i < gameManager.currentBoard.pellets.length; i++) {
             let pellet = gameManager.currentBoard.pellets[i];
 
-            if (pellet[2] == parsedData.data.pelletID) {
+            if (pellet.id == parsedData.data.pelletID) {
                 gameManager.currentBoard.pellets.splice(i, 1);
                 break;
             }
@@ -141,7 +140,11 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public boardState(parsedData: any) {
-        gameManager.currentBoard = new GameBoard(parsedData.data.board, parsedData.data.pellets, parsedData.data.pathIntersections);
+        gameManager.currentBoard = new GameBoard(
+            parsedData.data.board,
+            parsedData.data.pellets.map((p: any) => new Pellet(p.x, p.y, p.id, p.type)),
+            parsedData.data.pathIntersections
+        );
     }
 
     /**
@@ -152,6 +155,8 @@ class EventHandler {
         gameManager.localPacman.color = PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS];
 
         gameManager.localPacman.isDead = !parsedData.data.isAlive;
+        gameManager.localPacman.isPoweredUp = parsedData.data.poweredUp;
+
         gameManager.localPacman.x = parsedData.data.loc.x;
         gameManager.localPacman.y = parsedData.data.loc.y;
         gameManager.localPacman.facingDirection = Direction.fromEnum(parsedData.data.loc.facingDirection) as Direction;

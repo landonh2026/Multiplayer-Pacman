@@ -65,7 +65,7 @@ export class Player {
      * Publish this player's location to other players
      */
     public publishLocation() {
-        const posData = utils.makeMessage("position", {...this.pacman.lastKnownLocation, isAlive: this.pacman.isAlive}, false);
+        const posData = utils.makeMessage("position", {...this.pacman.lastKnownLocation, isAlive: this.pacman.isAlive, poweredUp: this.pacman.isPoweredUp}, false);
         posData["from-session"] = this.session;
         this.ws.publish(this.room.topics.event, JSON.stringify(posData));
     }
@@ -97,6 +97,7 @@ export class Pacman {
     lastClientTimestamp: number;
     player: Player;
     isAlive: boolean;
+    isPoweredUp: boolean;
 
     lastPosPacketTime: number;
 
@@ -108,6 +109,7 @@ export class Pacman {
         this.player = player;
         this.lastPosPacketTime = 0;
         this.isAlive = true;
+        this.isPoweredUp = false;
     }
 
     /**

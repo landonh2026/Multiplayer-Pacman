@@ -7,9 +7,9 @@ class GameBoard {
     /** The block positions in terms of pixels */
     blockPositions: Array<[number, number, number, number]>;
     /** The raw pellet positions in terms of tiles instead of pixels */
-    rawPellets: Array<[number, number, number]>;
+    rawPellets: Array<Pellet>;
     /** The pellet positions in terms of pixels */
-    pellets: Array<[number, number, number, PELLET_STATES]>;
+    pellets: Array<Pellet>;
     /** The bottom right position of the board. Also represents the width and height of the board. */
     bottomRight: [number, number];
     /** A list of path intersections where ghosts and pacman can turn */
@@ -21,7 +21,7 @@ class GameBoard {
 
     constructor(
         rawBlockPositions: Array<[number, number, number, number]>,
-        rawPellets: Array<[number, number, number]>,
+        rawPellets: Array<Pellet>,
         pathIntersections: Array<{x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]}>,
         tileSize: number|null = null
     ) {
@@ -48,12 +48,7 @@ class GameBoard {
 
         // do the same as above for pellets
         this.rawPellets = rawPellets;
-        const pellets = [...rawPellets.map(innerArray => [...innerArray])] as Array<[number, number, number]>;
-        this.pellets = [];
-
-        for (let i = 0; i < pellets.length; i++) {
-            this.pellets.push([pellets[i][0]*tileSize, pellets[i][1]*tileSize, pellets[i][2], PELLET_STATES.NONE]);
-        }
+        this.pellets = rawPellets.map((p) => new Pellet(p.x*tileSize, p.y*tileSize, p.id, p.type));
 
         this.wallCollisionFunctions = [
             // left of wall check
@@ -253,4 +248,26 @@ class PathIntersection {
 
 enum PELLET_STATES {
     NONE, EAT_PENDING
+}
+
+enum PELLET_TYPES {
+    normal,
+    power,
+    food
+}
+
+class Pellet {
+    x: number;
+    y: number;
+    type: PELLET_TYPES;
+    id: number;
+    local_state: PELLET_STATES
+
+    constructor(x: number, y: number, id: number, type: PELLET_TYPES = PELLET_TYPES.normal) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.id = id;
+        this.local_state = PELLET_STATES.NONE;
+    }
 }
