@@ -25,6 +25,8 @@ export class Player {
     /** The last time this player was bumped */
     lastBump: number;
 
+    wins: number;
+
     constructor(session: string, ws: ServerWebSocket<globals.SocketData>, color: globals.Colors, room: Room) {
         this.session = session;
         this.ws = ws;
@@ -32,6 +34,7 @@ export class Player {
         this.timeStamp = performance.now();
         this.room = room;
         this.lastBump = 0;
+        this.wins = 0;
 
         this.pacman = new Pacman(color, this);
     }

@@ -10,7 +10,8 @@ export class GameBoard {
     blockPositions: Array<[number, number, number, number]>;
 
     /** The pellet positions as tile positions */
-    pellets: Array<[number, number, number]>; // TODO: make an array of a class
+    // pellets: Array<[number, number, number]>;
+    pellets: Array<Pellet>;
 
     /** Represents the bottom right position of this game board */
     bottomRight: [number, number];
@@ -70,26 +71,26 @@ export class GameBoard {
             for (let otherPellet of this.pellets) {
 
                 // skip if pellet ids match
-                if (pellet[2] == otherPellet[2]) continue;
+                if (pellet.id == otherPellet.id) continue;
 
 
                 // do the y positions match?
-                if (Math.abs(pellet[1]-otherPellet[1]) == 0) {
+                if (Math.abs(pellet.y-otherPellet.y) == 0) {
                     // are the pellets 1 tile away from each other in the left or right directions? If so, mark that
-                    if (pellet[0]-otherPellet[0] == 1) {
+                    if (pellet.x-otherPellet.x == 1) {
                         passedDirections[2] = true;
-                    } else if (pellet[0]-otherPellet[0] == -1) {
+                    } else if (pellet.x-otherPellet.x == -1) {
                         passedDirections[0] = true;
                     }
 
                 }
 
                 // do the x positions match?
-                if (Math.abs(pellet[0]-otherPellet[0]) == 0) {
+                if (Math.abs(pellet.x-otherPellet.x) == 0) {
                     // are the pellets 1 tile away from each other in the up or down directions? If so, mark that
-                    if (pellet[1]-otherPellet[1] == 1) {
+                    if (pellet.y-otherPellet.y == 1) {
                         passedDirections[3] = true;
-                    } else if (pellet[1]-otherPellet[1] == -1) {
+                    } else if (pellet.y-otherPellet.y == -1) {
                         passedDirections[1] = true;
                     }
                 }
@@ -99,7 +100,7 @@ export class GameBoard {
             // If this node is not connected to at least 1 horizontal and vertical node, then it is not a path intersection node
             if (!((passedDirections[0] || passedDirections[2]) && (passedDirections[1] || passedDirections[3]))) continue;
 
-            pathIntersections.push(new PathIntersection(pellet[0], pellet[1], i, passedDirections));
+            pathIntersections.push(new PathIntersection(pellet.x, pellet.y, i, passedDirections));
         }
 
         return pathIntersections;
@@ -109,8 +110,8 @@ export class GameBoard {
      * Make the pellets for the gameboard
      * @returns An array of three numbers, [x position, y position, id]
      */
-    public makePellets(): Array<[number, number, number]> {
-        const pellets: Array<[number, number, number]> = [];
+    public makePellets(): Array<Pellet> {
+        const pellets: Array<Pellet> = [];
 
         let id = 0;
         // loop through each tile
@@ -123,7 +124,7 @@ export class GameBoard {
                     }
                 }
 
-                pellets.push([x+0.5, y+0.5, id]);
+                pellets.push(new Pellet(x+0.5, y+0.5, id));
                 id++;
             }
         }
@@ -206,14 +207,22 @@ export class PathIntersection {
     }
 }
 
+enum PELLET_TYPES {
+    normal,
+    power,
+    food
+}
+
 export class Pellet {
     x: number;
     y: number;
+    type: PELLET_TYPES;
     id: number;
 
-    constructor(x: number, y: number, id: number) {
+    constructor(x: number, y: number, id: number, type: PELLET_TYPES = PELLET_TYPES.normal) {
         this.x = x;
         this.y = y;
+        this.type = type;
         this.id = id;
     }
 }

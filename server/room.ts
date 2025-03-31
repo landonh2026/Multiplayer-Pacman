@@ -6,6 +6,13 @@ import {GameBoard, gameBoards} from "./gameBoard.ts";
 import {Simulator} from "./simulator.ts";
 import { Ghost } from "./ghost.ts";
 
+enum GAME_STATES {
+    WAITING_FOR_PLAYERS,
+    PLAYING,
+    INTERMISSION,
+    GAME_END
+};
+
 export class Room {
     /** The server context that this room is under */
     server: Server;
@@ -15,6 +22,8 @@ export class Room {
 
     /** The UUID for this room */
     uuid: string;
+
+    gameState: GAME_STATES;
 
     joinCode: string;
 
@@ -50,6 +59,8 @@ export class Room {
 
         // todo: change later to actual join code system
         this.joinCode = this.uuid;
+
+        this.gameState = GAME_STATES.WAITING_FOR_PLAYERS;
 
         this.simulator = new Simulator();
 
@@ -201,30 +212,6 @@ export class Room {
         player.publishLocation();
     }
 
-    public handlePlayerDead(player: Player, data: {data: {position: globals.PositionData}}) {
-        player.pacman.isAlive = false;
-
-        player.pacman.lastKnownLocation.x = data.data.position.x;
-        player.pacman.lastKnownLocation.y = data.data.position.y;
-        player.score = 0;
-
-        player.sendLocalPlayerState();
-        player.ws.publish(this.topics.event, utils.makeMessage("kill-pacman", { id: player.session }));
-
-        this.server.publish(this.topics.event, utils.makeMessage("update-scores", {scores: this.makeScoresList()}));        
-        console.log("player died");
-
-        // debug
-        setTimeout(() => {
-            player.pacman.lastKnownLocation.x = 60;
-            player.pacman.lastKnownLocation.y = 120;
-            player.pacman.isAlive = true;
-
-            player.sendLocalPlayerState();
-            player.publishLocation();
-        }, globals.animation_timings.kill * 1.3);
-    }
-
     /**
      * Handle the packet sent when a client bumps another player
      * @param player The player that sent the packet
@@ -259,12 +246,12 @@ export class Room {
         let estimatedOtherPlayerPosition = otherPlayer.pacman.getEstimatedPosition(performance.now()-otherPlayer.pacman.lastPosPacketTime);
         
         // change when radius is not constant
-        let allowedDistance = 150;
+        let allowedDistance = 70;
 
         let dx = Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x);
         let dy = Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y);
 
-        console.log(player.pacman.color, dx, dy);
+        // console.log(player.pacman.color, dx, dy);
 
         if (dx > allowedDistance || dy > allowedDistance) {
             // TODO: do something here
@@ -327,7 +314,7 @@ export class Room {
         for (pellet_index = 0; pellet_index < this.gameBoard.pellets.length; pellet_index++) {
             pellet = this.gameBoard.pellets[pellet_index];
 
-            if (pellet[2] == data.data.pelletID) {
+            if (pellet.id == data.data.pelletID) {
                 break;
             }
         }
@@ -340,7 +327,7 @@ export class Room {
         }
 
         // get the pellet position and the distance the pacman is from the pellet
-        const pellet_pos = [pellet[0]*40, pellet[1]*40];
+        const pellet_pos = [pellet.x*40, pellet.y*40];
         const distance_from_pellet = [Math.abs(player.pacman.lastKnownLocation.x - pellet_pos[0]), Math.abs(player.pacman.lastKnownLocation.y - pellet_pos[1])]
         // const distance_from_pellet = [Math.abs(newPacmanPosition.x - pellet_pos[0]), Math.abs(newPacmanPosition.y - pellet_pos[1])]
         
@@ -362,7 +349,44 @@ export class Room {
         // remove the pellet from the gameboard
         this.gameBoard.pellets.splice(pellet_index, 1);
         player.score += 10;
-        this.server.publish(this.topics.event, utils.makeMessage("eat-pellet", {pelletID: pellet[2], scores: this.makeScoresList()}));
+        this.server.publish(this.topics.event, utils.makeMessage("eat-pellet", {pelletID: pellet.id, scores: this.makeScoresList()}));
+    }
+
+    public handlePlayerDead(player: Player, data: {data: {position: globals.PositionData}}) {
+        player.pacman.isAlive = false;
+
+        player.pacman.lastKnownLocation.x = data.data.position.x;
+        player.pacman.lastKnownLocation.y = data.data.position.y;
+        player.score = 0;
+
+        player.sendLocalPlayerState();
+        player.ws.publish(this.topics.event, utils.makeMessage("kill-pacman", { id: player.session }));
+
+        this.server.publish(this.topics.event, utils.makeMessage("update-scores", {scores: this.makeScoresList()}));        
+        player.log("died");
+
+        let remainingPlayers = 0;
+        for (let player of Object.values(this.players)) {
+            if (player.pacman.isAlive) remainingPlayers++;
+        }
+
+        if (remainingPlayers <= 1) {
+            this.roundDone();
+        }
+
+        // debug respawn
+        // setTimeout(() => {
+        //     player.pacman.lastKnownLocation.x = 60;
+        //     player.pacman.lastKnownLocation.y = 120;
+        //     player.pacman.isAlive = true;
+
+        //     player.sendLocalPlayerState();
+        //     player.publishLocation();
+        // }, globals.animation_timings.kill * 1.3);
+    }
+    
+    public roundDone() {
+        console.log("Round is over!");
     }
 
     /**
