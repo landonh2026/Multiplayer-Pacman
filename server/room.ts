@@ -1,10 +1,10 @@
 import type { Server, ServerWebSocket } from "bun";
-import { Player } from "./player.ts";
 import * as utils from "./utils.ts";
 import * as globals from "./globals.ts";
-import {GameBoard, gameBoards, PELLET_TYPES} from "./gameBoard.ts";
-import {Simulator} from "./simulator.ts";
-import {Ghost} from "./ghost.ts";
+import { GameBoard, gameBoards, PELLET_TYPES } from "./gameBoard.ts";
+import { Player, PLAYER_TIMER_TYPES } from "./player.ts";
+import { Simulator } from "./simulator.ts";
+import { Ghost } from "./ghost.ts";
 
 enum GAME_STATES {
     WAITING_FOR_PLAYERS,
@@ -19,6 +19,8 @@ export class Room {
 
     /** The players that are in this server with the session as the key and the Player object as the value*/
     players: {[session: string]: Player};
+
+    ghosts: {[id: string]: Ghost};
 
     /** The UUID for this room */
     uuid: string;
@@ -51,6 +53,7 @@ export class Room {
     constructor(server: Server, uuid: string) {
         this.server = server;
         this.players = {};
+        this.ghosts = {};
         this.uuid = uuid;
         this.maxPlayers = 4;
         this.availableColors = [...globals.colors] as Array<globals.Colors>;
@@ -68,7 +71,8 @@ export class Room {
             "position": this.handlePositionUpdate.bind(this),
             "eat-pellet": this.handlePelletEat.bind(this),
             "trigger-bump": this.handlePlayerBump.bind(this),
-            "kill-pacman": this.handlePlayerDead.bind(this)
+            "kill-pacman": this.handlePlayerDead.bind(this),
+            "eat-ghost": this.handleGhostEat.bind(this)
         };
 
         this.topics = this.makeTopics();
@@ -146,13 +150,13 @@ export class Room {
      * Check to see if the player moved too far given a player and their new position
      * @return Is the player able to move here since their last position packet
      */
-    public checkPlayerMoveDistance(now: number, player: Player, otherPosition: globals.PositionData, includeRadius: boolean = false, tolerance: number|null = null) {
+    public moveDistanceAllowed(now: number, player: Player, otherPosition: globals.PositionData, includeRadius: boolean = false, tolerance: number|null = null) {
         if (!this.enable_lagback) return true;
 
         // const now = performance.now();
         const distances = [
-            Math.abs(otherPosition.x-player.pacman.lastKnownLocation.x),
-            Math.abs(otherPosition.y-player.pacman.lastKnownLocation.y)
+            Math.abs(otherPosition.x-player.pacman.lastLocation.x),
+            Math.abs(otherPosition.y-player.pacman.lastLocation.y)
         ];
         const distanceTraveled = distances[0] + distances[1] - (includeRadius ? 20 : 0);
 
@@ -181,7 +185,7 @@ export class Room {
             return false;
         }
 
-        if (!this.checkPlayerMoveDistance(newPosition.timestamp, player, newPosition)) {
+        if (!this.moveDistanceAllowed(newPosition.timestamp, player, newPosition)) {
             player.pacman.lastClientTimestamp = newPosition.timestamp;
             player.sendLocalPlayerState();
             player.publishLocation();
@@ -189,7 +193,7 @@ export class Room {
         }
 
         player.pacman.lastClientTimestamp = newPosition.timestamp;
-        player.pacman.lastKnownLocation = newPosition;
+        player.pacman.lastLocation = newPosition;
         player.pacman.lastPosPacketTime = performance.now();
         return true;
     }
@@ -200,7 +204,7 @@ export class Room {
      * @param data 
      */
     public handlePositionUpdate(player: Player, data: {data: globals.PositionData}) {
-        if (player.pacman.lastKnownLocation.packetIndex > data.data.packetIndex) {
+        if (player.pacman.lastLocation.packetIndex > data.data.packetIndex) {
             player.log("Ignoring old movement packet");
             return;
         }
@@ -229,7 +233,7 @@ export class Room {
         }
 
         // move the player to the new pos
-        let newPacmanPosition: globals.PositionData = {...player.pacman.lastKnownLocation};
+        let newPacmanPosition: globals.PositionData = {...player.pacman.lastLocation};
         newPacmanPosition.x = data.data.position.x;
         newPacmanPosition.y = data.data.position.y;
         newPacmanPosition.timestamp = data.data.timestamp;
@@ -248,8 +252,8 @@ export class Room {
         // change when radius is not constant
         let allowedDistance = 70;
 
-        let dx = Math.abs(player.pacman.lastKnownLocation.x-estimatedOtherPlayerPosition.x);
-        let dy = Math.abs(player.pacman.lastKnownLocation.y-estimatedOtherPlayerPosition.y);
+        let dx = Math.abs(player.pacman.lastLocation.x-estimatedOtherPlayerPosition.x);
+        let dy = Math.abs(player.pacman.lastLocation.y-estimatedOtherPlayerPosition.y);
 
         // console.log(player.pacman.color, dx, dy);
 
@@ -261,8 +265,8 @@ export class Room {
 
         // calculate the direction each player should launch
         let direction;
-        if (dx < dy) direction = player.pacman.lastKnownLocation.y - estimatedOtherPlayerPosition.y > 0 ? 3 : 1;
-        else direction = player.pacman.lastKnownLocation.x - estimatedOtherPlayerPosition.x > 0 ? 2 : 0;
+        if (dx < dy) direction = player.pacman.lastLocation.y - estimatedOtherPlayerPosition.y > 0 ? 3 : 1;
+        else direction = player.pacman.lastLocation.x - estimatedOtherPlayerPosition.x > 0 ? 2 : 0;
 
         // set the last bump time for each player to be now
         player.lastBump = now;
@@ -273,8 +277,8 @@ export class Room {
             collisions: [
                 {
                     session: player.session,
-                    x: player.pacman.lastKnownLocation.x,
-                    y: player.pacman.lastKnownLocation.y,
+                    x: player.pacman.lastLocation.x,
+                    y: player.pacman.lastLocation.y,
                     from: direction
                 },
                 {
@@ -294,19 +298,20 @@ export class Room {
      */
     public handlePelletEat(player: Player, data: any) {
         // move the player to the new pos
-        let newPacmanPosition: globals.PositionData = {...player.pacman.lastKnownLocation};
+        let newPacmanPosition: globals.PositionData = {...player.pacman.lastLocation};
         newPacmanPosition.x = data.data.position.x;
         newPacmanPosition.y = data.data.position.y;
 
         // check to see if the player moved a valid distance
+        // todo: should this be verifyNewPosition?
         // if (!this.checkPlayerMoveDistance(player, newPacmanPosition, false)) {
-        if (!this.checkPlayerMoveDistance(data.data.timestamp, player, newPacmanPosition)) {
+        if (!this.moveDistanceAllowed(data.data.timestamp, player, newPacmanPosition)) {
             player.log("Moved too quickly while attempting to eat a pellet");
             player.ws.send(utils.makeMessage("pellet-reject", {pelletID: data.data.pelletID}));
             return;
         }
 
-        player.pacman.lastKnownLocation = newPacmanPosition;
+        player.pacman.lastLocation = newPacmanPosition;
         player.pacman.lastPosPacketTime = performance.now();
 
         // get the current pellet and pellet index
@@ -328,7 +333,7 @@ export class Room {
 
         // get the pellet position and the distance the pacman is from the pellet
         const pellet_pos = [pellet.x*40, pellet.y*40];
-        const distance_from_pellet = [Math.abs(player.pacman.lastKnownLocation.x - pellet_pos[0]), Math.abs(player.pacman.lastKnownLocation.y - pellet_pos[1])];
+        const distance_from_pellet = [Math.abs(player.pacman.lastLocation.x - pellet_pos[0]), Math.abs(player.pacman.lastLocation.y - pellet_pos[1])];
         // const distance_from_pellet = [Math.abs(newPacmanPosition.x - pellet_pos[0]), Math.abs(newPacmanPosition.y - pellet_pos[1])]
         
         // reject the pellet if the player is too far
@@ -342,17 +347,25 @@ export class Room {
         if (pellet.type == PELLET_TYPES.power) {
             player.pacman.isPoweredUp = true;
 
+            console.log("player ate power");
+
             player.sendLocalPlayerState();
 
-            setInterval(() => {
+            // clear existing timers
+            clearTimeout(player.timers.get(PLAYER_TIMER_TYPES.POWERUP));
+            
+            player.timers.set(PLAYER_TIMER_TYPES.POWERUP, setTimeout(() => {
                 player.pacman.isPoweredUp = false;
 
+                // don't update the player if they died
+                if (!player.pacman.isAlive) return;
+
                 const estimated_pos = player.pacman.getEstimatedPosition(performance.now()-player.pacman.lastPosPacketTime);
-                player.pacman.lastKnownLocation.x = estimated_pos.x;
-                player.pacman.lastKnownLocation.y = estimated_pos.y;
+                player.pacman.lastLocation.x = estimated_pos.x;
+                player.pacman.lastLocation.y = estimated_pos.y;
 
                 player.sendLocalPlayerState();
-            }, globals.animation_timings.power_up);
+            }, globals.animation_timings.power_up));
         }
 
         // remake the gameboard if all the pellets are gone
@@ -369,11 +382,38 @@ export class Room {
         this.server.publish(this.topics.event, utils.makeMessage("eat-pellet", {pelletID: pellet.id, scores: this.makeScoresList()}));
     }
 
+    public handleGhostEat(player: Player, data: {data: any}) {
+        if (!player.pacman.isPoweredUp) {
+            player.ws.send(utils.makeMessage("reject-ghost-eat", {id: data.data.ghost_id}));
+            return;
+        }
+
+        if (!this.verifyNewPosition(player, data.data.position)) {
+            player.log("Moved too quickly while attempting to eat a ghost");
+            player.ws.send(utils.makeMessage("reject-ghost-eat", {id: data.data.ghost_id}));
+            return;
+        }
+
+        player.pacman.lastLocation.x = data.data.position.x;
+        player.pacman.lastLocation.y = data.data.position.y;
+        player.pacman.lastClientTimestamp = data.data.timestamp;
+        
+        player.pacman.lastPosPacketTime = performance.now();
+
+        if (this.ghosts[data.data.ghost_id] == undefined) {
+            player.ws.send(utils.makeMessage("reject-ghost-eat", {id: data.data.ghost_id}));
+            return;
+        }
+
+        this.ghosts[data.data.ghost_id].eat();
+    }
+
     public handlePlayerDead(player: Player, data: {data: {position: globals.PositionData}}) {
         player.pacman.isAlive = false;
+        player.pacman.lastLocation.shouldMove = false;
 
-        player.pacman.lastKnownLocation.x = data.data.position.x;
-        player.pacman.lastKnownLocation.y = data.data.position.y;
+        player.pacman.lastLocation.x = data.data.position.x;
+        player.pacman.lastLocation.y = data.data.position.y;
         player.score = 0;
 
         player.sendLocalPlayerState();
@@ -447,7 +487,7 @@ export class Room {
                     "last-location":
                     {
                         "from-session": player.session,
-                        data: player.pacman.lastKnownLocation
+                        data: player.pacman.lastLocation
                     }
                 }
             ));
@@ -461,6 +501,7 @@ export class Room {
         this.players[newPlayer.session] = newPlayer;
 
         const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
+        this.ghosts[ghost.id] = ghost;
         ghost.startPathing();
     }
 

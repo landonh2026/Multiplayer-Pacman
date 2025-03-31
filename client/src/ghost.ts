@@ -1,3 +1,5 @@
+
+
 /**
  * Represents a ghost
  */
@@ -8,6 +10,8 @@ class Ghost {
     facingDirection: Direction|null;
     path: Path|null;
     color: string;
+    id: string;
+    eat_pending: boolean;
     
     constructor(x: number, y: number, id: string, color: string, add_to_list: boolean = true) {
         this.x = x;
@@ -15,6 +19,8 @@ class Ghost {
         this.movementSpeed = 5;
         this.facingDirection = null;
         this.color = color; // TODO: make this an object
+        this.id = id;
+        this.eat_pending = false;
 
         this.path = null;
 
@@ -28,6 +34,9 @@ class Ghost {
      */
     public draw() {
         ctx.fillStyle = this.color;
+
+        if (this.eat_pending) ctx.fillStyle = "gray";
+
         gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
     }
 
@@ -41,5 +50,11 @@ class Ghost {
 
         this.x += this.facingDirection.getDeltas().dx * this.movementSpeed * deltaTime;
         this.y += this.facingDirection.getDeltas().dy * this.movementSpeed * deltaTime;
+    }
+
+    public eat() {
+        if (this.eat_pending) return;
+        this.eat_pending = true;
+        gameManager.connectionManager.eatGhost(this.id);
     }
 }

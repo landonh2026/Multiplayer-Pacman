@@ -1,3 +1,5 @@
+const powerupSizeUp = 1.5;
+
 /**
  * Represents a Pacman
  */
@@ -11,7 +13,6 @@ class Pacman {
     movingDirection: Direction;
     queuedDirection: Direction;
 
-    visualRadius: number;
     movementSpeed: number;
     shouldMove: boolean;
     movingLastFrame: boolean;
@@ -36,7 +37,6 @@ class Pacman {
         this.queuedDirection = queuedDirection;
         
         this.radius = tileSize / 2;
-        this.visualRadius = this.radius;
         
         this.movementSpeed = tileSize / (6 + (2/3));
 
@@ -170,12 +170,21 @@ class Pacman {
      * @param deltaTime 
      */
     public draw(deltaTime: number) {
+        let sizeMultiplier = (this.isPoweredUp ? powerupSizeUp : 1);
+
         // create the gradient for this pacman
         const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);
-        gradient.addColorStop(0, "white");
-        gradient.addColorStop(0.225, this.color.gradient_start);
-        gradient.addColorStop(0.875,  this.color.gradient_end);
-        gradient.addColorStop(1, "black");
+        
+        if (this.isPoweredUp) {
+            gradient.addColorStop(0, this.color.gradient_start);
+            gradient.addColorStop(1,  this.color.gradient_end);
+        } else {
+            gradient.addColorStop(0, "white");
+            gradient.addColorStop(0.225, this.color.gradient_start);
+            gradient.addColorStop(0.875,  this.color.gradient_end);
+            gradient.addColorStop(1, "black");
+        }
+        
         ctx.fillStyle = gradient;
         ctx.strokeStyle = "#FFFFFF";
         
@@ -193,7 +202,7 @@ class Pacman {
         }
         
         // draw the pacman
-        gameManager.drawManager.drawPacman(this.x, this.y, this.radius, this.animationManager.animations.bodyAnimation.get_frame(), this.facingDirection);
+        gameManager.drawManager.drawPacman(this.x, this.y, this.radius * sizeMultiplier, this.animationManager.animations.bodyAnimation.get_frame(), this.facingDirection);
     }
 
     /**
@@ -380,13 +389,21 @@ class Pacman {
         }
     }
 
-    public checkShouldDie() {
+    public collideGhosts() {
         // todo: find a server side way of doing this
         for (let id of Object.keys(gameManager.ghosts)) {
             const ghost = gameManager.ghosts[id];
 
+            if (this.isPoweredUp) {
+                if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2*1.5) {
+                    ghost.eat();
+                }
+
+                continue;
+            }
+
             // todo: include ghost size instead of just client
-            if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
+            if (!ghost.eat_pending && Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
                 this.kill();
                 break;
             }
@@ -424,7 +441,7 @@ class Pacman {
         }
 
         if (this.isLocal) {
-            this.checkShouldDie();
+            this.collideGhosts();
         }
 
         // if we shouldn't move, set our animation frame to 0

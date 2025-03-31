@@ -4,6 +4,8 @@ import * as globals from "./globals.ts";
 import {Room} from "./room.ts";
 // import {Simulator} from "./simulator.ts";
 
+export enum PLAYER_TIMER_TYPES { POWERUP };
+
 export class Player {
     /** The session id for this player */
     session: string;
@@ -16,9 +18,7 @@ export class Player {
 
     /** The pacman for this player */
     pacman: Pacman;
-    
-    timeStamp: number;
-    
+        
     /** The room that this player is in */
     room: Room;
     
@@ -26,6 +26,9 @@ export class Player {
     lastBump: number;
 
     wins: number;
+    timeStamp: number;
+
+    timers: Map<PLAYER_TIMER_TYPES, Timer>;
 
     constructor(session: string, ws: ServerWebSocket<globals.SocketData>, color: globals.Colors, room: Room) {
         this.session = session;
@@ -35,6 +38,8 @@ export class Player {
         this.room = room;
         this.lastBump = 0;
         this.wins = 0;
+
+        this.timers = new Map();
 
         this.pacman = new Pacman(color, this);
     }
@@ -51,9 +56,10 @@ export class Player {
             utils.makeMessage(
                 "local-player-info",
                 {
+                    poweredUp: this.pacman.isPoweredUp,
                     isAlive: this.pacman.isAlive,
                     color: this.pacman.color,
-                    loc: this.pacman.lastKnownLocation,
+                    loc: this.pacman.lastLocation,
                     moveSpeed: this.pacman.movementSpeed,
                     session: this.session
                 }
@@ -65,7 +71,7 @@ export class Player {
      * Publish this player's location to other players
      */
     public publishLocation() {
-        const posData = utils.makeMessage("position", {...this.pacman.lastKnownLocation, isAlive: this.pacman.isAlive, poweredUp: this.pacman.isPoweredUp}, false);
+        const posData = utils.makeMessage("position", {...this.pacman.lastLocation, isAlive: this.pacman.isAlive, poweredUp: this.pacman.isPoweredUp}, false);
         posData["from-session"] = this.session;
         this.ws.publish(this.room.topics.event, JSON.stringify(posData));
     }
@@ -93,7 +99,7 @@ export class Player {
 export class Pacman {
     color: globals.Colors;
     movementSpeed: number;
-    lastKnownLocation: globals.PositionData;
+    lastLocation: globals.PositionData;
     lastClientTimestamp: number;
     player: Player;
     isAlive: boolean;
@@ -104,7 +110,7 @@ export class Pacman {
     constructor(color: globals.Colors, player: Player) {
         this.color = color;
         this.movementSpeed = 6;
-        this.lastKnownLocation = {x: 60, y: 100, facingDirection: 1, queuedDirection: 0, shouldMove: true, packetIndex: -1};
+        this.lastLocation = {x: 60, y: 100, facingDirection: 1, queuedDirection: 0, shouldMove: true, packetIndex: -1};
         this.lastClientTimestamp = 0;
         this.player = player;
         this.lastPosPacketTime = 0;
@@ -123,7 +129,7 @@ export class Pacman {
         if (collidingWalls == null) return null;
 
         // get the axis that we should check the distance on
-        let distanceDirectionCheck = this.lastKnownLocation.facingDirection % 2 == 0 ? "x" : "y" as "x"|"y";
+        let distanceDirectionCheck = this.lastLocation.facingDirection % 2 == 0 ? "x" : "y" as "x"|"y";
 
         let minDistance = null;
         let minDistanceObj = null;
@@ -131,7 +137,7 @@ export class Pacman {
         // go through each colliding wall and decide which one is closest
         for (let i = 0; i < collidingWalls.length; i++) {
             let thisCollision = collidingWalls[i];
-            let distance = Math.abs(this.lastKnownLocation[distanceDirectionCheck] - thisCollision.pos[distanceDirectionCheck]);
+            let distance = Math.abs(this.lastLocation[distanceDirectionCheck] - thisCollision.pos[distanceDirectionCheck]);
 
             if (minDistance == null || distance < minDistance) {
                 minDistance = distance;
@@ -150,7 +156,7 @@ export class Pacman {
      * @returns The estimated x and y position of the client
      */
     public getEstimatedPosition(deltaTime: number): {x: number, y: number} {
-        if (!this.lastKnownLocation.shouldMove) return {x: this.lastKnownLocation.x, y: this.lastKnownLocation.y};
+        if (!this.lastLocation.shouldMove) return {x: this.lastLocation.x, y: this.lastLocation.y};
 
         const nextWall = this.getNextCollidingWall();
 
@@ -162,22 +168,22 @@ export class Pacman {
 
         // we made it to the next wall
         if (nextWall != null && nextWall.distance < distance) {
-            const negativeMultiplier = this.lastKnownLocation.facingDirection > 1 ? 1 : -1;
+            const negativeMultiplier = this.lastLocation.facingDirection > 1 ? 1 : -1;
             // console.log(nextWall.distance);
 
-            if (this.lastKnownLocation.facingDirection % 2 == 0) {
+            if (this.lastLocation.facingDirection % 2 == 0) {
                 // console.log("horizontal stuff", this.lastKnownLocation.x, nextWall.distance, nextWall.wallObject[(this.lastKnownLocation.facingDirection + 2) % 4])
-                return {x: this.lastKnownLocation.x + (nextWall.distance*-negativeMultiplier) + (20*negativeMultiplier), y: this.lastKnownLocation.y};
+                return {x: this.lastLocation.x + (nextWall.distance*-negativeMultiplier) + (20*negativeMultiplier), y: this.lastLocation.y};
             }
             
             // console.log("vertical stuff", this.lastKnownLocation.y, nextWall.distance, nextWall.wallObject[(this.lastKnownLocation.facingDirection + 2) % 4])
-            return {x: this.lastKnownLocation.x, y: this.lastKnownLocation.y + (nextWall.distance*-negativeMultiplier) + (20*negativeMultiplier)};
+            return {x: this.lastLocation.x, y: this.lastLocation.y + (nextWall.distance*-negativeMultiplier) + (20*negativeMultiplier)};
         }
 
         delta.dx *= distance;
         delta.dy *= distance;
 
-        return {x: this.lastKnownLocation.x + delta.dx, y: this.lastKnownLocation.y + delta.dy};
+        return {x: this.lastLocation.x + delta.dx, y: this.lastLocation.y + delta.dy};
     }
 
     /**
@@ -185,6 +191,6 @@ export class Pacman {
      * @returns 
      */
     public getDirectionDelta() {
-        return utils.getDirectionDelta(this.lastKnownLocation.facingDirection);
+        return utils.getDirectionDelta(this.lastLocation.facingDirection);
     }
 }

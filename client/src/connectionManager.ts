@@ -136,9 +136,9 @@ class ConnectionManager {
                 pelletID: pellet,
                 "position": {
                     x: pacman.x,
-                    y: pacman.y
-                },
-                timestamp: this.getTimestamp()
+                    y: pacman.y,
+                    timestamp: this.getTimestamp()
+                }
             }
         ));
     }
@@ -149,9 +149,23 @@ class ConnectionManager {
             {
                 "position": {
                     x: gameManager.localPacman.x,
-                    y: gameManager.localPacman.y
+                    y: gameManager.localPacman.y,
+                    timestamp: this.getTimestamp()
+                }
+            }
+        ));
+    }
+
+    public eatGhost(id: string) {
+        this.socket.send(this.makeMessage(
+            "eat-ghost",
+            {
+                "position": {
+                    x: gameManager.localPacman.x,
+                    y: gameManager.localPacman.y,
+                    timestamp: this.getTimestamp()
                 },
-                timestamp: this.getTimestamp()
+                ghost_id: id
             }
         ));
     }

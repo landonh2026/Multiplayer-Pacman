@@ -47,9 +47,9 @@ export class Simulator {
      * @returns A list of object containing the position and wall data that this pacman could potentially run into
      */
     public getPacmanWallCollisions(pacman: Pacman, walls: Array<[number, number, number, number]>) {
-        const pacmanPosition = {x: pacman.lastKnownLocation.x, y: pacman.lastKnownLocation.y};
+        const pacmanPosition = {x: pacman.lastLocation.x, y: pacman.lastLocation.y};
         let pacmanDirection = pacman.getDirectionDelta();
-        let directionCheck = this.wallCollisionFunctions[pacman.lastKnownLocation.facingDirection];
+        let directionCheck = this.wallCollisionFunctions[pacman.lastLocation.facingDirection];
 
         if (directionCheck == undefined) {
             console.error("Direction was invalid!");

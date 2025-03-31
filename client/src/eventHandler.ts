@@ -9,7 +9,7 @@ class EventHandler {
         this.typeHandlers = {
             "player-join": this.playerJoin.bind(this),
             "player-leave": this.playerLeave.bind(this),
-            "position": this.positionUpdate.bind(this),
+            "position": this.remotePacmanUpdate.bind(this),
             "local-player-info": this.localInfo.bind(this),
             "board-state":this.boardState.bind(this),
             "eat-pellet": this.eatPellet.bind(this),
@@ -19,7 +19,8 @@ class EventHandler {
             "trigger-bump": this.handleBump.bind(this),
             "ghost-position": this.updateGhostPosition.bind(this),
             "update-scores": this.updateScores.bind(this),
-            "kill-pacman": this.remotePacmanDied.bind(this)
+            "kill-pacman": this.remotePacmanDied.bind(this),
+            "reject-ghost-eat": this.ghostEatReject.bind(this)
         }
     }
 
@@ -195,7 +196,7 @@ class EventHandler {
 
         // update the pacman's location
         if (parsedData.data["last-location"] != undefined)
-            this.positionUpdate(parsedData.data["last-location"]);
+            this.remotePacmanUpdate(parsedData.data["last-location"]);
     }
 
     /**
@@ -211,13 +212,20 @@ class EventHandler {
      * Handle a position update for a remote pacman form the server
      * @param parsedData The parsed data from the server
      */
-    public positionUpdate(parsedData: any) {
+    public remotePacmanUpdate(parsedData: any) {
         const workingPacman = gameManager.remotePlayers[parsedData["from-session"] as keyof typeof gameManager.remotePlayers].pacman;
         workingPacman.x = parsedData.data.x;
         workingPacman.y = parsedData.data.y;
         workingPacman.isDead = !parsedData.data.isAlive;
+        workingPacman.isPoweredUp = parsedData.data.poweredUp;
         workingPacman.facingDirection = Direction.fromEnum(parsedData.data.facingDirection) as Direction;
         workingPacman.queuedDirection = Direction.fromEnum(parsedData.data.queuedDirection) as Direction;
         workingPacman.shouldMove = parsedData.data.shouldMove;
+    }
+
+    public ghostEatReject(parsedData: any) {
+        console.log("ghost eat rejected", parsedData);
+
+        gameManager.ghosts[parsedData.data.id].eat_pending = false;
     }
 }

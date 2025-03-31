@@ -16,6 +16,7 @@ export class Ghost {
     id: string;
     color: globals.Colors;
     fallback_last: boolean;
+    eaten: boolean;
 
     constructor(x: number, y: number, room: Room) {
         this.x = x;
@@ -32,6 +33,7 @@ export class Ghost {
         this.nextTurnTimeout = null;
 
         this.fallback_last = false;
+        this.eaten = false;
 
         this.sendLocation();
     }
@@ -42,11 +44,21 @@ export class Ghost {
             utils.makeMessage("ghost-position",
             {
                 position: {x: this.x, y: this.y, direction: this.facingDirection},
+                eaten: this.eaten,
                 id: this.id,
                 color: this.color,
                 debug_path: globals.debug ? this.path?.nodes.map((n) => { return {x: n.x, y: n.y} }) : null
             }
         ));
+    }
+
+    public eat() {
+        this.eaten = true;
+
+        this.facingDirection = null;
+        this.sendLocation();
+
+        if (this.nextTurnTimeout) clearTimeout(this.nextTurnTimeout);
     }
 
     public determineTarget(players: Array<Player>) {
@@ -60,7 +72,7 @@ export class Ghost {
         for (let player of players) {
             if (!player.pacman.isAlive) continue;
 
-            const distance = heuristic(this.x, this.y, player.pacman.lastKnownLocation.x, player.pacman.lastKnownLocation.y);
+            const distance = heuristic(this.x, this.y, player.pacman.lastLocation.x, player.pacman.lastLocation.y);
 
             if (distance < closest.distance) {
                 closest = {
@@ -106,6 +118,8 @@ export class Ghost {
     }
 
     public onTurn() {
+        if (this.eaten) return;
+        
         // if the path is null set the fallback timer
         if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
             this.findPathToNextTarget();
