@@ -153,6 +153,8 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public localInfo(parsedData: any) {
+        console.log(parsedData);
+
         gameManager.localPacman.color = PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS];
 
         gameManager.localPacman.isDead = !parsedData.data.isAlive;
@@ -165,6 +167,9 @@ class EventHandler {
         gameManager.localPacman.shouldMove = parsedData.data.loc.shouldMove;
         gameManager.localPacman.movementSpeed = parsedData.data.moveSpeed;
 
+        console.log(gameManager.localPacman.facingDirection);
+
+        // todo: only do if we just became alive
         gameManager.localPacman.animationManager.animations.killAnimation.reset();
         gameManager.localPacman.animationManager.animations.killAnimation.setActive(false);
 

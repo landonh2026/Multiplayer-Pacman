@@ -26,7 +26,7 @@ export class Ghost {
         this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
         this.id = crypto.randomUUID().toString();
 
-        this.facingDirection = 0;
+        this.facingDirection = null;
         this.currentTarget = null;
         this.path = null;
         this.room = room;
@@ -119,7 +119,7 @@ export class Ghost {
 
     public onTurn() {
         if (this.eaten) return;
-        
+
         // if the path is null set the fallback timer
         if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
             this.findPathToNextTarget();

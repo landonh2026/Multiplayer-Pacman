@@ -487,7 +487,7 @@ export class Room {
                     "last-location":
                     {
                         "from-session": player.session,
-                        data: player.pacman.lastLocation
+                        data: player.publishLocation(false)
                     }
                 }
             ));

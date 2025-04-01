@@ -70,10 +70,11 @@ export class Player {
     /**
      * Publish this player's location to other players
      */
-    public publishLocation() {
+    public publishLocation(send: boolean = true) {
         const posData = utils.makeMessage("position", {...this.pacman.lastLocation, isAlive: this.pacman.isAlive, poweredUp: this.pacman.isPoweredUp}, false);
         posData["from-session"] = this.session;
-        this.ws.publish(this.room.topics.event, JSON.stringify(posData));
+        if (send) this.ws.publish(this.room.topics.event, JSON.stringify(posData));
+        else return posData;
     }
 
     /**
