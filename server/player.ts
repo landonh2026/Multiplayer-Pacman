@@ -26,7 +26,7 @@ export class Player {
     lastCollision: number;
 
     wins: number;
-    timeStamp: number;
+    timestamp: number;
 
     timers: Map<PLAYER_TIMER_TYPES, Timer>;
 
@@ -34,7 +34,7 @@ export class Player {
         this.session = session;
         this.ws = ws;
         this.score = 0;
-        this.timeStamp = performance.now();
+        this.timestamp = performance.now();
         this.room = room;
         this.lastCollision = 0;
         this.wins = 0;
@@ -83,7 +83,7 @@ export class Player {
      * @returns Is this timestamp allowed?
      */
     public isTimestampAllowed(timestamp: number) {
-        const timeDifference = ((performance.now() - this.timeStamp) - (timestamp));
+        const timeDifference = ((performance.now() - this.timestamp) - (timestamp));
         // console.log(timeDifference);
         return timeDifference < 1000 && timeDifference > 0;
     }
@@ -93,7 +93,7 @@ export class Player {
      */
     public resetTimestamp() {
         this.ws.send(utils.makeMessage("server-time-reset", undefined));
-        this.timeStamp = performance.now();
+        this.timestamp = performance.now();
     }
 }
 

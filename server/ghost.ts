@@ -23,7 +23,8 @@ export class Ghost {
         this.y = y;
         this.movementSpeed = 5;
 
-        this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
+        // this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
+        this.color = "RED" as globals.Colors;
         this.id = crypto.randomUUID().toString();
 
         this.facingDirection = null;

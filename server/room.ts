@@ -526,9 +526,9 @@ export class Room {
         newPlayer.ws.send(utils.makeMessage("board-state", this.makeBoardState()));
         this.players[newPlayer.session] = newPlayer;
 
-        // const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
-        // this.ghosts[ghost.id] = ghost;
-        // ghost.startPathing();
+        const ghost = new Ghost(340, 300, this);
+        this.ghosts[ghost.id] = ghost;
+        ghost.startPathing();
     }
 
     /**
