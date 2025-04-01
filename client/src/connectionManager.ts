@@ -82,9 +82,9 @@ class ConnectionManager {
      * @param pacman The local pacman
      * @param remoteSession The remote pacman that the client bumped into
      */
-    public triggerBump(pacman: Pacman, remoteSession: string) {
+    public playerCollision(pacman: Pacman, remoteSession: string) {
         this.socket.send(this.makeMessage(
-            "trigger-bump",
+            "player-collide",
             {
                 remotePlayer: remoteSession,
                 position: {
@@ -137,8 +137,8 @@ class ConnectionManager {
                 "position": {
                     x: pacman.x,
                     y: pacman.y,
-                    timestamp: this.getTimestamp()
-                }
+                },
+                timestamp: this.getTimestamp()
             }
         ));
     }
@@ -150,8 +150,8 @@ class ConnectionManager {
                 "position": {
                     x: gameManager.localPacman.x,
                     y: gameManager.localPacman.y,
-                    timestamp: this.getTimestamp()
-                }
+                },
+                timestamp: this.getTimestamp()
             }
         ));
     }
@@ -163,8 +163,8 @@ class ConnectionManager {
                 "position": {
                     x: gameManager.localPacman.x,
                     y: gameManager.localPacman.y,
-                    timestamp: this.getTimestamp()
                 },
+                timestamp: this.getTimestamp(), // TODO: should this be in .position or not
                 ghost_id: id
             }
         ));

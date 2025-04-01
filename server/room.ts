@@ -70,7 +70,7 @@ export class Room {
         this.messageHandlers = {
             "position": this.handlePositionUpdate.bind(this),
             "eat-pellet": this.handlePelletEat.bind(this),
-            "trigger-bump": this.handlePlayerBump.bind(this),
+            "player-collide": this.handlePlayerCollision.bind(this),
             "kill-pacman": this.handlePlayerDead.bind(this),
             "eat-ghost": this.handleGhostEat.bind(this)
         };
@@ -217,18 +217,20 @@ export class Room {
     }
 
     /**
-     * Handle the packet sent when a client bumps another player
+     * Handle the packet sent when a client collides with another player
      * @param player The player that sent the packet
      * @param data The data from the client
      */
-    public handlePlayerBump(player: Player, data: {data: globals.PositionData}) {
+    public handlePlayerCollision(player: Player, data: {data: globals.PositionData}) {
         const otherPlayer = this.players[data.data.remotePlayer];
         if (otherPlayer == undefined) return;
 
+        if (!player.pacman.isAlive || !otherPlayer.pacman.isAlive) return;
+
         const now = performance.now();
-        // both players submitted this bump, only acknowledge one bump so we skip this one
-        if (now-player.lastBump < 500 && now-otherPlayer.lastBump < 500) {
+        if (now-player.lastCollision < 500 && now-otherPlayer.lastCollision < 500) {
             // console.log(`too quick bumps (${now-player.lastBump}, ${now-otherPlayer.lastBump})`);
+            // both players submitted this collision, only acknowledge one total. we already acknowledged one so we skip
             return; 
         }
 
@@ -241,7 +243,6 @@ export class Room {
         // if (!this.checkPlayerMoveDistance(data.data.timestamp, player, newPacmanPosition)) {
         if (!this.verifyNewPosition(player, newPacmanPosition)) {
             player.log("Moved too quickly while attempting to trigger a bump");
-            // player.ws.send(utils.makeMessage("bump-reject", {})); // TODO: implement
             return;
         }
 
@@ -255,25 +256,44 @@ export class Room {
         let dx = Math.abs(player.pacman.lastLocation.x-estimatedOtherPlayerPosition.x);
         let dy = Math.abs(player.pacman.lastLocation.y-estimatedOtherPlayerPosition.y);
 
-        // console.log(player.pacman.color, dx, dy);
-
         if (dx > allowedDistance || dy > allowedDistance) {
             // TODO: do something here
             player.log("Attempted to bump a pacman that was too far");
             return;
         }
 
+        // both are in the same powerup state, they should bump
+        if (player.pacman.isPoweredUp == otherPlayer.pacman.isPoweredUp) {
+            this.handlePlayerBump(player, dx, dy, now, estimatedOtherPlayerPosition, otherPlayer);
+            return;
+        }
+
+        // otherwise, one pacman eats the other
+        let eaten = player.pacman.isPoweredUp ? otherPlayer : player;
+        eaten.pacman.isAlive = false;
+
+        if (otherPlayer.pacman.isPoweredUp) {
+            // update the remote player's position
+            otherPlayer.pacman.lastLocation.x = estimatedOtherPlayerPosition.x;
+            otherPlayer.pacman.lastLocation.y = estimatedOtherPlayerPosition.y;
+        }
+
+        eaten.sendLocalPlayerState();
+        eaten.publishLocation();
+    }
+
+    public handlePlayerBump(player: Player, dx: number, dy: number, now: number, estimatedOtherPlayerPosition: { x: number; y: number; }, otherPlayer: Player) {
         // calculate the direction each player should launch
         let direction;
         if (dx < dy) direction = player.pacman.lastLocation.y - estimatedOtherPlayerPosition.y > 0 ? 3 : 1;
         else direction = player.pacman.lastLocation.x - estimatedOtherPlayerPosition.x > 0 ? 2 : 0;
 
         // set the last bump time for each player to be now
-        player.lastBump = now;
-        otherPlayer.lastBump = now;
+        player.lastCollision = now;
+        otherPlayer.lastCollision = now;
 
         // send the collision data to each client
-        this.server.publish(this.topics.event, utils.makeMessage("trigger-bump", {
+        this.server.publish(this.topics.event, utils.makeMessage("player-bump", {
             collisions: [
                 {
                     session: player.session,
@@ -364,6 +384,7 @@ export class Room {
                 player.pacman.lastLocation.x = estimated_pos.x;
                 player.pacman.lastLocation.y = estimated_pos.y;
 
+                player.publishLocation();
                 player.sendLocalPlayerState();
             }, globals.animation_timings.power_up));
         }
@@ -388,7 +409,12 @@ export class Room {
             return;
         }
 
-        if (!this.verifyNewPosition(player, data.data.position)) {
+        let newPacmanPosition: globals.PositionData = {...player.pacman.lastLocation};
+        newPacmanPosition.timestamp = data.data.timestamp;
+        newPacmanPosition.x = data.data.position.x;
+        newPacmanPosition.y = data.data.position.y;
+
+        if (!this.verifyNewPosition(player, newPacmanPosition)) {
             player.log("Moved too quickly while attempting to eat a ghost");
             player.ws.send(utils.makeMessage("reject-ghost-eat", {id: data.data.ghost_id}));
             return;
@@ -487,7 +513,7 @@ export class Room {
                     "last-location":
                     {
                         "from-session": player.session,
-                        data: player.publishLocation(false)
+                        data: {...player.pacman.lastLocation, isAlive: player.pacman.isAlive, poweredUp: player.pacman.isPoweredUp}
                     }
                 }
             ));
@@ -500,9 +526,9 @@ export class Room {
         newPlayer.ws.send(utils.makeMessage("board-state", this.makeBoardState()));
         this.players[newPlayer.session] = newPlayer;
 
-        const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
-        this.ghosts[ghost.id] = ghost;
-        ghost.startPathing();
+        // const ghost = new Ghost(this.gameBoard.pathIntersections[10].x*40, this.gameBoard.pathIntersections[10].y*40, this);
+        // this.ghosts[ghost.id] = ghost;
+        // ghost.startPathing();
     }
 
     /**

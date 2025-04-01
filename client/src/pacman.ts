@@ -271,12 +271,11 @@ class Pacman {
 
     /**
      * Handle collision with any remote pacman
-     * @returns Did we collide with another pacman?
      */
     public collideRemotePacman() {
         // skip if we are in our bump animation
         if (this.animationManager.animations.bumpAnimation.isActive()) {
-            return false;
+            return;
         }
 
         // loop through each remote player
@@ -288,17 +287,15 @@ class Pacman {
             }
 
             // determine if we should bump this remote pacman
-            let allowedDistance = this.radius + remotePlayer.pacman.radius;
+            let allowedDistance = this.radius * (this.isPoweredUp ? powerupSizeUp : 1) + remotePlayer.pacman.radius * (remotePlayer.pacman.isPoweredUp ? powerupSizeUp : 1);
             if (Math.abs(remotePlayer.pacman.x-this.x) > allowedDistance || Math.abs(remotePlayer.pacman.y-this.y) > allowedDistance) {
                 continue;
             }
 
             // tell the server that we just bumped this remote pacman
-            gameManager.connectionManager.triggerBump(this, remotePlayer.session);
-            return true;
+            gameManager.connectionManager.playerCollision(this, remotePlayer.session);
+            return;
         }
-
-        return false;
     }
 
     public kill() {

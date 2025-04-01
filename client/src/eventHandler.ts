@@ -16,7 +16,7 @@ class EventHandler {
             "pellet-reject": this.pelletRejected.bind(this),
             "score-update": this.scoreUpdate.bind(this),
             "server-time-reset": this.resetServerTime.bind(this),
-            "trigger-bump": this.handleBump.bind(this),
+            "player-bump": this.handleBump.bind(this),
             "ghost-position": this.updateGhostPosition.bind(this),
             "update-scores": this.updateScores.bind(this),
             "kill-pacman": this.remotePacmanDied.bind(this),
@@ -153,9 +153,12 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public localInfo(parsedData: any) {
-        console.log(parsedData);
-
         gameManager.localPacman.color = PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS];
+
+        if (gameManager.localPacman.isDead && parsedData.data.isAlive) {
+            gameManager.localPacman.animationManager.animations.killAnimation.reset();
+            gameManager.localPacman.animationManager.animations.killAnimation.setActive(false);
+        }
 
         gameManager.localPacman.isDead = !parsedData.data.isAlive;
         gameManager.localPacman.isPoweredUp = parsedData.data.poweredUp;
@@ -166,12 +169,6 @@ class EventHandler {
         gameManager.localPacman.queuedDirection = Direction.fromEnum(parsedData.data.loc.queuedDirection) as Direction;
         gameManager.localPacman.shouldMove = parsedData.data.loc.shouldMove;
         gameManager.localPacman.movementSpeed = parsedData.data.moveSpeed;
-
-        console.log(gameManager.localPacman.facingDirection);
-
-        // todo: only do if we just became alive
-        gameManager.localPacman.animationManager.animations.killAnimation.reset();
-        gameManager.localPacman.animationManager.animations.killAnimation.setActive(false);
 
         gameManager.uuid = parsedData.data.session;
     }
@@ -229,8 +226,6 @@ class EventHandler {
     }
 
     public ghostEatReject(parsedData: any) {
-        console.log("ghost eat rejected", parsedData);
-
         gameManager.ghosts[parsedData.data.id].eat_pending = false;
     }
 }

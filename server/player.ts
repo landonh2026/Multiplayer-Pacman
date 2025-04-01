@@ -23,7 +23,7 @@ export class Player {
     room: Room;
     
     /** The last time this player was bumped */
-    lastBump: number;
+    lastCollision: number;
 
     wins: number;
     timeStamp: number;
@@ -36,7 +36,7 @@ export class Player {
         this.score = 0;
         this.timeStamp = performance.now();
         this.room = room;
-        this.lastBump = 0;
+        this.lastCollision = 0;
         this.wins = 0;
 
         this.timers = new Map();
