@@ -370,6 +370,7 @@ export class Room {
             console.log("player ate power");
 
             player.sendLocalPlayerState();
+            player.publishLocation();
 
             // clear existing timers
             clearTimeout(player.timers.get(PLAYER_TIMER_TYPES.POWERUP));

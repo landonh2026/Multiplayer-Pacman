@@ -177,23 +177,17 @@ class Pacman {
             let powerupAnimationScale = this.radius / 2;
 
             this.animations.powerAnimation.step_frame(deltaTime);
-            customRadius = this.radius + powerUpSizingFunction(this.animations.powerAnimation.get_progress()) * powerupAnimationScale * (this.isPoweredUp ? 1 : -(1/1.5));
-            console.log(customRadius, this.animations.powerAnimation.get_progress());
+            customRadius = this.radius + powerUpSizingFunction(
+                this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
+                (1 - this.animations.powerAnimation.get_progress())
+            ) * powerupAnimationScale;
+            // console.log(customRadius, this.animations.powerAnimation.get_progress());
         }
 
         // create the gradient for this pacman
-        const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);
-        
-        if (this.isPoweredUp) {
-            gradient.addColorStop(0, this.color.gradient_start);
-            gradient.addColorStop(1,  this.color.gradient_end);
-        } else {
-            gradient.addColorStop(0, "white");
-            gradient.addColorStop(0.225, this.color.gradient_start);
-            gradient.addColorStop(0.875,  this.color.gradient_end);
-            gradient.addColorStop(1, "black");
-        }
-        
+        const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);    
+        gradient.addColorStop(0, this.color.gradient_start);
+        gradient.addColorStop(1,  this.color.gradient_end);
         ctx.fillStyle = gradient;
         ctx.strokeStyle = "#FFFFFF";
         
