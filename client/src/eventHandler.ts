@@ -155,9 +155,16 @@ class EventHandler {
     public localInfo(parsedData: any) {
         gameManager.localPacman.color = PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS];
 
+        // local pacman just revived
         if (gameManager.localPacman.isDead && parsedData.data.isAlive) {
-            gameManager.localPacman.animationManager.animations.killAnimation.reset();
-            gameManager.localPacman.animationManager.animations.killAnimation.setActive(false);
+            gameManager.localPacman.animations.killAnimation.reset();
+            gameManager.localPacman.animations.killAnimation.setActive(false);
+        }
+
+        // local pacman just powered up
+        if (!gameManager.localPacman.isPoweredUp && parsedData.data.poweredUp) {
+            gameManager.localPacman.animations.powerAnimation.reset();
+            gameManager.localPacman.animations.powerAnimation.setActive(true);
         }
 
         gameManager.localPacman.isDead = !parsedData.data.isAlive;
@@ -216,6 +223,19 @@ class EventHandler {
      */
     public remotePacmanUpdate(parsedData: any) {
         const workingPacman = gameManager.remotePlayers[parsedData["from-session"] as keyof typeof gameManager.remotePlayers].pacman;
+        
+        // pacman just revived
+        if (workingPacman.isDead && parsedData.data.isAlive) {
+            workingPacman.animationManager.animations.killAnimation.reset();
+            workingPacman.animationManager.animations.killAnimation.setActive(false);
+        }
+
+        // pacman just powered up
+        if (!workingPacman.isPoweredUp && parsedData.data.poweredUp) {
+            workingPacman.animations.powerAnimation.reset();
+            workingPacman.animations.powerAnimation.setActive(true);
+        }
+
         workingPacman.x = parsedData.data.x;
         workingPacman.y = parsedData.data.y;
         workingPacman.isDead = !parsedData.data.isAlive;

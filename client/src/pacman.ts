@@ -24,6 +24,7 @@ class Pacman {
     score: number;
     lastQueuedDirectionNode: { distance: number, node: PathIntersection, nodeIndex: number } | null;
     animationManager: AnimationManager;
+    animations: typeof this.animationManager.animations;
 
     constructor(x: number, y: number, color: PacmanColor, facingDirection: Direction, queuedDirection: Direction, isDead: boolean, score: number, isLocal: boolean, tileSize: number|null = null) {
         if (tileSize == null) tileSize = gameManager.tileSize;
@@ -51,11 +52,13 @@ class Pacman {
         this.lastQueuedDirectionNode = null;
         
         this.animationManager = new AnimationManager();
-        this.animationManager.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
-        this.animationManager.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
-        this.animationManager.animations.killAnimation = new GameAnimation(41, true, 1, false);
+        this.animations = this.animationManager.animations;
+        this.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
+        this.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
+        this.animations.killAnimation = new GameAnimation(41, true, 1, false);
+        this.animations.powerAnimation = new GameAnimation(24 * 1.5, false, 1, false);
 
-        this.animationManager.animations.bodyAnimation.setActive(true);
+        this.animations.bodyAnimation.setActive(true);
     }
 
     /**
@@ -156,7 +159,7 @@ class Pacman {
             }
 
             // Set the pacman's current mouth frame to 0
-            this.animationManager.animations.bodyAnimation.currentFrame = 0;
+            this.animations.bodyAnimation.currentFrame = 0;
 
             // stop the pacman's movement if stopMove is true
             if (stopMove) this.shouldMove = false;
@@ -190,19 +193,19 @@ class Pacman {
         
         // if we are moving step the mouth animation
         if (this.shouldMove) {
-            this.animationManager.animations.bodyAnimation.step_frame(deltaTime);
+            this.animations.bodyAnimation.step_frame(deltaTime);
         }
 
         // if we are dead draw the dead pacman animation
         if (this.isDead) {
-            this.animationManager.animations.killAnimation.step_frame(deltaTime);
-            gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animationManager.animations.killAnimation.get_frame());
+            this.animations.killAnimation.step_frame(deltaTime);
+            gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animations.killAnimation.get_frame());
 
             return;
         }
         
         // draw the pacman
-        gameManager.drawManager.drawPacman(this.x, this.y, this.radius * sizeMultiplier, this.animationManager.animations.bodyAnimation.get_frame(), this.facingDirection);
+        gameManager.drawManager.drawPacman(this.x, this.y, this.radius * sizeMultiplier, this.animations.bodyAnimation.get_frame(), this.facingDirection);
     }
 
     /**
@@ -274,7 +277,7 @@ class Pacman {
      */
     public collideRemotePacman() {
         // skip if we are in our bump animation
-        if (this.animationManager.animations.bumpAnimation.isActive()) {
+        if (this.animations.bumpAnimation.isActive()) {
             return;
         }
 
@@ -304,8 +307,8 @@ class Pacman {
 
         this.isDead = true;
 
-        this.animationManager.animations.killAnimation.reset();
-        this.animationManager.animations.killAnimation.setActive(true);
+        this.animations.killAnimation.reset();
+        this.animations.killAnimation.setActive(true);
     }
 
     /**
@@ -313,12 +316,12 @@ class Pacman {
      * @param collisionFrom The direction that the collision came from
      */
     public triggerBump(collisionFrom: Direction) {
-        this.animationManager.animations.bumpAnimation.reset();
-        this.animationManager.animations.bumpAnimation.setActive(true);
+        this.animations.bumpAnimation.reset();
+        this.animations.bumpAnimation.setActive(true);
 
         this.facingDirection = collisionFrom;
 
-        this.animationManager.animations.bumpAnimation.meta = {
+        this.animations.bumpAnimation.meta = {
             moveDirection: collisionFrom.getOpposite()
         };
     }
@@ -329,25 +332,25 @@ class Pacman {
      * @returns Is the bump animation still active?
      */
     public bumpAnimation(deltaTime: number) {
-        if (!this.animationManager.animations.bumpAnimation.isActive()) return;
+        if (!this.animations.bumpAnimation.isActive()) return;
 
         // calculate the distance that we should move
-        let beforeFrame = this.animationManager.animations.bumpAnimation.currentFrame;
-        this.animationManager.animations.bumpAnimation.step_frame(deltaTime);
-        let frameChange = this.animationManager.animations.bumpAnimation.currentFrame - beforeFrame;
+        let beforeFrame = this.animations.bumpAnimation.currentFrame;
+        this.animations.bumpAnimation.step_frame(deltaTime);
+        let frameChange = this.animations.bumpAnimation.currentFrame - beforeFrame;
 
         // set our moving direction to the move direction of the animation
-        this.movingDirection = this.animationManager.animations.bumpAnimation.meta.moveDirection;
+        this.movingDirection = this.animations.bumpAnimation.meta.moveDirection;
 
         // move the pacman in the moving direction
         [this.x, this.y] = this.getPositionAhead(frameChange);
 
         // handle if we just finished the bump animation
-        if (this.animationManager.animations.bumpAnimation.isDone()) {
+        if (this.animations.bumpAnimation.isDone()) {
             // collide with walls, send our current position, and disable the animation
             this.collideWalls();
             gameManager.connectionManager.sendPosition(this);
-            this.animationManager.animations.bumpAnimation.setActive(false);
+            this.animations.bumpAnimation.setActive(false);
             return false;
         }
 
@@ -443,7 +446,7 @@ class Pacman {
 
         // if we shouldn't move, set our animation frame to 0
         if (!this.shouldMove) {
-            this.animationManager.animations.bodyAnimation.currentFrame = 0;
+            this.animations.bodyAnimation.currentFrame = 0;
             this.movingLastFrame = this.shouldMove;
             return;
         }
