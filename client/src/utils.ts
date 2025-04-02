@@ -59,10 +59,12 @@ function lineIntersection(
  * @param x 
  */
 function powerUpSizingFunction(x: number): number {
-    const p = [.56, -0.02, 0.41, 1.5];
+    const p = [0.27, -3, 3, 1];
 
     return Math.pow(1 - x, 3) * p[0] +
         3 * Math.pow(1 - x, 2) * x * p[1] +
         3 * (1 - x) * Math.pow(x, 2) * p[2] +
         Math.pow(x, 3) * p[3];
 }
+
+console.log(powerUpSizingFunction(1));

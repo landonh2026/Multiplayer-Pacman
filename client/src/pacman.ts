@@ -1,5 +1,3 @@
-const powerupSizeUp = 1.5;
-
 /**
  * Represents a Pacman
  */
@@ -56,7 +54,7 @@ class Pacman {
         this.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
         this.animations.killAnimation = new GameAnimation(41, true, 1, false);
-        this.animations.powerAnimation = new GameAnimation(24, false, 1, false);
+        this.animations.powerAnimation = new GameAnimation(8, false, 1, false);
 
         this.animations.bodyAnimation.setActive(true);
     }
@@ -173,11 +171,14 @@ class Pacman {
      * @param deltaTime 
      */
     public draw(deltaTime: number) {
-        let sizeMultiplier = (this.isPoweredUp ? powerupSizeUp : 1);
+        let customRadius = this.radius * (this.isPoweredUp ? 1.5 : 1);
         
         if (!this.animations.powerAnimation.isDone()) {
+            let powerupAnimationScale = this.radius / 2;
+
             this.animations.powerAnimation.step_frame(deltaTime);
-            sizeMultiplier = powerUpSizingFunction(this.animations.powerAnimation.get_progress()) * powerupSizeUp;
+            customRadius = this.radius + powerUpSizingFunction(this.animations.powerAnimation.get_progress()) * powerupAnimationScale * (this.isPoweredUp ? 1 : -(1/1.5));
+            console.log(customRadius, this.animations.powerAnimation.get_progress());
         }
 
         // create the gradient for this pacman
@@ -210,7 +211,7 @@ class Pacman {
         }
         
         // draw the pacman
-        gameManager.drawManager.drawPacman(this.x, this.y, this.radius * sizeMultiplier, this.animations.bodyAnimation.get_frame(), this.facingDirection);
+        gameManager.drawManager.drawPacman(this.x, this.y, customRadius, this.animations.bodyAnimation.get_frame(), this.facingDirection);
     }
 
     /**
@@ -295,7 +296,8 @@ class Pacman {
             }
 
             // determine if we should bump this remote pacman
-            let allowedDistance = this.radius * (this.isPoweredUp ? powerupSizeUp : 1) + remotePlayer.pacman.radius * (remotePlayer.pacman.isPoweredUp ? powerupSizeUp : 1);
+            // todo add config for powered up size. Maybe use server to set size of pacman
+            let allowedDistance = this.radius * (this.isPoweredUp ? 1.5 : 1) + remotePlayer.pacman.radius * (remotePlayer.pacman.isPoweredUp ? 1.5 : 1);
             if (Math.abs(remotePlayer.pacman.x-this.x) > allowedDistance || Math.abs(remotePlayer.pacman.y-this.y) > allowedDistance) {
                 continue;
             }

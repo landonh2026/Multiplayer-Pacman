@@ -165,8 +165,8 @@ class EventHandler {
             gameManager.localPacman.animations.killAnimation.setActive(false);
         }
 
-        // local pacman just powered up
-        if (!gameManager.localPacman.isPoweredUp && parsedData.data.poweredUp) {
+        // local pacman power up animation
+        if (gameManager.localPacman.isPoweredUp != parsedData.data.poweredUp) {
             gameManager.localPacman.animations.powerAnimation.reset();
             gameManager.localPacman.animations.powerAnimation.setActive(true);
         }
@@ -198,7 +198,7 @@ class EventHandler {
         }
 
         // pacman just powered up
-        if (!workingPacman.isPoweredUp && parsedData.data.poweredUp) {
+        if (workingPacman.isPoweredUp != parsedData.data.poweredUp) {
             workingPacman.animations.powerAnimation.reset();
             workingPacman.animations.powerAnimation.setActive(true);
         }
