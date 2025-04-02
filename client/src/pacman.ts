@@ -56,7 +56,7 @@ class Pacman {
         this.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
         this.animations.killAnimation = new GameAnimation(41, true, 1, false);
-        this.animations.powerAnimation = new GameAnimation(24 * 1.5, false, 1, false);
+        this.animations.powerAnimation = new GameAnimation(24, false, 1, false);
 
         this.animations.bodyAnimation.setActive(true);
     }
@@ -174,6 +174,11 @@ class Pacman {
      */
     public draw(deltaTime: number) {
         let sizeMultiplier = (this.isPoweredUp ? powerupSizeUp : 1);
+        
+        if (!this.animations.powerAnimation.isDone()) {
+            this.animations.powerAnimation.step_frame(deltaTime);
+            sizeMultiplier = powerUpSizingFunction(this.animations.powerAnimation.get_progress()) - 1;
+        }
 
         // create the gradient for this pacman
         const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);

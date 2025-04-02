@@ -84,5 +84,7 @@ class GameAnimation {
         return this.currentFrame + 1;
     }
 
-
+    public get_progress() {
+        return this.currentFrame / this.totalFrames;
+    }
 }

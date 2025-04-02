@@ -136,6 +136,10 @@ class EventHandler {
         }
     }
 
+    public ghostEatReject(parsedData: any) {
+        gameManager.ghosts[parsedData.data.id].eat_pending = false;
+    }
+
     /**
      * Update the board state using information from the server
      * @param parsedData The parsed data from the server
@@ -181,6 +185,34 @@ class EventHandler {
     }
 
     /**
+     * Handle a position update for a remote pacman form the server
+     * @param parsedData The parsed data from the server
+     */
+    public remotePacmanUpdate(parsedData: any) {
+        const workingPacman = gameManager.remotePlayers[parsedData["from-session"] as keyof typeof gameManager.remotePlayers].pacman;
+        
+        // pacman just revived
+        if (workingPacman.isDead && parsedData.data.isAlive) {
+            workingPacman.animationManager.animations.killAnimation.reset();
+            workingPacman.animationManager.animations.killAnimation.setActive(false);
+        }
+
+        // pacman just powered up
+        if (!workingPacman.isPoweredUp && parsedData.data.poweredUp) {
+            workingPacman.animations.powerAnimation.reset();
+            workingPacman.animations.powerAnimation.setActive(true);
+        }
+
+        workingPacman.x = parsedData.data.x;
+        workingPacman.y = parsedData.data.y;
+        workingPacman.isDead = !parsedData.data.isAlive;
+        workingPacman.isPoweredUp = parsedData.data.poweredUp;
+        workingPacman.facingDirection = Direction.fromEnum(parsedData.data.facingDirection) as Direction;
+        workingPacman.queuedDirection = Direction.fromEnum(parsedData.data.queuedDirection) as Direction;
+        workingPacman.shouldMove = parsedData.data.shouldMove;
+    }
+
+    /**
      * Handle a player joining the room
      * @param parsedData The parsed data from the server
      */
@@ -215,37 +247,5 @@ class EventHandler {
     public playerLeave(parsedData: any) {
         delete gameManager.remotePlayers[parsedData.data.session];
         gameManager.infoBoard.setPlayerCount(Object.keys(gameManager.remotePlayers).length + 1);
-    }
-
-    /**
-     * Handle a position update for a remote pacman form the server
-     * @param parsedData The parsed data from the server
-     */
-    public remotePacmanUpdate(parsedData: any) {
-        const workingPacman = gameManager.remotePlayers[parsedData["from-session"] as keyof typeof gameManager.remotePlayers].pacman;
-        
-        // pacman just revived
-        if (workingPacman.isDead && parsedData.data.isAlive) {
-            workingPacman.animationManager.animations.killAnimation.reset();
-            workingPacman.animationManager.animations.killAnimation.setActive(false);
-        }
-
-        // pacman just powered up
-        if (!workingPacman.isPoweredUp && parsedData.data.poweredUp) {
-            workingPacman.animations.powerAnimation.reset();
-            workingPacman.animations.powerAnimation.setActive(true);
-        }
-
-        workingPacman.x = parsedData.data.x;
-        workingPacman.y = parsedData.data.y;
-        workingPacman.isDead = !parsedData.data.isAlive;
-        workingPacman.isPoweredUp = parsedData.data.poweredUp;
-        workingPacman.facingDirection = Direction.fromEnum(parsedData.data.facingDirection) as Direction;
-        workingPacman.queuedDirection = Direction.fromEnum(parsedData.data.queuedDirection) as Direction;
-        workingPacman.shouldMove = parsedData.data.shouldMove;
-    }
-
-    public ghostEatReject(parsedData: any) {
-        gameManager.ghosts[parsedData.data.id].eat_pending = false;
     }
 }
