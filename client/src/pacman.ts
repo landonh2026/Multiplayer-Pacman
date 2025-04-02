@@ -177,7 +177,7 @@ class Pacman {
         
         if (!this.animations.powerAnimation.isDone()) {
             this.animations.powerAnimation.step_frame(deltaTime);
-            sizeMultiplier = powerUpSizingFunction(this.animations.powerAnimation.get_progress()) - 1;
+            sizeMultiplier = powerUpSizingFunction(this.animations.powerAnimation.get_progress()) * powerupSizeUp;
         }
 
         // create the gradient for this pacman
