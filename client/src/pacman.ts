@@ -291,7 +291,8 @@ class Pacman {
 
             // determine if we should bump this remote pacman
             // todo add config for powered up size. Maybe use server to set size of pacman
-            let allowedDistance = this.radius * (this.isPoweredUp ? 1.5 : 1) + remotePlayer.pacman.radius * (remotePlayer.pacman.isPoweredUp ? 1.5 : 1);
+            // let allowedDistance = this.radius * (this.isPoweredUp ? 1.5 : 1) + remotePlayer.pacman.radius * (remotePlayer.pacman.isPoweredUp ? 1.5 : 1);
+            let allowedDistance = this.radius + remotePlayer.pacman.radius;
             if (Math.abs(remotePlayer.pacman.x-this.x) > allowedDistance || Math.abs(remotePlayer.pacman.y-this.y) > allowedDistance) {
                 continue;
             }
@@ -396,7 +397,8 @@ class Pacman {
             const ghost = gameManager.ghosts[id];
 
             if (this.isPoweredUp) {
-                if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2*1.5) {
+                // if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2*1.5) {
+                if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
                     ghost.eat();
                 }
 
