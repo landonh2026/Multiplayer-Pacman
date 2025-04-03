@@ -4,6 +4,11 @@ import { Room } from "./room.ts";
 import * as globals from "./globals.ts";
 import * as utils from "./utils.ts";
 
+/*
+MOVEMENT REFERENCE:
+https://www.todayifoundout.com/index.php/2015/10/ghosts-pac-man-work/
+*/
+
 export class Ghost {
     x: number;
     y: number;

@@ -126,13 +126,13 @@ export class GameBoard {
 
                 pellets.push(new Pellet(
                     x+0.5, y+0.5, id++,
-                    Math.random() > 0.9 ? PELLET_TYPES.power : PELLET_TYPES.normal
+                    Math.random() > 0.9 ? PELLET_TYPES.POWER : PELLET_TYPES.NORMAL
                 ));
             }
         }
 
         // make random pellet the food pellet
-        utils.getRandomListItem(pellets).type = PELLET_TYPES.food;
+        utils.getRandomListItem(pellets).type = PELLET_TYPES.FOOD;
 
         return pellets;
     }
@@ -213,9 +213,9 @@ export class PathIntersection {
 }
 
 enum PELLET_TYPES {
-    normal,
-    power,
-    food
+    NORMAL,
+    POWER,
+    FOOD
 }
 
 export class Pellet {
@@ -224,7 +224,7 @@ export class Pellet {
     type: PELLET_TYPES;
     id: number;
 
-    constructor(x: number, y: number, id: number, type: PELLET_TYPES = PELLET_TYPES.normal) {
+    constructor(x: number, y: number, id: number, type: PELLET_TYPES = PELLET_TYPES.NORMAL) {
         this.x = x;
         this.y = y;
         this.type = type;

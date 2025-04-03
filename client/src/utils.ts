@@ -54,17 +54,23 @@ function lineIntersection(
     return null; // No intersection
 }
 
+function bezier_curve(x: number, p: [number, number, number, number]): number {
+    return Math.pow(1 - x, 3) * p[0] +
+        3 * Math.pow(1 - x, 2) * x * p[1] +
+        3 * (1 - x) * Math.pow(x, 2) * p[2] +
+        Math.pow(x, 3) * p[3];
+}
+
 /**
  * 
  * @param x 
  */
 function powerUpSizingFunction(x: number): number {
-    const p = [0.27, -3, 3, 1];
+    return bezier_curve(x, [0.27, -3, 3, 1]);
+}
 
-    return Math.pow(1 - x, 3) * p[0] +
-        3 * Math.pow(1 - x, 2) * x * p[1] +
-        3 * (1 - x) * Math.pow(x, 2) * p[2] +
-        Math.pow(x, 3) * p[3];
+function ease_curve(x: number): number {
+    return bezier_curve(x, [0.17, 0.67, 0.83, 1]);
 }
 
 console.log(powerUpSizingFunction(1));

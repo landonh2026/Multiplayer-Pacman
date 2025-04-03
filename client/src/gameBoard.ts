@@ -251,9 +251,9 @@ enum PELLET_STATES {
 }
 
 enum PELLET_TYPES {
-    normal,
-    power,
-    food
+    NORMAL,
+    POWER,
+    FOOD
 }
 
 class Pellet {
@@ -263,7 +263,7 @@ class Pellet {
     id: number;
     local_state: PELLET_STATES
 
-    constructor(x: number, y: number, id: number, type: PELLET_TYPES = PELLET_TYPES.normal) {
+    constructor(x: number, y: number, id: number, type: PELLET_TYPES = PELLET_TYPES.NORMAL) {
         this.x = x;
         this.y = y;
         this.type = type;

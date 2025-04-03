@@ -13,6 +13,16 @@ enum GAME_STATES {
     GAME_END
 };
 
+enum GHOST_PHASES {
+    CHASE,
+    SCATTER,
+    FRIGHTENED
+}
+
+enum SERVER_TIMERS {
+    GHOST_PHASE
+}
+
 export class Room {
     /** The server context that this room is under */
     server: Server;
@@ -21,6 +31,10 @@ export class Room {
     players: {[session: string]: Player};
 
     ghosts: {[id: string]: Ghost};
+
+    ghost_phase: GHOST_PHASES;
+
+    timers: Map<SERVER_TIMERS, Timer>;
 
     /** The UUID for this room */
     uuid: string;
@@ -52,20 +66,26 @@ export class Room {
 
     constructor(server: Server, uuid: string) {
         this.server = server;
-        this.players = {};
-        this.ghosts = {};
         this.uuid = uuid;
-        this.maxPlayers = 4;
-        this.availableColors = [...globals.colors] as Array<globals.Colors>;
-        this.gameBoard = gameBoards.default.duplicate();
-        this.enable_lagback = false;
-
         // todo: change later to actual join code system
         this.joinCode = this.uuid;
 
+        this.players = {};
+        this.ghosts = {};
+        this.maxPlayers = 4;
+        
+        this.availableColors = [...globals.colors] as Array<globals.Colors>;
+        
+        this.gameBoard = gameBoards.default.duplicate();
+        this.enable_lagback = false;
+        
+        this.timers = new Map();        
+        this.simulator = new Simulator();
+        
+        this.ghost_phase = GHOST_PHASES.CHASE;
         this.gameState = GAME_STATES.WAITING_FOR_PLAYERS;
 
-        this.simulator = new Simulator();
+        // todo: set ghost phase change timer for scatter phase
 
         this.messageHandlers = {
             "position": this.handlePositionUpdate.bind(this),
@@ -317,14 +337,10 @@ export class Room {
      * @param data 
      */
     public handlePelletEat(player: Player, data: any) {
-        // move the player to the new pos
         let newPacmanPosition: globals.PositionData = {...player.pacman.lastLocation};
         newPacmanPosition.x = data.data.position.x;
         newPacmanPosition.y = data.data.position.y;
 
-        // check to see if the player moved a valid distance
-        // todo: should this be verifyNewPosition?
-        // if (!this.checkPlayerMoveDistance(player, newPacmanPosition, false)) {
         if (!this.moveDistanceAllowed(data.data.timestamp, player, newPacmanPosition)) {
             player.log("Moved too quickly while attempting to eat a pellet");
             player.ws.send(utils.makeMessage("pellet-reject", {pelletID: data.data.pelletID}));
@@ -335,6 +351,7 @@ export class Room {
         player.pacman.lastPosPacketTime = performance.now();
 
         // get the current pellet and pellet index
+        // TODO: use a map or smth
         let pellet, pellet_index;
         for (pellet_index = 0; pellet_index < this.gameBoard.pellets.length; pellet_index++) {
             pellet = this.gameBoard.pellets[pellet_index];
@@ -351,51 +368,23 @@ export class Room {
             return;
         }
 
-        // get the pellet position and the distance the pacman is from the pellet
+        // get the pellet position and the distance the pacman is from the pellet, reject the pellet if the player is too far
         const pellet_pos = [pellet.x*40, pellet.y*40];
         const distance_from_pellet = [Math.abs(player.pacman.lastLocation.x - pellet_pos[0]), Math.abs(player.pacman.lastLocation.y - pellet_pos[1])];
-        // const distance_from_pellet = [Math.abs(newPacmanPosition.x - pellet_pos[0]), Math.abs(newPacmanPosition.y - pellet_pos[1])]
-        
-        // reject the pellet if the player is too far
         if (distance_from_pellet[0] > 40 || distance_from_pellet[1] > 40) {
             player.log("Attempted to eat pellet too far away from new pos: ", distance_from_pellet);
             player.ws.send(utils.makeMessage("pellet-reject", {pelletID: data.data.pelletID}));
             return;
         }
 
-        if (pellet.type == PELLET_TYPES.food) {
+        if (pellet.type == PELLET_TYPES.FOOD) {
             this.gameBoard = gameBoards.default.duplicate();
             this.server.publish(this.topics.event, utils.makeMessage("board-state", this.makeBoardState()));
         }
 
         // power up the player if appropriate
-        else if (pellet.type == PELLET_TYPES.power) {
-            const shouldUpdatePos = !player.pacman.isPoweredUp;
-            player.pacman.isPoweredUp = true;
-
-            console.log("player ate power");
-
-            if (shouldUpdatePos) {
-                player.sendLocalPlayerState();
-                player.publishLocation();
-            }
-
-            // clear existing timers
-            clearTimeout(player.timers.get(PLAYER_TIMER_TYPES.POWERUP));
-            
-            player.timers.set(PLAYER_TIMER_TYPES.POWERUP, setTimeout(() => {
-                player.pacman.isPoweredUp = false;
-
-                // don't update the player if they died
-                if (!player.pacman.isAlive) return;
-
-                const estimated_pos = player.pacman.getEstimatedPosition(performance.now()-player.pacman.lastPosPacketTime);
-                player.pacman.lastLocation.x = estimated_pos.x;
-                player.pacman.lastLocation.y = estimated_pos.y;
-
-                player.publishLocation();
-                player.sendLocalPlayerState();
-            }, globals.animation_timings.power_up));
+        else if (pellet.type == PELLET_TYPES.POWER) {
+            this.handlePowerPelletEat(player, data);
         }
 
         // remake the gameboard if all the pellets are gone
@@ -410,6 +399,37 @@ export class Room {
         this.gameBoard.pellets.splice(pellet_index, 1);
         player.score += 10;
         this.server.publish(this.topics.event, utils.makeMessage("eat-pellet", {pelletID: pellet.id, scores: this.makeScoresList()}));
+    }
+
+    public handlePowerPelletEat(player: Player, data: {data: any}) {
+        const shouldUpdatePos = !player.pacman.isPoweredUp;
+        player.pacman.isPoweredUp = true;
+
+        clearInterval(this.timers.get(SERVER_TIMERS.GHOST_PHASE));
+
+        console.log("player ate power");
+
+        if (shouldUpdatePos) {
+            player.sendLocalPlayerState();
+            player.publishLocation();
+        }
+
+        // clear existing timers
+        clearTimeout(player.timers.get(PLAYER_TIMER_TYPES.POWERUP));
+        
+        player.timers.set(PLAYER_TIMER_TYPES.POWERUP, setTimeout(() => {
+            player.pacman.isPoweredUp = false;
+
+            // don't update the player if they died
+            if (!player.pacman.isAlive) return;
+
+            const estimated_pos = player.pacman.getEstimatedPosition(performance.now()-player.pacman.lastPosPacketTime);
+            player.pacman.lastLocation.x = estimated_pos.x;
+            player.pacman.lastLocation.y = estimated_pos.y;
+
+            player.publishLocation();
+            player.sendLocalPlayerState();
+        }, globals.animation_timings.power_up));
     }
 
     public handleGhostEat(player: Player, data: {data: any}) {

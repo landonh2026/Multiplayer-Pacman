@@ -1,4 +1,4 @@
-
+enum GHOST_PHASES { CHASE, SCATTER, FRIGHTENED }
 
 /**
  * Represents a ghost
@@ -12,6 +12,7 @@ class Ghost {
     color: string;
     id: string;
     eat_pending: boolean;
+    eaten: boolean;
     
     constructor(x: number, y: number, id: string, color: string, add_to_list: boolean = true) {
         this.x = x;
@@ -21,6 +22,7 @@ class Ghost {
         this.color = color; // TODO: make this an object
         this.id = id;
         this.eat_pending = false;
+        this.eaten = false;
 
         this.path = null;
 
@@ -37,7 +39,8 @@ class Ghost {
 
         if (this.eat_pending) ctx.fillStyle = "gray";
 
-        gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
+        // gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
+        gameManager.drawManager.drawPacman(this.x, this.y, gameManager.localPacman.radius, gameManager.localPacman.animations.bodyAnimation.get_frame(), this.facingDirection || directions.UP);
     }
 
     /**

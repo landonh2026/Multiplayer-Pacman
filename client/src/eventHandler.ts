@@ -42,6 +42,7 @@ class EventHandler {
         localGhost.y = parsedData.data.position.y;
         localGhost.facingDirection = parsedData.data.position.direction == null ? null : Direction.fromEnum(parsedData.data.position.direction) as Direction;
         localGhost.path = new Path(parsedData.data.debug_path.map((n: {x: number, y: number}) => new PathNode(n.x, n.y)));
+        localGhost.eaten = parsedData.data.eaten;
     }
 
     /**
@@ -145,6 +146,10 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public boardState(parsedData: any) {
+        gameManager.drawManager.oldPellets = gameManager.currentBoard.pellets;
+        gameManager.drawManager.pelletShrinkAnimation.reset();
+        gameManager.drawManager.pelletShrinkAnimation.setActive(true);
+
         gameManager.currentBoard = new GameBoard(
             parsedData.data.board,
             parsedData.data.pellets.map((p: any) => new Pellet(p.x, p.y, p.id, p.type)),

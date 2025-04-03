@@ -3,9 +3,49 @@
  */
 class DrawManager {
     powerPelletFlash: GameAnimation;
+    pelletShrinkAnimation: GameAnimation;
+    oldPellets: Array<Pellet>;
 
     constructor() {
-        this.powerPelletFlash = new GameAnimation(16, true, 1, true);
+        this.powerPelletFlash = new GameAnimation(24, true, 1, true);
+        this.pelletShrinkAnimation = new GameAnimation(12, false, 1, false);
+        this.oldPellets = [];
+    }
+
+    public drawPellets(pellets: Array<Pellet>, deltaTime: number, shrink: boolean = false) {
+        // draw the pellets from the pellet data
+        for (let pellet of pellets) {
+            if (pellet.local_state == PELLET_STATES.EAT_PENDING) continue;
+            
+            ctx.fillStyle = ENVIRONMENT_COLORS.PELLET;
+            ctx.strokeStyle = ENVIRONMENT_COLORS.PELLET
+
+            let size = Math.max(2.5 * (gameManager.tileSize / 40), 1.25);
+            
+            // todo: line animation thing instead?
+            if (!this.pelletShrinkAnimation.isDone())
+                size *= (shrink ? 1 - this.pelletShrinkAnimation.get_progress() : this.pelletShrinkAnimation.get_progress());
+            
+            if (pellet.type == PELLET_TYPES.POWER) {
+                size *= 2;
+
+                if (this.powerPelletFlash.get_progress() < 0.5) ctx.fillStyle = ENVIRONMENT_COLORS.DARK_PELLET;
+            } else if (pellet.type == PELLET_TYPES.FOOD) size *= 3;
+
+            ctx.beginPath();
+
+            if (pellet.type == PELLET_TYPES.FOOD) {
+                ctx.moveTo(pellet.x, pellet.y+size);
+                ctx.lineTo(pellet.x+size, pellet.y);
+                ctx.lineTo(pellet.x-size, pellet.y);
+                ctx.lineTo(pellet.x, pellet.y+size);
+            } else {
+                ctx.arc(pellet.x, pellet.y, size, 0, 2*Math.PI);
+            }
+            
+            if (pellet.type != PELLET_TYPES.FOOD) ctx.fill();
+            else ctx.stroke();
+        }
     }
 
     /**
@@ -15,44 +55,26 @@ class DrawManager {
     public drawBoard(deltaTime: number, board: GameBoard|null = null) {
         if (board == null) board = gameManager.currentBoard;
 
+        this.pelletShrinkAnimation.step_frame(deltaTime);
         this.powerPelletFlash.step_frame(deltaTime);
-        const renderPowerPellets = this.powerPelletFlash.get_frame() > 2;
-
-        console.log(this.powerPelletFlash.get_frame(), renderPowerPellets);
-
 
         // draw the walls from the block data
-        for (let i = 0; i < gameManager.currentBoard.blockPositions.length; i++) {
-            let blockData = gameManager.currentBoard.blockPositions[i];
+        for (let i = 0; i < board.blockPositions.length; i++) {
+            let blockData = board.blockPositions[i];
 
             ctx.strokeStyle = ENVIRONMENT_COLORS.WALL;
             ctx.beginPath();
             ctx.roundRect(blockData[0], blockData[1], blockData[2], blockData[3], 5 * (gameManager.tileSize / 40));
             ctx.stroke();
-        }
+        };
 
-        // draw the pellets from the pellet data
-        for (let pellet of gameManager.currentBoard.pellets) {
-            if (pellet.local_state == PELLET_STATES.EAT_PENDING) continue;
-            
-            let radius = Math.max(2.5 * (gameManager.tileSize / 40), 1.25);
-            if (pellet.type != PELLET_TYPES.normal) radius *= 2;
-
-            if (pellet.type == PELLET_TYPES.power && !renderPowerPellets) continue;
-
-            ctx.fillStyle = ENVIRONMENT_COLORS.PELLET;
-            ctx.strokeStyle = ENVIRONMENT_COLORS.PELLET;
-            ctx.beginPath();
-            ctx.arc(pellet.x, pellet.y, radius, 0, 2*Math.PI);
-            
-            if (pellet.type != PELLET_TYPES.food) ctx.fill();
-            else ctx.stroke();
-        }
+        // if (!this.pelletShrinkAnimation.isDone()) this.drawPellets(this.oldPellets, deltaTime, true);
+        this.drawPellets(board.pellets, deltaTime, false);
 
         if (gameManager.debug.intersectionPoints) {
             // draw path intersections
-            for (let i = 0; i < gameManager.currentBoard.pathIntersections.length; i++) {
-                let intersectionData = gameManager.currentBoard.pathIntersections[i];
+            for (let i = 0; i < board.pathIntersections.length; i++) {
+                let intersectionData = board.pathIntersections[i];
                 
                 ctx.strokeStyle = "red";
                 ctx.beginPath();

@@ -181,7 +181,6 @@ class Pacman {
                 this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
                 (1 - this.animations.powerAnimation.get_progress())
             ) * powerupAnimationScale;
-            // console.log(customRadius, this.animations.powerAnimation.get_progress());
         }
 
         // create the gradient for this pacman
