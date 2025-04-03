@@ -39,14 +39,13 @@ class Ghost {
 
         if (this.eat_pending) ctx.fillStyle = "gray";
 
-        // gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
-        gameManager.drawManager.drawPacman(this.x, this.y, gameManager.localPacman.radius, gameManager.localPacman.animations.bodyAnimation.get_frame(), this.facingDirection || directions.UP);
+        gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
     }
 
     /**
      * Step the movement of the ghost
      * @param deltaTime 
-     * @returns 
+     * @returns
      */
     public stepMovement(deltaTime: number) {
         if (this.facingDirection == null) return;

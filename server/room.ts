@@ -406,6 +406,8 @@ export class Room {
         player.pacman.isPoweredUp = true;
 
         clearInterval(this.timers.get(SERVER_TIMERS.GHOST_PHASE));
+        this.ghost_phase = GHOST_PHASES.FRIGHTENED;
+        for (let ghost of Object.values(this.ghosts)) ghost.
 
         console.log("player ate power");
 

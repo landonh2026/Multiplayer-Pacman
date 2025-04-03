@@ -67,6 +67,14 @@ export class Ghost {
         if (this.nextTurnTimeout) clearTimeout(this.nextTurnTimeout);
     }
 
+    public enterFrightened() {
+        
+    }
+
+    public getInBetweenPosition(deltaTime: number) {
+        
+    }
+
     public determineTarget(players: Array<Player>) {
         const heuristic = (x1: number, y1: number, x2: number, y2: number) => { return Math.abs(x1-x2) + Math.abs(y1-y2) };
 
@@ -101,17 +109,13 @@ export class Ghost {
 
         const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
 
-        // this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: this.currentTarget.pacman.lastKnownLocation.x, y: this.currentTarget.pacman.lastKnownLocation.y})
         this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
         
         if (this.path?.nodes[0].x == this.x && this.path?.nodes[0].y == this.y) {
-            // console.log("Removing duplicate path node", this.x, this.y);
             this.path.nodes.shift();
         }
 
         if (this.path?.nodes.length == 0) this.facingDirection = null;
-
-        // console.log(this.path?.nodes.map((n) => `${n.x} ${n.y}`).join(" -> ") ?? "No path");
     }
 
     public getTimeToTurn() {
@@ -133,8 +137,6 @@ export class Ghost {
             return;
         }
 
-        // TODO: don't do this if we didn't have a target before
-        // because we snap to this next node
         if (this.facingDirection != null) {
             [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
             this.path.nodes.shift();
