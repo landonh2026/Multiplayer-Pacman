@@ -6,14 +6,14 @@ import { Player, PLAYER_TIMER_TYPES } from "./player.ts";
 import { Simulator } from "./simulator.ts";
 import { Ghost } from "./ghost.ts";
 
-enum GAME_STATES {
+export enum GAME_STATES {
     WAITING_FOR_PLAYERS,
     PLAYING,
     INTERMISSION,
     GAME_END
 };
 
-enum GHOST_PHASES {
+export enum GHOST_PHASES {
     CHASE,
     SCATTER,
     FRIGHTENED
@@ -408,8 +408,6 @@ export class Room {
         clearInterval(this.timers.get(SERVER_TIMERS.GHOST_PHASE));
         this.ghost_phase = GHOST_PHASES.FRIGHTENED;
         for (let ghost of Object.values(this.ghosts)) ghost.enterFrightened();
-
-        console.log("player ate power");
 
         // todo: instead just send a different packet without position information to avoid lagbacks
         if (shouldUpdatePos) {

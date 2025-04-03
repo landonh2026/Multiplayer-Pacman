@@ -1,6 +1,6 @@
 import { Player } from "./player.ts";
 import { Path } from "./pathfinding.ts";
-import { Room } from "./room.ts";
+import { Room, GHOST_PHASES } from "./room.ts";
 import * as globals from "./globals.ts";
 import * as utils from "./utils.ts";
 
@@ -68,7 +68,13 @@ export class Ghost {
     }
 
     public enterFrightened() {
-        
+        // todo: set
+        // pos = this.getInBetweenPosition(...);
+
+        if (this.nextTurnTimeout) clearTimeout(this.nextTurnTimeout);
+        if (this.facingDirection != null) this.facingDirection = (this.facingDirection + 2) % 4 as 0|1|2|3;
+
+        this.findPathToNextTarget();
     }
 
     public getInBetweenPosition(deltaTime: number) {
@@ -118,17 +124,26 @@ export class Ghost {
         if (this.path?.nodes.length == 0) this.facingDirection = null;
     }
 
-    public getTimeToTurn() {
+    public getTimeToTurn(nextNode: PathNode|null = null) {
         if (this.path == null) throw new Error("Path property is null");
         
-        const nextNode = this.path.nodes[0];
+        if (nextNode == null) nextNode = this.path.nodes[0];
         const distance = Math.abs(this.x - nextNode.x) + Math.abs(this.y - nextNode.y);
 
         return (distance * 1000) / (this.movementSpeed * globals.target_client_fps);
     }
 
+    // public chooseRandomTurn() {
+        
+    // }
+
     public onTurn() {
         if (this.eaten) return;
+
+        // if (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED) {
+            
+        //     return;
+        // }
 
         // if the path is null set the fallback timer
         if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {

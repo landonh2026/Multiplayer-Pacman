@@ -21,7 +21,7 @@ export class Pathfinder
         if (Math.abs(node.y-otherNode.y) == 0) return node.x - otherNode.x > 0 ? 2 : 0;
         if (Math.abs(node.x-otherNode.x) == 0) return node.y - otherNode.y > 0 ? 3 : 1;
 
-        return 2;
+        return null;
     }
 
     /**
