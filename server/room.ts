@@ -406,8 +406,10 @@ export class Room {
         player.pacman.isPoweredUp = true;
 
         clearInterval(this.timers.get(SERVER_TIMERS.GHOST_PHASE));
-        this.ghost_phase = GHOST_PHASES.FRIGHTENED;
-        for (let ghost of Object.values(this.ghosts)) ghost.enterFrightened();
+        if (this.ghost_phase != GHOST_PHASES.FRIGHTENED) {
+            this.ghost_phase = GHOST_PHASES.FRIGHTENED;
+            for (let ghost of Object.values(this.ghosts)) ghost.enterFrightened();
+        }   
 
         // todo: instead just send a different packet without position information to avoid lagbacks
         if (shouldUpdatePos) {
@@ -420,6 +422,17 @@ export class Room {
         
         player.timers.set(PLAYER_TIMER_TYPES.POWERUP, setTimeout(() => {
             player.pacman.isPoweredUp = false;
+
+            let shouldGhostFrightened = false;
+            for (let player of Object.values(this.players)) {
+                shouldGhostFrightened = player.pacman.isPoweredUp;
+                if (shouldGhostFrightened) break;
+            }
+
+            if (!shouldGhostFrightened) {
+                this.ghost_phase = GHOST_PHASES.CHASE;
+                // todo: set ghost timer now
+            }
 
             // don't update the player if they died
             if (!player.pacman.isAlive) return;

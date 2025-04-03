@@ -43,6 +43,7 @@ class EventHandler {
         localGhost.facingDirection = parsedData.data.position.direction == null ? null : Direction.fromEnum(parsedData.data.position.direction) as Direction;
         localGhost.path = new Path(parsedData.data.debug_path.map((n: {x: number, y: number}) => new PathNode(n.x, n.y)));
         localGhost.eaten = parsedData.data.eaten;
+        localGhost.phase = parsedData.data.phase;
     }
 
     /**

@@ -1,4 +1,5 @@
-enum GHOST_PHASES { CHASE, SCATTER, FRIGHTENED }
+enum GHOST_PHASES { CHASE, SCATTER, FRIGHTENED };
+
 
 /**
  * Represents a ghost
@@ -13,6 +14,7 @@ class Ghost {
     id: string;
     eat_pending: boolean;
     eaten: boolean;
+    phase: GHOST_PHASES;
     
     constructor(x: number, y: number, id: string, color: string, add_to_list: boolean = true) {
         this.x = x;
@@ -23,6 +25,7 @@ class Ghost {
         this.id = id;
         this.eat_pending = false;
         this.eaten = false;
+        this.phase = GHOST_PHASES.CHASE;
 
         this.path = null;
 
@@ -37,6 +40,7 @@ class Ghost {
     public draw() {
         ctx.fillStyle = this.color;
 
+        if (this.phase == GHOST_PHASES.FRIGHTENED) ctx.fillStyle = ENVIRONMENT_COLORS.WALL;
         if (this.eat_pending) ctx.fillStyle = "gray";
 
         gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
@@ -50,8 +54,9 @@ class Ghost {
     public stepMovement(deltaTime: number) {
         if (this.facingDirection == null) return;
 
-        this.x += this.facingDirection.getDeltas().dx * this.movementSpeed * deltaTime;
-        this.y += this.facingDirection.getDeltas().dy * this.movementSpeed * deltaTime;
+        const movementMultiplier = this.phase == GHOST_PHASES.FRIGHTENED ? 0.75 : 1;
+        this.x += this.facingDirection.getDeltas().dx * this.movementSpeed * deltaTime * movementMultiplier;
+        this.y += this.facingDirection.getDeltas().dy * this.movementSpeed * deltaTime * movementMultiplier;
     }
 
     public eat() {

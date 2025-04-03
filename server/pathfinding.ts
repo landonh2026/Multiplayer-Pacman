@@ -11,6 +11,23 @@ export class Pathfinder
         this.nodes = this.makeNodes(customNodes);
     }
 
+    public getManhattanClosestNode(x: number, y: number) {
+        let closest = {
+            node: null,
+            distance: Infinity 
+        } as {node: PathNode|null, distance: number};
+
+        for (let node of this.nodes) {
+            const distance = Math.abs(x-node.x) + Math.abs(y-node.y);
+
+            if (distance < closest.distance) {
+                closest = { node: node, distance: distance };
+            }
+        }
+
+        return closest;
+    }
+
     /**
      * Get the direction between a start node and another node. The given nodes should be in the same position in at least 1 axis.
      * @param node The node which the direction is relative to
@@ -205,7 +222,7 @@ export class Pathfinder
                 if (object == null) continue;
     
                 node.addConnection(object.node);
-                object.node.addConnection(node);
+                // object.node.addConnection(node);
             }
         }
     

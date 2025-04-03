@@ -1,6 +1,7 @@
 import { Player } from "./player.ts";
 import { Path } from "./pathfinding.ts";
 import { Room, GHOST_PHASES } from "./room.ts";
+import { PathNode } from "./pathfinding.ts";
 import * as globals from "./globals.ts";
 import * as utils from "./utils.ts";
 
@@ -53,7 +54,8 @@ export class Ghost {
                 eaten: this.eaten,
                 id: this.id,
                 color: this.color,
-                debug_path: globals.debug ? this.path?.nodes.map((n) => { return {x: n.x, y: n.y} }) : null
+                debug_path: globals.debug ? this.path?.nodes.map((n) => { return {x: n.x, y: n.y} }) : null,
+                phase: this.room.ghost_phase
             }
         ));
     }
@@ -124,26 +126,49 @@ export class Ghost {
         if (this.path?.nodes.length == 0) this.facingDirection = null;
     }
 
-    public getTimeToTurn(nextNode: PathNode|null = null) {
-        if (this.path == null) throw new Error("Path property is null");
-        
-        if (nextNode == null) nextNode = this.path.nodes[0];
-        const distance = Math.abs(this.x - nextNode.x) + Math.abs(this.y - nextNode.y);
+    public getAdjacentNodeDirections(node: PathNode, avoidNode: PathNode|null = null) {
+        const possibleDirections: Array<{node: PathNode, direction: 0|1|2|3}> = [];
 
-        return (distance * 1000) / (this.movementSpeed * globals.target_client_fps);
+        for (let connection of node.connections) {
+            const otherNode = connection.node;
+
+            if (avoidNode != null && avoidNode.id == otherNode.id) continue;
+
+            const dx = node.x - otherNode.x;
+            const dy = node.y - otherNode.y;
+
+            if (dx == 0) possibleDirections.push({node: otherNode, direction: dy > 0 ? 3 : 1});
+            else if (dy == 0) possibleDirections.push({node: otherNode, direction: dx > 0 ? 2 : 0});
+        }
+
+        const selected = possibleDirections[Math.floor(Math.random() * possibleDirections.length)];
+        return selected;
     }
-
-    // public chooseRandomTurn() {
-        
-    // }
 
     public onTurn() {
         if (this.eaten) return;
 
-        // if (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED) {
+        if (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED) {
+            let lastNode;
+            if (this.path != null) {
+                lastNode = this.path.nodes[0];
+                [this.x, this.y] = [this.path.nodes[1].x, this.path.nodes[1].y];
+            }
             
-        //     return;
-        // }
+            const node = this.room.gameBoard.pathfinder.getManhattanClosestNode(this.x, this.y).node;
+            if (node == null) return;
+            // [this.x, this.y] = [node.x, node.y];
+
+            const adjacentNode = this.getAdjacentNodeDirections(node, lastNode);
+            this.facingDirection = adjacentNode.direction;
+            
+            this.path = new Path([node, adjacentNode.node]);
+            this.sendLocation();
+
+            setTimeout(this.onTurn.bind(this), this.getTimeToTurn(adjacentNode.node));
+
+            return;
+        }
 
         // if the path is null set the fallback timer
         if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
@@ -187,6 +212,15 @@ export class Ghost {
         this.fallback_last = true;
 
         setTimeout(this.onTurn.bind(this), 150);
+    }
+
+    public getTimeToTurn(nextNode: PathNode|null = null) {
+        if (this.path == null) throw new Error("Path property is null");
+        
+        if (nextNode == null) nextNode = this.path.nodes[0];
+        const distance = Math.abs(this.x - nextNode.x) + Math.abs(this.y - nextNode.y);
+
+        return (distance * 1000) / (this.movementSpeed * globals.target_client_fps * (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED ? 0.75 : 1));
     }
 
     private setTurnTimeout() {

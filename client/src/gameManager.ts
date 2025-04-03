@@ -1,12 +1,11 @@
 enum GAME_STATES {
-    
     CONNECTING,
     DISCONNECTED,
     FINDING_ROOM,
     PREGAME,
     IN_GAME,
     AFTER_GAME
-}
+};
 
 /**
  * The primary game manager that manages the Pacman game
@@ -58,7 +57,7 @@ class GameManager {
         this.debug = {
             intersectionPoints: false,
             pacmanWallCollision: false,
-            ghostPath: false
+            ghostPath: true
         };
 
         this.tileSize = 40;
