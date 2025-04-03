@@ -407,10 +407,11 @@ export class Room {
 
         clearInterval(this.timers.get(SERVER_TIMERS.GHOST_PHASE));
         this.ghost_phase = GHOST_PHASES.FRIGHTENED;
-        for (let ghost of Object.values(this.ghosts)) ghost.
+        for (let ghost of Object.values(this.ghosts)) ghost.enterFrightened();
 
         console.log("player ate power");
 
+        // todo: instead just send a different packet without position information to avoid lagbacks
         if (shouldUpdatePos) {
             player.sendLocalPlayerState();
             player.publishLocation();
