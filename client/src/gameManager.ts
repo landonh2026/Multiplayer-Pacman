@@ -121,7 +121,7 @@ class GameManager {
     private draw(deltaTime: number) {
         // clear the canvas and draw the board
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        this.drawManager.drawBoard();
+        this.drawManager.drawBoard(deltaTime);
     
         // step the movement and draw each remote player
         for (let session in this.remotePlayers) {

@@ -131,6 +131,9 @@ export class GameBoard {
             }
         }
 
+        // make random pellet the food pellet
+        utils.getRandomListItem(pellets).type = PELLET_TYPES.food;
+
         return pellets;
     }
 

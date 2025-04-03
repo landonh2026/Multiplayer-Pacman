@@ -33,7 +33,7 @@ export function getRandomInt(min: number, max: number): number {
  * @param list 
  * @returns 
  */
-export function getRandomListItem(list: Array<any>) {
+export function getRandomListItem<T>(list: Array<T>): T {
     return list[getRandomInt(0, list.length - 1)];
 }
 

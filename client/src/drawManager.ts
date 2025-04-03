@@ -2,16 +2,24 @@
  * Handles drawing various objects onto the canvas
  */
 class DrawManager {
+    powerPelletFlash: GameAnimation;
+
     constructor() {
-        
+        this.powerPelletFlash = new GameAnimation(16, true, 1, true);
     }
 
     /**
      * Draw the board onto the canvas
      * @param board The gameboard to draw onto. Leave null for the current board.
      */
-    public drawBoard(board: GameBoard|null = null) {
+    public drawBoard(deltaTime: number, board: GameBoard|null = null) {
         if (board == null) board = gameManager.currentBoard;
+
+        this.powerPelletFlash.step_frame(deltaTime);
+        const renderPowerPellets = this.powerPelletFlash.get_frame() > 2;
+
+        console.log(this.powerPelletFlash.get_frame(), renderPowerPellets);
+
 
         // draw the walls from the block data
         for (let i = 0; i < gameManager.currentBoard.blockPositions.length; i++) {
@@ -28,12 +36,17 @@ class DrawManager {
             if (pellet.local_state == PELLET_STATES.EAT_PENDING) continue;
             
             let radius = Math.max(2.5 * (gameManager.tileSize / 40), 1.25);
-            if (pellet.type == PELLET_TYPES.power) radius *= 2;
+            if (pellet.type != PELLET_TYPES.normal) radius *= 2;
+
+            if (pellet.type == PELLET_TYPES.power && !renderPowerPellets) continue;
 
             ctx.fillStyle = ENVIRONMENT_COLORS.PELLET;
+            ctx.strokeStyle = ENVIRONMENT_COLORS.PELLET;
             ctx.beginPath();
             ctx.arc(pellet.x, pellet.y, radius, 0, 2*Math.PI);
-            ctx.fill();
+            
+            if (pellet.type != PELLET_TYPES.food) ctx.fill();
+            else ctx.stroke();
         }
 
         if (gameManager.debug.intersectionPoints) {

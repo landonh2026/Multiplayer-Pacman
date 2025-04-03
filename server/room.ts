@@ -363,8 +363,13 @@ export class Room {
             return;
         }
 
+        if (pellet.type == PELLET_TYPES.food) {
+            this.gameBoard = gameBoards.default.duplicate();
+            this.server.publish(this.topics.event, utils.makeMessage("board-state", this.makeBoardState()));
+        }
+
         // power up the player if appropriate
-        if (pellet.type == PELLET_TYPES.power) {
+        else if (pellet.type == PELLET_TYPES.power) {
             const shouldUpdatePos = !player.pacman.isPoweredUp;
             player.pacman.isPoweredUp = true;
 
