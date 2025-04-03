@@ -365,12 +365,15 @@ export class Room {
 
         // power up the player if appropriate
         if (pellet.type == PELLET_TYPES.power) {
+            const shouldUpdatePos = !player.pacman.isPoweredUp;
             player.pacman.isPoweredUp = true;
 
             console.log("player ate power");
 
-            player.sendLocalPlayerState();
-            player.publishLocation();
+            if (shouldUpdatePos) {
+                player.sendLocalPlayerState();
+                player.publishLocation();
+            }
 
             // clear existing timers
             clearTimeout(player.timers.get(PLAYER_TIMER_TYPES.POWERUP));
