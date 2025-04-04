@@ -99,7 +99,7 @@ export class Ghost {
 
         reverseDir: if (this.facingDirection != null && this.path != null) {
             const fromNode = this.findCameFromNode(this.path.nodes[0].connections.map(c => c.node))?.node;
-            console.log(fromNode);
+            console.log(fromNode?.x, fromNode?.y);
 
             if (!fromNode) break reverseDir;
 
