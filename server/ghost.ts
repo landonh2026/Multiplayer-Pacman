@@ -104,10 +104,13 @@ export class Ghost {
             if (!fromNode) break reverseDir;
 
             this.facingDirection = (this.facingDirection + 2) % 4 as 0|1|2|3;
+
+            this.path = new Path([new PathNode(this.x, this.y), fromNode]);
             
             this.sendLocation();
             const time = this.getTimeToTurn(fromNode);
             this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), time);
+            return;
         }
 
         this.setFallbackTimeout();
