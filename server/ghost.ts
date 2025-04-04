@@ -23,11 +23,13 @@ export class Ghost {
     color: globals.Colors;
     fallback_last: boolean;
     eaten: boolean;
+    lastNodeTimestamp: number|null;
 
     constructor(x: number, y: number, room: Room) {
         this.x = x;
         this.y = y;
         this.movementSpeed = 5;
+        this.lastNodeTimestamp = null;
 
         // this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
         this.color = "RED" as globals.Colors;
@@ -66,21 +68,64 @@ export class Ghost {
         this.facingDirection = null;
         this.sendLocation();
 
-        if (this.nextTurnTimeout) clearTimeout(this.nextTurnTimeout);
+        if (this.nextTurnTimeout != null) clearTimeout(this.nextTurnTimeout);
+    }
+
+    public findCameFromNode(nodes: Array<PathNode>) {
+        if (this.facingDirection == null) return;
+
+        const reversedFacingDirection = (this.facingDirection + 2) % 4;
+        let closestNode = {distance: Infinity, node: null as null|PathNode};
+
+        for (let node of nodes) {
+            const distance = Math.abs(this.x - node.x) + Math.abs(this.y - node.y);
+
+            if (utils.getDirectionFromNodes({x: this.x, y: this.y}, node) != reversedFacingDirection) {
+                continue;
+            }
+
+            if (distance < closestNode.distance) {
+                closestNode = {distance: distance, node: node};
+            }
+        }
+
+        return closestNode;
     }
 
     public enterFrightened() {
-        // todo: set
-        // pos = this.getInBetweenPosition(...);
+        [this.x, this.y] = this.getInBetweenPosition();
 
-        if (this.nextTurnTimeout) clearTimeout(this.nextTurnTimeout);
-        if (this.facingDirection != null) this.facingDirection = (this.facingDirection + 2) % 4 as 0|1|2|3;
+        if (this.nextTurnTimeout != null) clearTimeout(this.nextTurnTimeout);
 
-        this.findPathToNextTarget();
+        reverseDir: if (this.facingDirection != null && this.path != null) {
+            const fromNode = this.findCameFromNode(this.path.nodes[0].connections.map(c => c.node))?.node;
+            console.log(fromNode);
+
+            if (!fromNode) break reverseDir;
+
+            this.facingDirection = (this.facingDirection + 2) % 4 as 0|1|2|3;
+            
+            this.sendLocation();
+            const time = this.getTimeToTurn(fromNode);
+            this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), time);
+        }
+
+        this.setFallbackTimeout();
     }
 
-    public getInBetweenPosition(deltaTime: number) {
-        
+    public getInBetweenPosition() {
+        if (this.lastNodeTimestamp == null || this.facingDirection == null) {
+            return [this.x, this.y];
+        }
+
+        const deltaTime = performance.now() - this.lastNodeTimestamp;
+        const distance = globals.target_client_fps * this.movementSpeed * (deltaTime/1000);
+        const movementDelta = utils.getDirectionDelta(this.facingDirection);
+
+        movementDelta.dx *= distance;
+        movementDelta.dy *= distance;
+
+        return [this.x + movementDelta.dx, this.y + movementDelta.dy];
     }
 
     public determineTarget(players: Array<Player>) {
@@ -92,7 +137,7 @@ export class Ghost {
         };
 
         for (let player of players) {
-            if (!player.pacman.isAlive) continue;
+            if (!player.pacman.isAlive || player.pacman.isPoweredUp) continue;
 
             const distance = heuristic(this.x, this.y, player.pacman.lastLocation.x, player.pacman.lastLocation.y);
 
@@ -145,31 +190,27 @@ export class Ghost {
         return selected;
     }
 
-    public onTurn() {
-        if (this.eaten) return;
-
-        if (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED) {
-            let lastNode;
-            if (this.path != null) {
-                lastNode = this.path.nodes[0];
-                [this.x, this.y] = [this.path.nodes[1].x, this.path.nodes[1].y];
-            }
-            
-            const node = this.room.gameBoard.pathfinder.getManhattanClosestNode(this.x, this.y).node;
-            if (node == null) return;
-            // [this.x, this.y] = [node.x, node.y];
-
-            const adjacentNode = this.getAdjacentNodeDirections(node, lastNode);
-            this.facingDirection = adjacentNode.direction;
-            
-            this.path = new Path([node, adjacentNode.node]);
-            this.sendLocation();
-
-            setTimeout(this.onTurn.bind(this), this.getTimeToTurn(adjacentNode.node));
-
-            return;
+    public frightenedTurn() {
+        let lastNode;
+        if (this.path != null) {
+            lastNode = this.path.nodes[0];
+            [this.x, this.y] = [this.path.nodes[1].x, this.path.nodes[1].y];
         }
+        
+        const node = this.room.gameBoard.pathfinder.getManhattanClosestNode(this.x, this.y).node;
+        if (node == null) return;
+        // [this.x, this.y] = [node.x, node.y];
 
+        const adjacentNode = this.getAdjacentNodeDirections(node, lastNode);
+        this.facingDirection = adjacentNode.direction;
+        
+        this.path = new Path([node, adjacentNode.node]);
+        this.sendLocation();
+
+        this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), this.getTimeToTurn(adjacentNode.node));
+    }
+
+    public chaseTurn() {
         // if the path is null set the fallback timer
         if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
             this.findPathToNextTarget();
@@ -207,11 +248,24 @@ export class Ghost {
         this.setTurnTimeout();
     }
 
+    public onTurn() {
+        if (this.eaten) return;
+
+        if (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED) {
+            this.frightenedTurn();
+            this.lastNodeTimestamp = performance.now();
+            return;
+        }
+
+        this.chaseTurn();
+        this.lastNodeTimestamp = performance.now();
+    }
+
     private setFallbackTimeout() {
         if (!this.fallback_last) this.sendLocation();
         this.fallback_last = true;
 
-        setTimeout(this.onTurn.bind(this), 150);
+        this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), 150);
     }
 
     public getTimeToTurn(nextNode: PathNode|null = null) {
@@ -225,14 +279,14 @@ export class Ghost {
 
     private setTurnTimeout() {
         this.fallback_last = false;
-        setTimeout(this.onTurn.bind(this), this.getTimeToTurn());
+        this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), this.getTimeToTurn());
     }
 
     public startPathing() {
         this.findPathToNextTarget();
         
         if (this.path) this.setTurnTimeout();
-        else setTimeout(this.onTurn.bind(this), 150);
+        else this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), 150);
 
         this.sendLocation();
     }

@@ -1,3 +1,5 @@
+import {PathNode} from "./pathfinding.ts";
+
 type Point = { x: number, y: number };
 type Direction = { dx: number, dy: number };
 
@@ -125,4 +127,17 @@ export function getDirectionDelta(direction: 0|1|2|3) {
         case 2: return {dx: -1, dy: 0}
         case 3: return {dx: 0, dy: -1}
     }
+}
+
+/**
+ * Finds the direction something needs to face in order to face otherNode from node 
+ * @param node 
+ * @param otherNode 
+ * @returns 
+ */
+export function getDirectionFromNodes(node: {x: number, y: number}|PathNode, otherNode: {x: number, y: number}|PathNode): 0|1|2|3|null {
+    if (Math.abs(node.y-otherNode.y) == 0) return node.x - otherNode.x > 0 ? 2 : 0;
+    if (Math.abs(node.x-otherNode.x) == 0) return node.y - otherNode.y > 0 ? 3 : 1;
+
+    return null;
 }
