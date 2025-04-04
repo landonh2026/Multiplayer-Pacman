@@ -431,6 +431,7 @@ export class Room {
 
             if (!shouldGhostFrightened) {
                 this.ghost_phase = GHOST_PHASES.CHASE;
+                for (let ghost of Object.values(this.ghosts)) ghost.exitFrightened();
                 // todo: set ghost timer now
             }
 

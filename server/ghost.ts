@@ -65,6 +65,7 @@ export class Ghost {
     public eat() {
         this.eaten = true;
 
+        [this.x, this.y] = this.getInBetweenPosition();
         this.facingDirection = null;
         this.sendLocation();
 
@@ -99,8 +100,6 @@ export class Ghost {
 
         reverseDir: if (this.facingDirection != null && this.path != null) {
             const fromNode = this.findCameFromNode(this.path.nodes[0].connections.map(c => c.node))?.node;
-            console.log(fromNode?.x, fromNode?.y);
-
             if (!fromNode) break reverseDir;
 
             this.facingDirection = (this.facingDirection + 2) % 4 as 0|1|2|3;
@@ -116,7 +115,28 @@ export class Ghost {
         this.setFallbackTimeout();
     }
 
-    public getInBetweenPosition() {
+    public exitFrightened() {
+        [this.x, this.y] = this.getInBetweenPosition();
+        if (this.nextTurnTimeout != null) clearTimeout(this.nextTurnTimeout);
+
+        continueDirection: if (this.facingDirection != null && this.path != null) {
+            const toNode = this.path.nodes[1];
+            console.log(toNode?.x, toNode?.y);
+
+            if (!toNode) break continueDirection;
+
+            this.path = new Path([new PathNode(this.x, this.y), toNode]);
+            
+            this.sendLocation();
+            const time = this.getTimeToTurn(toNode);
+            this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), time);
+            return;
+        }
+
+        this.setFallbackTimeout();
+    }
+
+    private getInBetweenPosition() {
         if (this.lastNodeTimestamp == null || this.facingDirection == null) {
             return [this.x, this.y];
         }
@@ -131,7 +151,7 @@ export class Ghost {
         return [this.x + movementDelta.dx, this.y + movementDelta.dy];
     }
 
-    public determineTarget(players: Array<Player>) {
+    private determineTarget(players: Array<Player>) {
         const heuristic = (x1: number, y1: number, x2: number, y2: number) => { return Math.abs(x1-x2) + Math.abs(y1-y2) };
 
         let closest = {
@@ -155,7 +175,7 @@ export class Ghost {
         return closest.player;
     }
 
-    public findPathToNextTarget() {
+    private findPathToNextTarget() {
         this.currentTarget = this.determineTarget(Object.values(this.room.players));
 
         if (this.currentTarget == undefined) {
@@ -174,7 +194,7 @@ export class Ghost {
         if (this.path?.nodes.length == 0) this.facingDirection = null;
     }
 
-    public getAdjacentNodeDirections(node: PathNode, avoidNode: PathNode|null = null) {
+    private getAdjacentNodeDirections(node: PathNode, avoidNode: PathNode|null = null) {
         const possibleDirections: Array<{node: PathNode, direction: 0|1|2|3}> = [];
 
         for (let connection of node.connections) {
@@ -193,7 +213,7 @@ export class Ghost {
         return selected;
     }
 
-    public frightenedTurn() {
+    private frightenedTurn() {
         let lastNode;
         if (this.path != null) {
             lastNode = this.path.nodes[0];
@@ -213,12 +233,11 @@ export class Ghost {
         this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), this.getTimeToTurn(adjacentNode.node));
     }
 
-    public chaseTurn() {
+    private followPathTurn(): boolean {
         // if the path is null set the fallback timer
         if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
-            this.findPathToNextTarget();
             this.setFallbackTimeout();
-            return;
+            return false;
         }
 
         if (this.facingDirection != null) {
@@ -226,7 +245,12 @@ export class Ghost {
             this.path.nodes.shift();
         }
 
+        return true;
+    }
+
+    private chaseTurn() {
         this.findPathToNextTarget();
+        if (!this.followPathTurn()) return;
 
         if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
             this.findPathToNextTarget();
@@ -249,6 +273,10 @@ export class Ghost {
 
         // set a new timeout for when the ghost passes the next turn
         this.setTurnTimeout();
+    }
+
+    public eatenReturnTurn() {
+
     }
 
     public onTurn() {
