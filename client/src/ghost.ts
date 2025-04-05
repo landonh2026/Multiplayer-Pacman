@@ -34,6 +34,12 @@ class Ghost {
         }
     }
 
+    public getMovementSpeed() {
+        if (this.eaten) return this.movementSpeed * 2;
+        if (this.phase == GHOST_PHASES.FRIGHTENED) return this.movementSpeed * 0.75;
+        return this.movementSpeed;
+    }
+
     /**
      * Draw this ghost
      */
@@ -41,7 +47,7 @@ class Ghost {
         ctx.fillStyle = this.color;
 
         if (this.phase == GHOST_PHASES.FRIGHTENED) ctx.fillStyle = ENVIRONMENT_COLORS.WALL;
-        if (this.eat_pending) ctx.fillStyle = "gray";
+        if (this.eaten) ctx.fillStyle = "gray";
 
         gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
     }
@@ -54,9 +60,8 @@ class Ghost {
     public stepMovement(deltaTime: number) {
         if (this.facingDirection == null) return;
 
-        const movementMultiplier = this.phase == GHOST_PHASES.FRIGHTENED ? 0.75 : 1;
-        this.x += this.facingDirection.getDeltas().dx * this.movementSpeed * deltaTime * movementMultiplier;
-        this.y += this.facingDirection.getDeltas().dy * this.movementSpeed * deltaTime * movementMultiplier;
+        this.x += this.facingDirection.getDeltas().dx * this.getMovementSpeed() * deltaTime;
+        this.y += this.facingDirection.getDeltas().dy * this.getMovementSpeed() * deltaTime;
     }
 
     public eat() {
