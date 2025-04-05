@@ -395,6 +395,8 @@ class Pacman {
         for (let id of Object.keys(gameManager.ghosts)) {
             const ghost = gameManager.ghosts[id];
 
+            if (ghost.eaten) continue;
+
             if (this.isPoweredUp) {
                 // if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2*1.5) {
                 if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
