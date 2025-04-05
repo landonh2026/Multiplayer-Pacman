@@ -273,10 +273,6 @@ export class Ghost {
     private chaseTurn() {
         if (!this.followPathTurn()) {
             this.findPathToNextTarget();
-
-            this.facingDirection = null;
-            this.sendLocation();
-
             this.setFallbackTimeout();
             return;
         }
@@ -342,6 +338,8 @@ export class Ghost {
     }
 
     public onTurn() {
+        clearTimeout(this.nextTurnTimeout || undefined);
+
         if (this.eaten) {
             this.eatenReturnTurn();
             this.lastNodeTimestamp = performance.now();
@@ -353,8 +351,6 @@ export class Ghost {
             this.lastNodeTimestamp = performance.now();
             return;
         }
-
-        console.log("normal turn");
 
         this.chaseTurn();
         this.lastNodeTimestamp = performance.now();
