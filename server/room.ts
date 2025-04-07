@@ -352,7 +352,8 @@ export class Room {
 
         // get the current pellet and pellet index
         // TODO: use a map or smth
-        let pellet, pellet_index;
+        let pellet = undefined;
+        let pellet_index = 0;
         for (pellet_index = 0; pellet_index < this.gameBoard.pellets.length; pellet_index++) {
             pellet = this.gameBoard.pellets[pellet_index];
 
@@ -372,19 +373,9 @@ export class Room {
         const pellet_pos = [pellet.x*40, pellet.y*40];
         const distance_from_pellet = [Math.abs(player.pacman.lastLocation.x - pellet_pos[0]), Math.abs(player.pacman.lastLocation.y - pellet_pos[1])];
         if (distance_from_pellet[0] > 40 || distance_from_pellet[1] > 40) {
-            player.log("Attempted to eat pellet too far away from new pos: ", distance_from_pellet);
+            player.log("Attempted to eat pellet too far away from new pos: ", distance_from_pellet, pellet.id);
             player.ws.send(utils.makeMessage("pellet-reject", {pelletID: data.data.pelletID}));
             return;
-        }
-
-        if (pellet.type == PELLET_TYPES.FOOD) {
-            this.gameBoard = gameBoards.default.duplicate();
-            this.server.publish(this.topics.event, utils.makeMessage("board-state", this.makeBoardState()));
-        }
-
-        // power up the player if appropriate
-        else if (pellet.type == PELLET_TYPES.POWER) {
-            this.handlePowerPelletEat(player, data);
         }
 
         // remake the gameboard if all the pellets are gone
@@ -399,9 +390,19 @@ export class Room {
         this.gameBoard.pellets.splice(pellet_index, 1);
         player.score += 10;
         this.server.publish(this.topics.event, utils.makeMessage("eat-pellet", {pelletID: pellet.id, scores: this.makeScoresList()}));
+
+        if (pellet.type == PELLET_TYPES.FOOD) {
+            this.gameBoard = gameBoards.default.duplicate();
+            this.server.publish(this.topics.event, utils.makeMessage("board-state", this.makeBoardState()));
+        }
+
+        // power up the player if appropriate
+        else if (pellet.type == PELLET_TYPES.POWER) {
+            this.handlePowerPelletEat(player);
+        }
     }
 
-    public handlePowerPelletEat(player: Player, data: {data: any}) {
+    public handlePowerPelletEat(player: Player) {
         const shouldUpdatePos = !player.pacman.isPoweredUp;
         player.pacman.isPoweredUp = true;
 
@@ -474,7 +475,9 @@ export class Room {
             player.ws.send(utils.makeMessage("reject-ghost-eat", {id: data.data.ghost_id}));
             return;
         }
-
+        
+        player.score += 100;
+        this.server.publish(this.topics.event, utils.makeMessage("update-scores", {scores: this.makeScoresList()}));
         this.ghosts[data.data.ghost_id].eat();
     }
 
@@ -489,7 +492,7 @@ export class Room {
         player.sendLocalPlayerState();
         player.ws.publish(this.topics.event, utils.makeMessage("kill-pacman", { id: player.session }));
 
-        this.server.publish(this.topics.event, utils.makeMessage("update-scores", {scores: this.makeScoresList()}));        
+        this.server.publish(this.topics.event, utils.makeMessage("update-scores", {scores: this.makeScoresList()}));
         player.log("died");
 
         let remainingPlayers = 0;
@@ -570,7 +573,19 @@ export class Room {
         newPlayer.ws.send(utils.makeMessage("board-state", this.makeBoardState()));
         this.players[newPlayer.session] = newPlayer;
 
-        const ghost = new Ghost(340, 300, this);
+        let ghost = new Ghost(340, 300, this);
+        this.ghosts[ghost.id] = ghost;
+        ghost.startPathing();
+        
+        ghost = new Ghost(340, 300, this);
+        this.ghosts[ghost.id] = ghost;
+        ghost.startPathing();
+
+        ghost = new Ghost(340, 300, this);
+        this.ghosts[ghost.id] = ghost;
+        ghost.startPathing();
+
+        ghost = new Ghost(340, 300, this);
         this.ghosts[ghost.id] = ghost;
         ghost.startPathing();
     }

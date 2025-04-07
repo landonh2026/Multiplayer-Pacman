@@ -12,7 +12,7 @@ const topics = { event: "game-event" };
 //  ^ also movement speed eventually
 const animation_timings = {
     kill: 41 / target_client_fps * 1000,
-    power_up: 5 * 1000,
+    power_up: 4 * 1000,
 };
 
 const debug = true;
