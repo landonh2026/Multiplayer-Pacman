@@ -12,6 +12,15 @@ class DrawManager {
         this.oldPellets = [];
     }
 
+    public shouldDoEntityFlashing(): boolean {
+        let allPacman = [gameManager.localPacman];
+        for (let player of Object.keys(gameManager.remotePlayers)) allPacman.push(gameManager.remotePlayers[player].pacman);
+
+        const longest_time = Math.max(...allPacman.map(p => p.powerupExpiresAt && p.isPoweredUp ? (performance.now() - p.powerupExpiresAt) : -1 ));
+
+        return longest_time < 3000 && longest_time > 0;
+    }
+
     public drawPellets(pellets: Array<Pellet>, deltaTime: number, shrink: boolean = false) {
         // draw the pellets from the pellet data
         for (let pellet of pellets) {
@@ -23,14 +32,17 @@ class DrawManager {
             let size = Math.max(2.5 * (gameManager.tileSize / 40), 1.25);
             
             // todo: line animation thing instead?
-            if (!this.pelletShrinkAnimation.isDone())
+            if (!this.pelletShrinkAnimation.isDone()) {
                 size *= (shrink ? 1 - this.pelletShrinkAnimation.get_progress() : this.pelletShrinkAnimation.get_progress());
+            }
             
             if (pellet.type == PELLET_TYPES.POWER) {
                 size *= 2;
 
                 if (this.powerPelletFlash.get_progress() < 0.5) ctx.fillStyle = ENVIRONMENT_COLORS.DARK_PELLET;
-            } else if (pellet.type == PELLET_TYPES.FOOD) size *= 3;
+            } else if (pellet.type == PELLET_TYPES.FOOD) {
+                size *= 3;
+            }
 
             ctx.beginPath();
 
@@ -84,7 +96,7 @@ class DrawManager {
         }
     }
 
-    public drawDeadPacman(x: number, y: number, radius: number, frame: number) {
+    public drawDeadPacman(x: number, y: number, radius: number, frame: number, frightened: boolean = false) {
         if (frame > 35) {
             ctx.strokeStyle = "white";
 
@@ -127,9 +139,24 @@ class DrawManager {
 
         // actually draw the pacman
         ctx.beginPath();
+        ctx.moveTo(x, y);
         ctx.arc(x, y, radius, Math.PI * -0.5 + rad, Math.PI * 1.5 - rad, false);
         ctx.lineTo(x, y);
+
+        if (!frightened) {
+            ctx.fill();
+            return;
+        }
+
+        const gradient = ctx.createLinearGradient(x - radius, y - radius, x + radius, y + radius);    
+        gradient.addColorStop(0, ENTITY_STATE_COLORS.FRIGHTENED_BRIGHT);
+        gradient.addColorStop(1,  ENTITY_STATE_COLORS.FRIGHTENED_DARK);
+        ctx.fillStyle = gradient;
+        
+        ctx.lineWidth = 2;
         ctx.fill();
+        ctx.stroke();
+        ctx.lineWidth = 1;
     }
 
     /**
@@ -140,7 +167,7 @@ class DrawManager {
      * @param frame The current frame of the mouth animation of the pacman
      * @param direction The facing direction of the pacman
      */
-    public drawPacman(x: number, y: number, radius: number, frame: number, direction: Direction = directions.UP) {
+    public drawPacman(x: number, y: number, radius: number, frame: number, direction: Direction = directions.UP, frightened: boolean = false) {
         // define the size of the mouth
         const maxArcSize = 0.35;
         const minArcSize = 0.02;
@@ -159,9 +186,29 @@ class DrawManager {
 
         // actually draw the pacman
         ctx.beginPath();
+        ctx.moveTo(x, y);
         ctx.arc(x, y, radius, (radiusDifference * Math.PI) + arcOffset, ((2 - radiusDifference) * Math.PI) + arcOffset, false);
         ctx.lineTo(x, y);
+        
+        if (!frightened) {
+            ctx.fill();
+            return;
+        }
+
+        const gradient = ctx.createLinearGradient(x - radius, y - radius, x + radius, y + radius);    
+        gradient.addColorStop(0, ENTITY_STATE_COLORS.FRIGHTENED_BRIGHT);
+        gradient.addColorStop(1,  ENTITY_STATE_COLORS.FRIGHTENED_DARK);
+        ctx.fillStyle = gradient;
+
+        if (this.shouldDoEntityFlashing()) {
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "white";
+        }
+        
+        ctx.lineWidth = 2;
         ctx.fill();
+        ctx.stroke();
+        ctx.lineWidth = 1;
     }
 
     /**
@@ -171,6 +218,11 @@ class DrawManager {
      * @param direction The direction that the ghost is facing
      */
     public drawGhost(x: number, y: number, direction: Direction|null) {
+        if (this.shouldDoEntityFlashing()) {
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "white";
+        }
+
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, 2*Math.PI);
         ctx.fill();

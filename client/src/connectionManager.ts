@@ -43,6 +43,7 @@ class ConnectionManager {
         const parsed = JSON.parse(event.data);
 
         if (parsed.messageType in gameManager.eventHandler.typeHandlers) {
+            console.log("Received", parsed.messageType, "packet");
             gameManager.eventHandler.typeHandlers[parsed.messageType](parsed);
             return;
         }
@@ -107,9 +108,6 @@ class ConnectionManager {
     public sendPosition(pacman: Pacman) {
         if (this.socket.readyState == 0) return;
 
-        console.log("sending pos packet", pacman.x, pacman.y, pacman.shouldMove);
-        // console.trace();
-    
         this.socket.send(this.makeMessage(
             "position",
             {

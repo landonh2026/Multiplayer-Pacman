@@ -19,6 +19,12 @@ class PacmanColor {
     }
 }
 
+const ENTITY_STATE_COLORS = {
+    FRIGHTENED: "#612196",
+    FRIGHTENED_BRIGHT: "#6f2aa8",
+    FRIGHTENED_DARK: "#612196"
+};
+
 /** General environmental colors */
 const ENVIRONMENT_COLORS = {
     TEXT: "white",
@@ -31,7 +37,7 @@ const ENVIRONMENT_COLORS = {
 /** Ghost colors */
 const GHOST_COLORS = {
     PINKY: "rgb(253, 180, 255)"
-}
+};
 
 /** Pacman colors */
 const PACMAN_COLORS = {

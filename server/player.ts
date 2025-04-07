@@ -51,17 +51,24 @@ export class Player {
     /**
      * Sends this player's player state to the client
      */
-    public sendLocalPlayerState() {
+    public sendLocalPlayerState(send_position: boolean = true) {
+        let powerupTime = this.pacman.powerupTime != null ? (this.pacman.powerupTime - performance.now()) : null;
+        console.log(powerupTime);
+        if (powerupTime != null && powerupTime < 0) powerupTime = null;
+
+        console.log(this.pacman.powerupTime, powerupTime, performance.now());
+
         this.ws.send(
             utils.makeMessage(
                 "local-player-info",
                 {
-                    poweredUp: this.pacman.isPoweredUp,
+                    loc: send_position ? this.pacman.lastLocation : null,
                     isAlive: this.pacman.isAlive,
+                    poweredUp: this.pacman.isPoweredUp,
+                    powerupTimer: powerupTime,
                     color: this.pacman.color,
-                    loc: this.pacman.lastLocation,
-                    moveSpeed: this.pacman.movementSpeed,
-                    session: this.session
+                    session: this.session,
+                    moveSpeed: this.pacman.movementSpeed
                 }
             )
         );
@@ -70,9 +77,15 @@ export class Player {
     /**
      * Publish this player's location to other players
      */
-    public publishLocation(send: boolean = true) {
-        const posData = utils.makeMessage("position", {...this.pacman.lastLocation, isAlive: this.pacman.isAlive, poweredUp: this.pacman.isPoweredUp}, false);
+    public publishLocation(send_position: boolean = true, send: boolean = true) {
+        const position_data = send_position ? this.pacman.lastLocation : {no_pos: true};
+
+        let powerupTime = this.pacman.powerupTime ? performance.now() - this.pacman.powerupTime : null;
+        if (powerupTime != null && powerupTime < 0) powerupTime = null;
+        
+        const posData = utils.makeMessage("position", {...position_data, isAlive: this.pacman.isAlive, poweredUp: this.pacman.isPoweredUp, powerupTimer: powerupTime}, false);
         posData["from-session"] = this.session;
+
         if (send) this.ws.publish(this.room.topics.event, JSON.stringify(posData));
         else return posData;
     }
@@ -105,6 +118,7 @@ export class Pacman {
     player: Player;
     isAlive: boolean;
     isPoweredUp: boolean;
+    powerupTime: number|null;
 
     lastPosPacketTime: number;
 
@@ -117,6 +131,7 @@ export class Pacman {
         this.lastPosPacketTime = 0;
         this.isAlive = true;
         this.isPoweredUp = false;
+        this.powerupTime = null;
     }
 
     /**

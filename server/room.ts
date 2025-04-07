@@ -97,11 +97,11 @@ export class Room {
 
         this.topics = this.makeTopics();
 
-        for (let i = 0; i < 4; i++) {
-            const ghost = new Ghost(340, 300, this);
-            this.ghosts[ghost.id] = ghost;
-            ghost.startPathing();
-        }
+        // for (let i = 0; i < 4; i++) {
+        //     const ghost = new Ghost(340, 300, this);
+        //     this.ghosts[ghost.id] = ghost;
+        //     ghost.startPathing();
+        // }
     }
 
     /**
@@ -409,8 +409,9 @@ export class Room {
     }
 
     public handlePowerPelletEat(player: Player) {
-        const shouldUpdatePos = !player.pacman.isPoweredUp;
+        const shouldUpdateState = !player.pacman.isPoweredUp;
         player.pacman.isPoweredUp = true;
+        player.pacman.powerupTime = performance.now() + globals.animation_timings.power_up;
 
         clearInterval(this.timers.get(SERVER_TIMERS.GHOST_PHASE));
         if (this.ghost_phase != GHOST_PHASES.FRIGHTENED) {
@@ -418,16 +419,16 @@ export class Room {
             for (let ghost of Object.values(this.ghosts)) ghost.enterFrightened();
         }   
 
-        // todo: instead just send a different packet without position information to avoid lagbacks
-        if (shouldUpdatePos) {
-            player.sendLocalPlayerState();
-            player.publishLocation();
+        if (shouldUpdateState) {
+            player.sendLocalPlayerState(false);
+            player.publishLocation(false);
         }
 
         // clear existing timers
         clearTimeout(player.timers.get(PLAYER_TIMER_TYPES.POWERUP));
         
         player.timers.set(PLAYER_TIMER_TYPES.POWERUP, setTimeout(() => {
+            player.pacman.powerupTime = null;
             player.pacman.isPoweredUp = false;
 
             let shouldGhostFrightened = false;
@@ -449,8 +450,8 @@ export class Room {
             player.pacman.lastLocation.x = estimated_pos.x;
             player.pacman.lastLocation.y = estimated_pos.y;
 
-            player.publishLocation();
-            player.sendLocalPlayerState();
+            player.publishLocation(false);
+            player.sendLocalPlayerState(false);
         }, globals.animation_timings.power_up));
     }
 

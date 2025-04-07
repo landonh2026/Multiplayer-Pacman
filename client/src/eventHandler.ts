@@ -180,14 +180,18 @@ class EventHandler {
 
         gameManager.localPacman.isDead = !parsedData.data.isAlive;
         gameManager.localPacman.isPoweredUp = parsedData.data.poweredUp;
-
-        gameManager.localPacman.x = parsedData.data.loc.x;
-        gameManager.localPacman.y = parsedData.data.loc.y;
-        gameManager.localPacman.facingDirection = Direction.fromEnum(parsedData.data.loc.facingDirection) as Direction;
-        gameManager.localPacman.queuedDirection = Direction.fromEnum(parsedData.data.loc.queuedDirection) as Direction;
-        gameManager.localPacman.shouldMove = parsedData.data.loc.shouldMove;
         gameManager.localPacman.movementSpeed = parsedData.data.moveSpeed;
+        gameManager.localPacman.powerupExpiresAt = parsedData.data.powerupTimer ? performance.now() + parsedData.data.powerupTimer : null;
+        console.log(gameManager.localPacman.powerupExpiresAt);
 
+        if (parsedData.data.loc != null) {
+                gameManager.localPacman.x = parsedData.data.loc.x;
+                gameManager.localPacman.y = parsedData.data.loc.y;
+                gameManager.localPacman.facingDirection = Direction.fromEnum(parsedData.data.loc.facingDirection) as Direction;
+                gameManager.localPacman.queuedDirection = Direction.fromEnum(parsedData.data.loc.queuedDirection) as Direction;
+                gameManager.localPacman.shouldMove = parsedData.data.loc.shouldMove;
+        }
+        
         gameManager.uuid = parsedData.data.session;
     }
 
@@ -210,13 +214,19 @@ class EventHandler {
             workingPacman.animations.powerAnimation.setActive(true);
         }
 
-        workingPacman.x = parsedData.data.x;
-        workingPacman.y = parsedData.data.y;
-        workingPacman.isDead = !parsedData.data.isAlive;
         workingPacman.isPoweredUp = parsedData.data.poweredUp;
-        workingPacman.facingDirection = Direction.fromEnum(parsedData.data.facingDirection) as Direction;
-        workingPacman.queuedDirection = Direction.fromEnum(parsedData.data.queuedDirection) as Direction;
-        workingPacman.shouldMove = parsedData.data.shouldMove;
+        workingPacman.isDead = !parsedData.data.isAlive;
+        workingPacman.powerupExpiresAt = parsedData.data.powerupTimer ? performance.now() + parsedData.data.powerupTimer : null;
+
+        console.log(workingPacman.powerupExpiresAt);
+
+        if (!parsedData.data.no_pos) {
+            workingPacman.x = parsedData.data.x;
+            workingPacman.y = parsedData.data.y;
+            workingPacman.facingDirection = Direction.fromEnum(parsedData.data.facingDirection) as Direction;
+            workingPacman.queuedDirection = Direction.fromEnum(parsedData.data.queuedDirection) as Direction;
+            workingPacman.shouldMove = parsedData.data.shouldMove;
+        }
     }
 
     /**

@@ -46,7 +46,7 @@ class Ghost {
     public draw() {
         ctx.fillStyle = this.color;
 
-        if (this.phase == GHOST_PHASES.FRIGHTENED) ctx.fillStyle = ENVIRONMENT_COLORS.WALL;
+        if (this.phase == GHOST_PHASES.FRIGHTENED) ctx.fillStyle = ENTITY_STATE_COLORS.FRIGHTENED;
         if (this.eaten) ctx.fillStyle = "gray";
 
         gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);

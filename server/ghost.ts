@@ -236,7 +236,7 @@ export class Ghost {
 
     private followPathTurn(): boolean {
         // if the path is null set the fallback timer
-        if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == undefined) {
+        if (this.path == null || this.path.nodes.length === 0) {
             this.setFallbackTimeout();
             return false;
         }

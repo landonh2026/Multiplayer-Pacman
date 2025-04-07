@@ -18,6 +18,7 @@ class Pacman {
     isDead: boolean;
     isLocal: boolean;
     isPoweredUp: boolean;
+    powerupExpiresAt: number|null;
 
     score: number;
     lastQueuedDirectionNode: { distance: number, node: PathIntersection, nodeIndex: number } | null;
@@ -45,6 +46,7 @@ class Pacman {
         this.isDead = isDead;
         this.isLocal = isLocal;
         this.isPoweredUp = false;
+        this.powerupExpiresAt = null;
 
         this.score = score;
         this.lastQueuedDirectionNode = null;
@@ -80,6 +82,30 @@ class Pacman {
         }
 
         return [this.x, this.y]
+    }
+
+    public shouldRenderFrightened(): boolean {
+        if (this.isPoweredUp) return false;
+
+        
+        const other_pacman = [];
+        if (!this.isLocal) other_pacman.push(gameManager.localPacman);
+        
+        for (let player of Object.keys(gameManager.remotePlayers)) {
+            const pacman = gameManager.remotePlayers[player].pacman;
+            if (pacman == this) continue;
+            other_pacman.push(pacman);
+        }
+
+        let vulnerable = false;
+        for (let pacman of other_pacman) {
+            if (pacman.isPoweredUp) {
+                vulnerable = true;
+                break;
+            }
+        }
+
+        return vulnerable;
     }
 
     /**
@@ -176,6 +202,7 @@ class Pacman {
         if (!this.animations.powerAnimation.isDone()) {
             let powerupAnimationScale = this.radius / 2;
 
+            // play the animation forwards or in reverse
             this.animations.powerAnimation.step_frame(deltaTime);
             customRadius = this.radius + powerUpSizingFunction(
                 this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
@@ -183,28 +210,32 @@ class Pacman {
             ) * powerupAnimationScale;
         }
 
-        // create the gradient for this pacman
-        const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);    
-        gradient.addColorStop(0, this.color.gradient_start);
-        gradient.addColorStop(1,  this.color.gradient_end);
-        ctx.fillStyle = gradient;
-        ctx.strokeStyle = "#FFFFFF";
+
+        const vulnerable = this.shouldRenderFrightened();
+
+        if (vulnerable) ctx.strokeStyle = this.color.color;
+        else {
+            // create the gradient for this pacman
+            const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);    
+            gradient.addColorStop(0, this.color.gradient_start);
+            gradient.addColorStop(1,  this.color.gradient_end);
+    
+            ctx.fillStyle = gradient;
+        }
+
         
         // if we are moving step the mouth animation
-        if (this.shouldMove) {
-            this.animations.bodyAnimation.step_frame(deltaTime);
-        }
+        if (this.shouldMove) this.animations.bodyAnimation.step_frame(deltaTime);
 
         // if we are dead draw the dead pacman animation
         if (this.isDead) {
             this.animations.killAnimation.step_frame(deltaTime);
-            gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animations.killAnimation.get_frame());
-
+            gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animations.killAnimation.get_frame(), vulnerable);
             return;
         }
         
         // draw the pacman
-        gameManager.drawManager.drawPacman(this.x, this.y, customRadius, this.animations.bodyAnimation.get_frame(), this.facingDirection);
+        gameManager.drawManager.drawPacman(this.x, this.y, customRadius, this.animations.bodyAnimation.get_frame(), this.facingDirection, vulnerable);
     }
 
     /**
