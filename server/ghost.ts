@@ -308,6 +308,7 @@ export class Ghost {
 
         if (!this.followPathTurn()) {
             console.error("Can't follow return path.", this.path == null, this.path?.nodes.length === 0, this.currentTarget == undefined);
+            return;
         }
 
         if (this.path.nodes.length === 0) {

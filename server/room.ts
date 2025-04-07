@@ -96,6 +96,12 @@ export class Room {
         };
 
         this.topics = this.makeTopics();
+
+        for (let i = 0; i < 4; i++) {
+            const ghost = new Ghost(340, 300, this);
+            this.ghosts[ghost.id] = ghost;
+            ghost.startPathing();
+        }
     }
 
     /**
@@ -503,16 +509,6 @@ export class Room {
         if (remainingPlayers <= 1) {
             this.roundDone();
         }
-
-        // debug respawn
-        // setTimeout(() => {
-        //     player.pacman.lastKnownLocation.x = 60;
-        //     player.pacman.lastKnownLocation.y = 120;
-        //     player.pacman.isAlive = true;
-
-        //     player.sendLocalPlayerState();
-        //     player.publishLocation();
-        // }, globals.animation_timings.kill * 1.3);
     }
     
     public roundDone() {
@@ -572,22 +568,6 @@ export class Room {
         newPlayer.sendLocalPlayerState();
         newPlayer.ws.send(utils.makeMessage("board-state", this.makeBoardState()));
         this.players[newPlayer.session] = newPlayer;
-
-        let ghost = new Ghost(340, 300, this);
-        this.ghosts[ghost.id] = ghost;
-        ghost.startPathing();
-        
-        ghost = new Ghost(340, 300, this);
-        this.ghosts[ghost.id] = ghost;
-        ghost.startPathing();
-
-        ghost = new Ghost(340, 300, this);
-        this.ghosts[ghost.id] = ghost;
-        ghost.startPathing();
-
-        ghost = new Ghost(340, 300, this);
-        this.ghosts[ghost.id] = ghost;
-        ghost.startPathing();
     }
 
     /**

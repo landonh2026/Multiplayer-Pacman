@@ -82,8 +82,8 @@ class GameManager {
         this.infoBoard = new InfoBoard();
         this.debugger = new Debugger();
         
-        this.connectionManager = new ConnectionManager();
-        // this.connectionManager = new ConnectionManager("ws:/0.tcp.us-cal-1.ngrok.io:13045/gamesocket");
+        // this.connectionManager = new ConnectionManager();
+        this.connectionManager = new ConnectionManager("ws:/4.tcp.us-cal-1.ngrok.io:16000/gamesocket");
     }
 
     /**
