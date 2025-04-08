@@ -21,7 +21,7 @@ class PacmanColor {
 
 const ENTITY_STATE_COLORS = {
     FRIGHTENED: "#612196",
-    FRIGHTENED_BRIGHT: "#6f2aa8",
+    FRIGHTENED_BRIGHT: "#7c35b7",
     FRIGHTENED_DARK: "#612196"
 };
 
