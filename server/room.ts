@@ -97,7 +97,7 @@ export class Room {
 
         this.topics = this.makeTopics();
 
-        for (let i = 0; i < 0; i++) {
+        for (let i = 0; i < 10; i++) {
             const ghost = new Ghost(340, 300, this);
             this.ghosts[ghost.id] = ghost;
             ghost.startPathing();

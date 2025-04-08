@@ -1,6 +1,6 @@
 import { Player } from "./player.ts";
 import { Path } from "./pathfinding.ts";
-import { Room, GHOST_PHASES } from "./room.ts";
+import { Room } from "./room.ts";
 import { PathNode } from "./pathfinding.ts";
 import * as globals from "./globals.ts";
 import * as utils from "./utils.ts";
@@ -9,6 +9,12 @@ import * as utils from "./utils.ts";
 MOVEMENT REFERENCE:
 https://www.todayifoundout.com/index.php/2015/10/ghosts-pac-man-work/
 */
+
+export enum GHOST_PHASES {
+    CHASE,
+    SCATTER,
+    FRIGHTENED
+}
 
 export class Ghost {
     x: number;
@@ -24,6 +30,7 @@ export class Ghost {
     fallback_last: boolean;
     eaten: boolean;
     lastNodeTimestamp: number|null;
+    phase: GHOST_PHASES;
 
     constructor(x: number, y: number, room: Room) {
         this.x = x;
@@ -44,6 +51,8 @@ export class Ghost {
         this.fallback_last = false;
         this.eaten = false;
 
+        this.phase = GHOST_PHASES.CHASE;
+
         this.sendLocation();
     }
 
@@ -57,14 +66,14 @@ export class Ghost {
                 id: this.id,
                 color: this.color,
                 debug_path: globals.debug ? this.path?.nodes.map((n) => { return {x: n.x, y: n.y} }) : null,
-                phase: this.room.ghost_phase
+                phase: this.phase
             }
         ));
     }
 
     public getMovementSpeed() {
         if (this.eaten) return this.movementSpeed * 2;
-        if (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED) return this.movementSpeed * 0.75;
+        if (this.phase == GHOST_PHASES.FRIGHTENED) return this.movementSpeed * 0.75;
         return this.movementSpeed;
     }
 
@@ -319,7 +328,24 @@ export class Ghost {
             this.path = new Path([passingNode]);
             
             this.lastNodeTimestamp = performance.now();
-            if (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED) this.enterFrightened();
+
+            let shouldBeFrightened = true;
+            for (let player of Object.values(this.room.players)) {
+                if (player.pacman.isPoweredUp) continue;
+                shouldBeFrightened = false;
+                break;
+            }
+
+            if (shouldBeFrightened) {
+                if (this.phase == GHOST_PHASES.FRIGHTENED) this.enterFrightened();
+                else this.onTurn();
+                return;
+            }
+            
+            const wasFrightened = this.phase == GHOST_PHASES.FRIGHTENED;
+            this.phase = GHOST_PHASES.CHASE;
+            
+            if (wasFrightened) this.exitFrightened();
             else this.onTurn();
             
             return;
@@ -347,7 +373,7 @@ export class Ghost {
             return;
         }
 
-        if (this.room.ghost_phase == GHOST_PHASES.FRIGHTENED) {
+        if (this.phase == GHOST_PHASES.FRIGHTENED) {
             this.frightenedTurn();
             this.lastNodeTimestamp = performance.now();
             return;
