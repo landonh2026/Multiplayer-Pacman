@@ -53,11 +53,8 @@ export class Player {
      */
     public sendLocalPlayerState(send_position: boolean = true) {
         let powerupTime = this.pacman.powerupTime != null ? (this.pacman.powerupTime - performance.now()) : null;
-        console.log(powerupTime);
         if (powerupTime != null && powerupTime < 0) powerupTime = null;
-
-        console.log(this.pacman.powerupTime, powerupTime, performance.now());
-
+        
         this.ws.send(
             utils.makeMessage(
                 "local-player-info",
@@ -80,7 +77,7 @@ export class Player {
     public publishLocation(send_position: boolean = true, send: boolean = true) {
         const position_data = send_position ? this.pacman.lastLocation : {no_pos: true};
 
-        let powerupTime = this.pacman.powerupTime ? performance.now() - this.pacman.powerupTime : null;
+        let powerupTime = this.pacman.powerupTime != null ? (this.pacman.powerupTime - performance.now()) : null;
         if (powerupTime != null && powerupTime < 0) powerupTime = null;
         
         const posData = utils.makeMessage("position", {...position_data, isAlive: this.pacman.isAlive, poweredUp: this.pacman.isPoweredUp, powerupTimer: powerupTime}, false);

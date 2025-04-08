@@ -25,7 +25,6 @@ class EventHandler {
     }
 
     public remotePacmanDied(parsedData: any) {
-        console.log(parsedData.data.id);
         gameManager.remotePlayers[parsedData.data.id].pacman.kill();
     }
 
@@ -60,11 +59,6 @@ class EventHandler {
             let pacman: Pacman;
             if (gameManager.uuid == collision.session) pacman = gameManager.localPacman;
             else pacman = gameManager.remotePlayers[collision.session].pacman;
-
-            // debug
-            // if (gameManager.uuid == collision.session) {
-            //     console.log((Direction.fromEnum(collision.from) as Direction).asString, collision.x, collision.y);
-            // }
 
             // move the pacman to the collision
             pacman.x = collision.x;
@@ -182,7 +176,6 @@ class EventHandler {
         gameManager.localPacman.isPoweredUp = parsedData.data.poweredUp;
         gameManager.localPacman.movementSpeed = parsedData.data.moveSpeed;
         gameManager.localPacman.powerupExpiresAt = parsedData.data.powerupTimer ? performance.now() + parsedData.data.powerupTimer : null;
-        console.log(gameManager.localPacman.powerupExpiresAt);
 
         if (parsedData.data.loc != null) {
                 gameManager.localPacman.x = parsedData.data.loc.x;
@@ -217,8 +210,6 @@ class EventHandler {
         workingPacman.isPoweredUp = parsedData.data.poweredUp;
         workingPacman.isDead = !parsedData.data.isAlive;
         workingPacman.powerupExpiresAt = parsedData.data.powerupTimer ? performance.now() + parsedData.data.powerupTimer : null;
-
-        console.log(workingPacman.powerupExpiresAt);
 
         if (!parsedData.data.no_pos) {
             workingPacman.x = parsedData.data.x;

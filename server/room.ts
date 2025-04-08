@@ -97,11 +97,11 @@ export class Room {
 
         this.topics = this.makeTopics();
 
-        // for (let i = 0; i < 4; i++) {
-        //     const ghost = new Ghost(340, 300, this);
-        //     this.ghosts[ghost.id] = ghost;
-        //     ghost.startPathing();
-        // }
+        for (let i = 0; i < 0; i++) {
+            const ghost = new Ghost(340, 300, this);
+            this.ghosts[ghost.id] = ghost;
+            ghost.startPathing();
+        }
     }
 
     /**
@@ -409,7 +409,6 @@ export class Room {
     }
 
     public handlePowerPelletEat(player: Player) {
-        const shouldUpdateState = !player.pacman.isPoweredUp;
         player.pacman.isPoweredUp = true;
         player.pacman.powerupTime = performance.now() + globals.animation_timings.power_up;
 
@@ -417,12 +416,10 @@ export class Room {
         if (this.ghost_phase != GHOST_PHASES.FRIGHTENED) {
             this.ghost_phase = GHOST_PHASES.FRIGHTENED;
             for (let ghost of Object.values(this.ghosts)) ghost.enterFrightened();
-        }   
-
-        if (shouldUpdateState) {
-            player.sendLocalPlayerState(false);
-            player.publishLocation(false);
         }
+
+        player.sendLocalPlayerState(false);
+        player.publishLocation(false);
 
         // clear existing timers
         clearTimeout(player.timers.get(PLAYER_TIMER_TYPES.POWERUP));

@@ -12,13 +12,19 @@ class DrawManager {
         this.oldPellets = [];
     }
 
-    public shouldDoEntityFlashing(): boolean {
+    public shouldDoEntityFlash(): boolean {
         let allPacman = [gameManager.localPacman];
         for (let player of Object.keys(gameManager.remotePlayers)) allPacman.push(gameManager.remotePlayers[player].pacman);
 
-        const longest_time = Math.max(...allPacman.map(p => p.powerupExpiresAt && p.isPoweredUp ? (performance.now() - p.powerupExpiresAt) : -1 ));
+        const longest_time = Math.max(...allPacman.map(p => p.powerupExpiresAt != null && p.isPoweredUp ? (p.powerupExpiresAt - performance.now()) : -1 ));
 
-        return longest_time < 3000 && longest_time > 0;
+        const min = 0;
+        const max = 3000;
+
+        if (longest_time > max || longest_time < min) return false;
+
+        const flashInterval = 150 + (150 * (longest_time / max));
+        return Math.floor(longest_time / flashInterval) % 2 === 0;
     }
 
     public drawPellets(pellets: Array<Pellet>, deltaTime: number, shrink: boolean = false) {
@@ -200,7 +206,7 @@ class DrawManager {
         gradient.addColorStop(1,  ENTITY_STATE_COLORS.FRIGHTENED_DARK);
         ctx.fillStyle = gradient;
 
-        if (this.shouldDoEntityFlashing()) {
+        if (this.shouldDoEntityFlash()) {
             ctx.fillStyle = "white";
             ctx.strokeStyle = "white";
         }
@@ -218,7 +224,7 @@ class DrawManager {
      * @param direction The direction that the ghost is facing
      */
     public drawGhost(x: number, y: number, direction: Direction|null) {
-        if (this.shouldDoEntityFlashing()) {
+        if (this.shouldDoEntityFlash()) {
             ctx.fillStyle = "white";
             ctx.strokeStyle = "white";
         }
