@@ -239,11 +239,13 @@ let gameBoards: any = {
         
         [0, 1, 1, 7], // left-top wall
         [0, 9, 1, 10], // left-bottom wall
-        [-1, 8, 1, 1], // left-middle exit blocker
+        // [-1, 8, 1, 1], // left-middle exit blocker
 
         [16, 1, 1, 7], // right-top wall
         [16, 9, 1, 10], // right-left wall
-        [17, 8, 1, 1], // right-middle exit blocker
+        // [18, 8, 1, 1], // far right-middle exit blocker
+        // [17, 7, 2, 1], // right warp tunnel top exit blocker
+        // [17, 9, 2, 1], // right warp tunnel bottom exit blocker
         
         [8, 1, 1, 2], // top middle "knob"
         [7, 4, 3, 1], // just below knob

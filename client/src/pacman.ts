@@ -252,17 +252,17 @@ class Pacman {
         }
 
         // send a warning if we can't find a node
-        if (currentNode == null) {
-            console.warn("Unable to find a path intersection node! Player coords:", this.x, this.y);
-        }
+        // if (currentNode == null) {
+        //     console.warn("Unable to find a path intersection node! Player coords:", this.x, this.y);
+        // }
         
         // no previous node -- this pacman obj was probably just created
         if (this.lastQueuedDirectionNode == null) {
             this.lastQueuedDirectionNode = currentNode;
 
-            // if we don't have a current node or a past node, allow any queued direction changes
+            // if we don't have a current node or a past node, assume we are going through the warp tunnel
             if (currentNode == null) {
-                this.facingDirection = this.queuedDirection;
+                // this.facingDirection = this.queuedDirection;
                 this.shouldMove = true;
                 return;
             }
@@ -421,6 +421,15 @@ class Pacman {
         }
     }
 
+    public warpTunnel() {
+        if (this.x < 20) {
+            this.x = 660;
+        }
+        else if (this.x > 660) {
+            this.x = 20;
+        }
+    }
+
     public collideGhosts() {
         // todo: find a server side way of doing this
         for (let id of Object.keys(gameManager.ghosts)) {
@@ -467,6 +476,8 @@ class Pacman {
         if (((!gameManager.performanceMode) || this.isLocal)) {
             this.checkQueuedDirection();
         }
+
+        this.warpTunnel();
         
         // handle if we are active in the bump animation
         if (this.bumpAnimation(deltaTime)) {

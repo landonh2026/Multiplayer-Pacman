@@ -167,4 +167,8 @@ class ConnectionManager {
             }
         ));
     }
+
+    public useWarpTunnel() {
+        
+    }
 }
