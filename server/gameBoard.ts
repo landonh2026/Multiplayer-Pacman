@@ -235,11 +235,18 @@ export class Pellet {
 let gameBoards: any = {
     default: new GameBoard([
         [0, 0, 17, 1], // top wall
-        [0, 1, 1, 18], // left wall
-        [16, 1, 1, 18], // right wall
         [1, 18, 15, 1], // bottom wall
         
+        [0, 1, 1, 7], // left-top wall
+        [0, 9, 1, 10], // left-bottom wall
+        [-1, 8, 1, 1], // left-middle exit blocker
+
+        [16, 1, 1, 7], // right-top wall
+        [16, 9, 1, 10], // right-left wall
+        [17, 8, 1, 1], // right-middle exit blocker
+        
         [8, 1, 1, 2], // top middle "knob"
+        [7, 4, 3, 1], // just below knob
         
         [2, 2, 2, 1], // top left block
         [5, 2, 2, 1], // +right block
@@ -249,10 +256,7 @@ let gameBoards: any = {
         [10, 2, 2, 1], // right of top middle knob
         [13, 2, 2, 1], // +right block
         [13, 4, 2, 1], // +down
-
-        [7, 4, 3, 1], // just below knob
-
-        [11, 4, 1, 4], // +right
+        [11, 4, 1, 4], // +left wall
 
         [8, 5, 1, 2],
 
@@ -265,7 +269,7 @@ let gameBoards: any = {
         [1, 9, 3, 2],
         [5, 9, 1, 2],
         [11, 9, 1, 2],
-        [13, 9, 2, 2],
+        [13, 9, 3, 2], // modified 4.9.2025 for warp tunnel (2w -> 3w)
         [7, 10, 3, 1],
         [8, 11, 1, 2],
         [2, 12, 2, 1],
