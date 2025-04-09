@@ -331,7 +331,7 @@ export class Ghost {
 
             let shouldBeFrightened = true;
             for (let player of Object.values(this.room.players)) {
-                if (player.pacman.isPoweredUp) continue;
+                if (player.pacman.isPoweredUp || !player.pacman.isAlive) continue;
                 shouldBeFrightened = false;
                 break;
             }
