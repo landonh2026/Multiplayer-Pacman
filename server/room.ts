@@ -32,8 +32,6 @@ export class Room {
 
     ghosts: {[id: string]: Ghost};
 
-    ghost_phase: GHOST_PHASES;
-
     timers: Map<SERVER_TIMERS, Timer>;
 
     /** The UUID for this room */
@@ -82,7 +80,6 @@ export class Room {
         this.timers = new Map();        
         this.simulator = new Simulator();
         
-        this.ghost_phase = GHOST_PHASES.CHASE;
         this.gameState = GAME_STATES.WAITING_FOR_PLAYERS;
 
         // todo: set ghost phase change timer for scatter phase
@@ -97,7 +94,7 @@ export class Room {
 
         this.topics = this.makeTopics();
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 1; i++) {
             const ghost = new Ghost(340, 300, this);
             this.ghosts[ghost.id] = ghost;
             ghost.startPathing();
@@ -413,9 +410,10 @@ export class Room {
         player.pacman.powerupTime = performance.now() + globals.animation_timings.power_up;
 
         clearInterval(this.timers.get(SERVER_TIMERS.GHOST_PHASE));
-        if (this.ghost_phase != GHOST_PHASES.FRIGHTENED) {
-            this.ghost_phase = GHOST_PHASES.FRIGHTENED;
-            for (let ghost of Object.values(this.ghosts)) ghost.enterFrightened();
+        for (let ghost of Object.values(this.ghosts)) {
+            if (ghost.phase == GHOST_PHASES.FRIGHTENED) continue;
+            ghost.phase = GHOST_PHASES.FRIGHTENED;
+            ghost.enterFrightened();
         }
 
         player.sendLocalPlayerState(false);
@@ -435,8 +433,10 @@ export class Room {
             }
 
             if (!shouldGhostFrightened) {
-                this.ghost_phase = GHOST_PHASES.CHASE;
-                for (let ghost of Object.values(this.ghosts)) ghost.exitFrightened();
+                for (let ghost of Object.values(this.ghosts)) {
+                    ghost.phase = GHOST_PHASES.CHASE;
+                    ghost.exitFrightened();
+                }
                 // todo: set ghost timer now
             }
 
