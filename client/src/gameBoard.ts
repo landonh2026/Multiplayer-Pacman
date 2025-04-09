@@ -6,6 +6,10 @@ class GameBoard {
     rawBlockPositions: Array<[number, number, number, number]>;
     /** The block positions in terms of pixels */
     blockPositions: Array<[number, number, number, number]>;
+    
+    /** The lines to draw the walls */
+    drawLines: Array<[number, number, number, number]>;
+    
     /** The raw pellet positions in terms of tiles instead of pixels */
     rawPellets: Array<Pellet>;
     /** The pellet positions in terms of pixels */
@@ -45,6 +49,8 @@ class GameBoard {
                 block[t] *= tileSize;
             }
         }
+        this.drawLines = this.findDrawLines(this.blockPositions);
+
 
         // do the same as above for pellets
         this.rawPellets = rawPellets;
@@ -65,6 +71,39 @@ class GameBoard {
         ];
 
         this.pathfinder = new Pathfinder(this);
+    }
+
+    public findDrawLines(blockPosition: Array<[number, number, number, number]>): Array<[number, number, number, number]> {
+        const lines: Array<[number, number, number, number]> = [];
+
+        for (const block of blockPosition) {
+            const [x, y, width, height] = block;
+
+            // Define potential lines for the block
+            const topLine: [number, number, number, number] = [x, y, x + width, y];
+            const bottomLine: [number, number, number, number] = [x, y + height, x + width, y + height];
+            const leftLine: [number, number, number, number] = [x, y, x, y + height];
+            const rightLine: [number, number, number, number] = [x + width, y, x + width, y + height];
+
+            // Check adjacency and add lines if not adjacent
+            if (!blockPosition.some(b => b[0] === x && b[1] === y - b[3] && b[2] === width)) {
+                lines.push(topLine); // No block above
+            }
+
+            if (!blockPosition.some(b => b[0] === x && b[1] === y + height && b[2] === width)) {
+                lines.push(bottomLine); // No block below
+            }
+
+            if (!blockPosition.some(b => b[0] === x - b[2] && b[1] === y && b[3] === height)) {
+                lines.push(leftLine); // No block to the left
+            }
+
+            if (!blockPosition.some(b => b[0] === x + width && b[1] === y && b[3] === height)) {
+                lines.push(rightLine); // No block to the right
+            }
+        }
+
+        return lines;
     }
 
     /**
