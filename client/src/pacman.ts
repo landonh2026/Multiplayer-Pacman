@@ -261,8 +261,9 @@ class Pacman {
             this.lastQueuedDirectionNode = currentNode;
 
             // if we don't have a current node or a past node, assume we are going through the warp tunnel
+            // todo: change
             if (currentNode == null) {
-                // this.facingDirection = this.queuedDirection;
+                this.facingDirection = this.queuedDirection;
                 this.shouldMove = true;
                 return;
             }
