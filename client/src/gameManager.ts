@@ -73,7 +73,7 @@ class GameManager {
         this.uuid = null;
 
         this.currentState = GameManager.GAME_STATES.DISCONNECTED;
-        this.currentBoard = new GameBoard([[0, 12, 12, 1], [0, 0, 12, 1], [0, 1, 1, 11], [11, 1, 1, 11]], [], [], this.tileSize);
+        this.currentBoard = new GameBoard([new Block(0, 12, 12, 1), new Block(0, 0, 12, 1), new Block(0, 1, 1, 11), new Block(11, 1, 1, 11)], [], [], this.tileSize);
 
         this.localPacman = new Pacman(this.tileSize*1.5, this.tileSize*2.5, PACMAN_COLORS.YELLOW, directions.DOWN, directions.DOWN, false, 0, true, this.tileSize);
         this.inputManager = new InputManager();

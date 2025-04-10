@@ -142,6 +142,9 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public boardState(parsedData: any) {
+        console.log(parsedData.data.board);
+        console.log(parsedData.data.pellets);
+
         gameManager.drawManager.oldPellets = gameManager.currentBoard.pellets;
         gameManager.drawManager.pelletShrinkAnimation.reset();
         gameManager.drawManager.pelletShrinkAnimation.setActive(true);

@@ -135,7 +135,7 @@ export class Room {
      */
     public makeBoardState() {
         return {
-            board: this.gameBoard.rawBlockPositions,
+            board: this.gameBoard.blockPositions,
             pellets: this.gameBoard.pellets,
             pathIntersections: this.gameBoard.pathIntersections
         }
