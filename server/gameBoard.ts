@@ -198,6 +198,11 @@ export class GameBoard {
     }
 }
 
+enum PATH_INTERSECTION_TYPES {
+    NORMAL,
+    WARP_TUNNEL
+}
+
 export class PathIntersection {
     x: number;
     y: number;
