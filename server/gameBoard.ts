@@ -208,12 +208,14 @@ export class PathIntersection {
     y: number;
     id: number;
     directions: [boolean, boolean, boolean, boolean];
+    type: PATH_INTERSECTION_TYPES;
     
-    constructor(x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]) {
+    constructor(x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean], type: PATH_INTERSECTION_TYPES = PATH_INTERSECTION_TYPES.NORMAL) {
         this.x = x;
         this.y = y;
         this.id = id;
         this.directions = directions;
+        this.type = type;
     }
 }
 
