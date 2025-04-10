@@ -3,8 +3,11 @@ import * as globals from "./globals.ts";
 import {Pathfinder} from "./pathfinding.ts";
 
 export class GameBoard {
+    /** The raw block positions as tile positions */
+    rawBlockPositions: Array<[number, number, number, number]>;
+
     /** The block positions as pixels */
-    blockPositions: Array<Block>;
+    blockPositions: Array<[number, number, number, number]>;
 
     /** The pellet positions as tile positions */
     // pellets: Array<[number, number, number]>;
@@ -21,9 +24,19 @@ export class GameBoard {
 
     pathfinder: Pathfinder;
 
-    constructor(blockPositions: Array<Block>) {
+    constructor(blockPositions: Array<[number, number, number, number]>) {
+        this.rawBlockPositions = [...blockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>;
         this.blockPositions = blockPositions;
         this.bottomRight = [0, 0];
+
+        for (let i = 0; i < this.blockPositions.length; i++) {
+            let block = this.blockPositions[i];
+            this.bottomRight = [Math.max(this.bottomRight[0], block[0]+block[2]), Math.max(block[1]+block[3])];
+
+            for (let t = 0; t < 4; t++) {
+                block[t] *= 40;
+            }
+        }
 
         this.pellets = this.makePellets();
         this.pathIntersections = this.findPathIntersections();
@@ -105,9 +118,8 @@ export class GameBoard {
         for (let x = 0; x < this.bottomRight[0]; x++) {
             next_tile: for (let y = 0; y < this.bottomRight[1]+2; y++) {
                 // check to see if this pellet would be spawned inside a wall
-                for (let i = 0; i < this.blockPositions.length; i++) {
-                    const block = this.blockPositions[i];
-                    if (utils.pointIntersectsRect([x+0.5, y+0.5], [block.x, block.y, block.width, block.height])) {
+                for (let i = 0; i < this.rawBlockPositions.length; i++) {
+                    if (utils.pointIntersectsRect([x+0.5, y+0.5], this.rawBlockPositions[i])) {
                         continue next_tile;
                     }
                 }
@@ -120,7 +132,7 @@ export class GameBoard {
         }
 
         // make random pellet the food pellet
-        // utils.getRandomListItem(pellets).type = PELLET_TYPES.FOOD;
+        utils.getRandomListItem(pellets).type = PELLET_TYPES.FOOD;
 
         return pellets;
     }
@@ -154,12 +166,12 @@ export class GameBoard {
             }
     
             // go through each block and decide if it intersects the l ine
-            let intersections: Array<{pos: {x: number, y: number}, block: Block}> = [];
+            let intersections: Array<{pos: {x: number, y: number}, block: [number, number, number, number]}> = [];
             for (let i = 0; i < this.blockPositions.length; i++) {
                 const thisWall = this.blockPositions[i];
     
                 // convert this wall into a line, used to use the lineIntersection function
-                const directionData = directionCheck([thisWall.x, thisWall.y, thisWall.width, thisWall.height]);
+                const directionData = directionCheck(thisWall);
     
                 // get the intersection data for the given line and the wall's line
                 const intersection =  utils.lineIntersection(
@@ -182,21 +194,7 @@ export class GameBoard {
      * @returns 
      */
     public duplicate(): GameBoard {
-        return new GameBoard([...this.blockPositions.map(b => new Block(b.x, b.y, b.width, b.height))] as Array<Block>);
-    }
-}
-
-export class Block {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-
-    constructor(x: number, y: number, width: number, height: number) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        return new GameBoard([...this.rawBlockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>);
     }
 }
 
@@ -236,61 +234,61 @@ export class Pellet {
 
 let gameBoards: any = {
     default: new GameBoard([
-        new Block(0, 0, 17, 1), // top wall
-        new Block(1, 18, 15, 1), // bottom wall
+        [0, 0, 17, 1], // top wall
+        [1, 18, 15, 1], // bottom wall
         
-        new Block(0, 1, 1, 7), // left-top wall
-        new Block(0, 9, 1, 10), // left-bottom wall
+        [0, 1, 1, 7], // left-top wall
+        [0, 9, 1, 10], // left-bottom wall
         // [-1, 8, 1, 1], // left-middle exit blocker
 
-        new Block(16, 1, 1, 7), // right-top wall
-        new Block(16, 9, 1, 10), // right-left wall
+        [16, 1, 1, 7], // right-top wall
+        [16, 9, 1, 10], // right-left wall
         // [18, 8, 1, 1], // far right-middle exit blocker
         // [17, 7, 2, 1], // right warp tunnel top exit blocker
         // [17, 9, 2, 1], // right warp tunnel bottom exit blocker
         
-        new Block(8, 1, 1, 2), // top middle "knob"
-        new Block(7, 4, 3, 1), // just below knob
+        [8, 1, 1, 2], // top middle "knob"
+        [7, 4, 3, 1], // just below knob
         
-        new Block(2, 2, 2, 1), // top left block
-        new Block(5, 2, 2, 1), // +right block
-        new Block(2, 4, 2, 1), // down of top left block
-        new Block(5, 4, 1, 4), // +right block
+        [2, 2, 2, 1], // top left block
+        [5, 2, 2, 1], // +right block
+        [2, 4, 2, 1], // down of top left block
+        [5, 4, 1, 4], // +right block
 
-        new Block(10, 2, 2, 1), // right of top middle knob
-        new Block(13, 2, 2, 1), // +right block
-        new Block(13, 4, 2, 1), // +down
-        new Block(11, 4, 1, 4), // +left wall
+        [10, 2, 2, 1], // right of top middle knob
+        [13, 2, 2, 1], // +right block
+        [13, 4, 2, 1], // +down
+        [11, 4, 1, 4], // +left wall
 
-        new Block(8, 5, 1, 2),
+        [8, 5, 1, 2],
 
-        new Block(1, 6, 3, 2),
-        new Block(6, 6, 1, 1),
-        new Block(10, 6, 1, 1),
+        [1, 6, 3, 2],
+        [6, 6, 1, 1],
+        [10, 6, 1, 1],
 
-        new Block(13, 6, 3, 2),
+        [13, 6, 3, 2],
 
-        new Block(1, 9, 3, 2),
-        new Block(5, 9, 1, 2),
-        new Block(11, 9, 1, 2),
-        new Block(13, 9, 3, 2), // modified 4.9.2025 for warp tunnel (2w -> 3w)
-        new Block(7, 10, 3, 1),
-        new Block(8, 11, 1, 2),
-        new Block(2, 12, 2, 1),
-        new Block(5, 12, 2, 1),
-        new Block(10, 12, 5, 1),
-        new Block(3, 13, 1, 2),
-        new Block(13, 13, 1, 2),
-        new Block(1, 14, 1, 1),
-        new Block(5, 14, 1, 3),
-        new Block(7, 14, 3, 1),
-        new Block(11, 14, 1, 3),
-        new Block(15, 14, 1, 1),
-        new Block(8, 15, 1, 2),
-        new Block(2, 16, 3, 1),
-        new Block(6, 16, 1, 1),
-        new Block(10, 16, 1, 1),
-        new Block(12, 16, 3, 1),
+        [1, 9, 3, 2],
+        [5, 9, 1, 2],
+        [11, 9, 1, 2],
+        [13, 9, 3, 2], // modified 4.9.2025 for warp tunnel (2w -> 3w)
+        [7, 10, 3, 1],
+        [8, 11, 1, 2],
+        [2, 12, 2, 1],
+        [5, 12, 2, 1],
+        [10, 12, 5, 1],
+        [3, 13, 1, 2],
+        [13, 13, 1, 2],
+        [1, 14, 1, 1],
+        [5, 14, 1, 3],
+        [7, 14, 3, 1],
+        [11, 14, 1, 3],
+        [15, 14, 1, 1],
+        [8, 15, 1, 2],
+        [2, 16, 3, 1],
+        [6, 16, 1, 1],
+        [10, 16, 1, 1],
+        [12, 16, 3, 1],
     ])
 };
 

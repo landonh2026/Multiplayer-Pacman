@@ -169,9 +169,6 @@ class ConnectionManager {
     }
 
     public useWarpTunnel() {
-        this.socket.send(this.makeMessage(
-            "warp-tunnel",
-            {}
-        ));
+        
     }
 }

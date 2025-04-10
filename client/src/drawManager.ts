@@ -53,12 +53,12 @@ class DrawManager {
             ctx.beginPath();
 
             if (pellet.type == PELLET_TYPES.FOOD) {
-                ctx.moveTo(pellet.x * gameManager.tileSize, (pellet.y+size) * gameManager.tileSize);
-                ctx.lineTo((pellet.x+size) * gameManager.tileSize, pellet.y * gameManager.tileSize);
-                ctx.lineTo((pellet.x-size * gameManager.tileSize), pellet.y * gameManager.tileSize);
-                ctx.lineTo(pellet.x * gameManager.tileSize, (pellet.y+size) * gameManager.tileSize);
+                ctx.moveTo(pellet.x, pellet.y+size);
+                ctx.lineTo(pellet.x+size, pellet.y);
+                ctx.lineTo(pellet.x-size, pellet.y);
+                ctx.lineTo(pellet.x, pellet.y+size);
             } else {
-                ctx.arc(pellet.x * gameManager.tileSize, pellet.y * gameManager.tileSize, size, 0, 2*Math.PI);
+                ctx.arc(pellet.x, pellet.y, size, 0, 2*Math.PI);
             }
             
             if (pellet.type != PELLET_TYPES.FOOD) ctx.fill();
@@ -84,8 +84,8 @@ class DrawManager {
 
             ctx.strokeStyle = ENVIRONMENT_COLORS.WALL;
             ctx.beginPath();
-            ctx.moveTo(lineData[0] * gameManager.tileSize, lineData[1] * gameManager.tileSize);
-            ctx.lineTo(lineData[2] * gameManager.tileSize, lineData[3] * gameManager.tileSize);
+            ctx.moveTo(lineData[0], lineData[1]);
+            ctx.lineTo(lineData[2], lineData[3]);
             ctx.stroke();
         }
 

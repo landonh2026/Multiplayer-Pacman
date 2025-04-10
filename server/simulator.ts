@@ -1,5 +1,4 @@
 import {Pacman} from "./player.ts";
-import {Block} from "./gameBoard.ts";
 import * as utils from "./utils.ts";
 import * as globals from "./globals.ts";
 
@@ -8,23 +7,23 @@ export class Simulator {
     distanceChangeTolerance: number;
 
     /** Collision wall functions that turn a wall into a line that can be intersected with */
-    wallCollisionFunctions: Array<(wall: Block) => { pos: { x: number; y: number; }; dir: { dx: number; dy: number; }; dist: number; }>;
+    wallCollisionFunctions: Array<(wall: [number, number, number, number]) => { pos: { x: number; y: number; }; dir: { dx: number; dy: number; }; dist: number; }>;
     
     constructor() {
         this.distanceChangeTolerance = 1.5;
 
         this.wallCollisionFunctions = [
             // left of wall check
-            (wall: Block) => { return { pos: {x: wall.x, y: wall.y}, dir: {dx: 0, dy: 1}, dist: wall.height }; },
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]}, dir: {dx: 0, dy: 1}, dist: wall[3] }; },
             
             // up of wall check
-            (wall: Block) => { return { pos: {x: wall.x, y: wall.y}, dir: {dx: 1, dy: 0}, dist: wall.width }; },
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]}, dir: {dx: 1, dy: 0}, dist: wall[2] }; },
             
             // right of wall check
-            (wall: Block) => { return { pos: {x: (wall.x)+(wall.width), y: wall.y}, dir: {dx: 0, dy: 1}, dist: wall.height }; },
+            (wall: [number, number, number, number]) => { return { pos: {x: (wall[0])+(wall[2]), y: wall[1]}, dir: {dx: 0, dy: 1}, dist: wall[3] }; },
 
             // bottom of wall check
-            (wall: Block) => { return { pos: {x: wall.x, y: wall.y+(wall.height)}, dir: {dx: 1, dy: 0}, dist: wall.width }; },
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]+(wall[3])}, dir: {dx: 1, dy: 0}, dist: wall[2] }; },
         ]
     }
 
@@ -47,7 +46,7 @@ export class Simulator {
      * @param walls The walls of the gameboard
      * @returns A list of object containing the position and wall data that this pacman could potentially run into
      */
-    public getPacmanWallCollisions(pacman: Pacman, walls: Array<Block>) {
+    public getPacmanWallCollisions(pacman: Pacman, walls: Array<[number, number, number, number]>) {
         const pacmanPosition = {x: pacman.lastLocation.x, y: pacman.lastLocation.y};
         let pacmanDirection = pacman.getDirectionDelta();
         let directionCheck = this.wallCollisionFunctions[pacman.lastLocation.facingDirection];
@@ -57,7 +56,7 @@ export class Simulator {
             return null;
         }
 
-        let intersections: Array<{pos: {x: number, y: number}, block: Block}> = [];
+        let intersections: Array<{pos: {x: number, y: number}, block: [number, number, number, number]}> = [];
         for (let i = 0; i < walls.length; i++) {
             const thisWall = walls[i];
 

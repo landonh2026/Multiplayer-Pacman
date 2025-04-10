@@ -2,8 +2,10 @@
  * Represents a Pacman game board with pellets, blocks, and path intersections where ghosts and pacman can turn
  */
 class GameBoard {
+    /** The raw block positions in terms of tiles instead of pixels */
+    rawBlockPositions: Array<[number, number, number, number]>;
     /** The block positions in terms of pixels */
-    blockPositions: Array<Block>;
+    blockPositions: Array<[number, number, number, number]>;
     
     /** The lines to draw the walls */
     drawLines: Array<[number, number, number, number]>;
@@ -17,12 +19,12 @@ class GameBoard {
     /** A list of path intersections where ghosts and pacman can turn */
     pathIntersections: Array<PathIntersection>;
     /** A list of wall collision functions that turn a wall into a single line given a direction */
-    wallCollisionFunctions: Array<(wall: Block) => { pos: { x: number; y: number; }; dir: { dx: number; dy: number; }; dist: number; }>;
+    wallCollisionFunctions: Array<(wall: [number, number, number, number]) => { pos: { x: number; y: number; }; dir: { dx: number; dy: number; }; dist: number; }>;
     /** The pathfinder object for this gameboard */
     pathfinder: Pathfinder;
 
     constructor(
-        blockPositions: Array<Block>,
+        rawBlockPositions: Array<[number, number, number, number]>,
         rawPellets: Array<Pellet>,
         pathIntersections: Array<{x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]}>,
         tileSize: number|null = null
@@ -33,10 +35,20 @@ class GameBoard {
         // Maybe cache in draw manager?
         
         // duplicate the rawBlockPositions argument into the rawBlockPositions attriute
-        this.blockPositions = blockPositions;
+        this.rawBlockPositions = [...rawBlockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>;
+        this.blockPositions = rawBlockPositions;
         this.bottomRight = [0, 0];
         this.pathIntersections = this.makePathIntersections(pathIntersections, tileSize);
 
+        // go through the block positions and multiply it by the tile size to get the pixel tile size
+        for (let i = 0; i < this.blockPositions.length; i++) {
+            let block = this.blockPositions[i];
+            this.bottomRight = [Math.max(this.bottomRight[0], block[0]+block[2]), Math.max(block[1]+block[3])];
+
+            for (let t = 0; t < 4; t++) {
+                block[t] *= tileSize;
+            }
+        }
         this.drawLines = this.findDrawLines(this.blockPositions);
 
 
@@ -46,31 +58,32 @@ class GameBoard {
 
         this.wallCollisionFunctions = [
             // left of wall check
-            (wall: Block) => { return { pos: {x: wall.x, y: wall.y}, dir: {dx: 0, dy: 1}, dist: wall.height }; },
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]}, dir: {dx: 0, dy: 1}, dist: wall[3] }; },
             
             // up of wall check
-            (wall: Block) => { return { pos: {x: wall.x, y: wall.y}, dir: {dx: 1, dy: 0}, dist: wall.width }; },
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]}, dir: {dx: 1, dy: 0}, dist: wall[2] }; },
             
             // right of wall check
-            (wall: Block) => { return { pos: {x: (wall.x)+(wall.width), y: wall.y}, dir: {dx: 0, dy: 1}, dist: wall.height }; },
+            (wall: [number, number, number, number]) => { return { pos: {x: (wall[0])+(wall[2]), y: wall[1]}, dir: {dx: 0, dy: 1}, dist: wall[3] }; },
 
             // bottom of wall check
-            (wall: Block) => { return { pos: {x: wall.x, y: wall.y+(wall.height)}, dir: {dx: 1, dy: 0}, dist: wall.width }; },
+            (wall: [number, number, number, number]) => { return { pos: {x: wall[0], y: wall[1]+(wall[3])}, dir: {dx: 1, dy: 0}, dist: wall[2] }; },
         ];
 
         this.pathfinder = new Pathfinder(this);
     }
 
-    public findDrawLines(blockPositions: Array<Block>): Array<[number, number, number, number]> {
+    public findDrawLines(blockPositions: Array<[number, number, number, number]>): Array<[number, number, number, number]> {
         const lines: Array<[number, number, number, number]> = [];
 
         for (let i = 0; i < blockPositions.length; i++) {
-            const block = blockPositions[i];
+            const [x, y, width, height] = blockPositions[i];
+
             // get the 4 sides of this block
-            const top = [block.x, block.y, block.x + block.width, block.y] as [number, number, number, number];
-            const bottom = [block.x, block.y + block.height, block.x + block.width, block.y + block.height] as [number, number, number, number];
-            const left = [block.x, block.y, block.x, block.y + block.height] as [number, number, number, number];
-            const right = [block.x + block.width, block.y, block.x + block.width, block.y + block.height] as [number, number, number, number];
+            const top = [x, y, x + width, y] as [number, number, number, number];
+            const bottom = [x, y + height, x + width, y + height] as [number, number, number, number];
+            const left = [x, y, x, y + height] as [number, number, number, number];
+            const right = [x + width, y, x + width, y + height] as [number, number, number, number];
 
             // get the segments for each of the sides
             let remainingTop = [top];
@@ -81,8 +94,7 @@ class GameBoard {
             for (let j = 0; j < blockPositions.length; j++) {
                 if (i === j) continue;
 
-                const otherBlock = blockPositions[j];
-                const [otherX, otherY, otherWidth, otherHeight] = [otherBlock.x, otherBlock.y, otherBlock.width, otherBlock.height];
+                const [otherX, otherY, otherWidth, otherHeight] = blockPositions[j];
 
                 // Check for adjacent lines and split them
                 remainingTop = this.splitLine(remainingTop, [otherX, otherY + otherHeight, otherX + otherWidth, otherY + otherHeight]);
@@ -175,7 +187,7 @@ class GameBoard {
         }
 
         // go through each block and decide if it intersects the l ine
-        let intersections: Array<{pos: {x: number, y: number}, block: Block}> = [];
+        let intersections: Array<{pos: {x: number, y: number}, block: [number, number, number, number]}> = [];
         for (let i = 0; i < this.blockPositions.length; i++) {
             const thisWall = this.blockPositions[i];
 
@@ -205,6 +217,44 @@ class GameBoard {
      */
     public getTileCoordinatesFromPosition(position: Array<number>): [number, number] {
         return [Math.ceil(position[0]/gameManager.tileSize-1), Math.ceil(position[1]/gameManager.tileSize-1)];
+    }
+
+    /**
+     * Get the wall at a given pixel position
+     * @param position 
+     * @param offset 
+     * @returns 
+     */
+    public getWallAtPosition(position: [number, number], offset: Array<number> = [0, 0]): [number, number, number, number]|null {
+        // TODO: why are we using an offset?
+
+        // get the position given a location
+        const tilePosition = this.getTileCoordinatesFromPosition([position[0]+offset[0],position[1]+offset[1]]);
+
+        // offset the given tile location so it will be in the center of the wall
+        tilePosition[0] += 0.5;
+        tilePosition[1] += 0.5;
+
+        // go through each wall
+        for (let i = 0; i < this.blockPositions.length; i++) {
+            // if this point is not inside this wall, skip it
+            if (!pointIntersectsRect(tilePosition, this.rawBlockPositions[i])) continue;
+
+            // return this wall
+            return this.blockPositions[i] as [number, number, number, number];
+        }
+
+        return null;
+    }
+
+    /**
+     * Determines if a pixel position is a wall
+     * @param position The pixel position
+     * @param offset 
+     * @returns Is this position a wall?
+     */
+    public isPositionWall(position: [number, number], offset: Array<number> = [0, 0]) {
+        return this.getWallAtPosition(position, offset) == null;
     }
 
     /**
@@ -249,20 +299,6 @@ class GameBoard {
         if (minDistanceData.node == null) return null;
 
         return minDistanceData as { distance: number, node: PathIntersection, nodeIndex: number } | null;
-    }
-}
-
-class Block {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-
-    constructor(x: number, y: number, width: number, height: number) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
     }
 }
 

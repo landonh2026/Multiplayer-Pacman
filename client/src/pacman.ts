@@ -163,22 +163,22 @@ class Pacman {
             let blockData = gameManager.currentBoard.blockPositions[i];
 
             // skip this block if we are not in it
-            if (!(pointIntersectsRect([collisionX+horizontalOffset, collisionY+verticalOffset], [blockData.x, blockData.y, blockData.width, blockData.height]) ||
-                pointIntersectsRect([collisionX-horizontalOffset, collisionY-verticalOffset], [blockData.x, blockData.y, blockData.width, blockData.height]))) continue;
+            if (!(pointIntersectsRect([collisionX+horizontalOffset, collisionY+verticalOffset], blockData) ||
+                pointIntersectsRect([collisionX-horizontalOffset, collisionY-verticalOffset], blockData))) continue;
 
             // move us to an end of the wall depending on our facing direction
             switch (this.movingDirection) {
                 case directions.UP:
-                    this.y = blockData.y + blockData.height + this.radius;
+                    this.y = blockData[1] + blockData[3] + this.radius;
                     break;
                 case directions.DOWN:
-                    this.y = blockData.y - this.radius;
+                    this.y = blockData[1] - this.radius;
                     break;
                 case directions.LEFT:
-                    this.x = blockData.x + blockData.width + this.radius;
+                    this.x = blockData[0] + blockData[2] + this.radius;
                     break;
                 case directions.RIGHT:
-                    this.x = blockData.x - this.radius;
+                    this.x = blockData[0] - this.radius;
                     break;
             }
 
