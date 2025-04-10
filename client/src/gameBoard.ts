@@ -73,37 +73,73 @@ class GameBoard {
         this.pathfinder = new Pathfinder(this);
     }
 
-    public findDrawLines(blockPosition: Array<[number, number, number, number]>): Array<[number, number, number, number]> {
+    public findDrawLines(blockPositions: Array<[number, number, number, number]>): Array<[number, number, number, number]> {
         const lines: Array<[number, number, number, number]> = [];
 
-        for (const block of blockPosition) {
-            const [x, y, width, height] = block;
+        for (let i = 0; i < blockPositions.length; i++) {
+            const [x, y, width, height] = blockPositions[i];
 
-            // Define potential lines for the block
-            const topLine: [number, number, number, number] = [x, y, x + width, y];
-            const bottomLine: [number, number, number, number] = [x, y + height, x + width, y + height];
-            const leftLine: [number, number, number, number] = [x, y, x, y + height];
-            const rightLine: [number, number, number, number] = [x + width, y, x + width, y + height];
+            // get the 4 sides of this block
+            const top = [x, y, x + width, y] as [number, number, number, number];
+            const bottom = [x, y + height, x + width, y + height] as [number, number, number, number];
+            const left = [x, y, x, y + height] as [number, number, number, number];
+            const right = [x + width, y, x + width, y + height] as [number, number, number, number];
 
-            // Check adjacency and add lines if not adjacent
-            if (!blockPosition.some(b => b[0] === x && b[1] === y - b[3] && b[2] === width)) {
-                lines.push(topLine); // No block above
+            // get the segments for each of the sides
+            let remainingTop = [top];
+            let remainingBottom = [bottom];
+            let remainingLeft = [left];
+            let remainingRight = [right];
+
+            for (let j = 0; j < blockPositions.length; j++) {
+                if (i === j) continue;
+
+                const [otherX, otherY, otherWidth, otherHeight] = blockPositions[j];
+
+                // Check for adjacent lines and split them
+                remainingTop = this.splitLine(remainingTop, [otherX, otherY + otherHeight, otherX + otherWidth, otherY + otherHeight]);
+                remainingBottom = this.splitLine(remainingBottom, [otherX, otherY, otherX + otherWidth, otherY]);
+                remainingLeft = this.splitLine(remainingLeft, [otherX + otherWidth, otherY, otherX + otherWidth, otherY + otherHeight]);
+                remainingRight = this.splitLine(remainingRight, [otherX, otherY, otherX, otherY + otherHeight]);
             }
 
-            if (!blockPosition.some(b => b[0] === x && b[1] === y + height && b[2] === width)) {
-                lines.push(bottomLine); // No block below
-            }
-
-            if (!blockPosition.some(b => b[0] === x - b[2] && b[1] === y && b[3] === height)) {
-                lines.push(leftLine); // No block to the left
-            }
-
-            if (!blockPosition.some(b => b[0] === x + width && b[1] === y && b[3] === height)) {
-                lines.push(rightLine); // No block to the right
-            }
+            lines.push(...remainingTop, ...remainingBottom, ...remainingLeft, ...remainingRight);
         }
 
         return lines;
+    }
+
+    /**
+     * Splits a line into segments, excluding the overlapping portion with another line
+     * @param lines The original line segments
+     * @param overlap The line to exclude from the original segments
+     * @returns The remaining line segments
+     */
+    public splitLine(
+        lines: Array<[number, number, number, number]>,
+        overlap: [number, number, number, number]
+    ): Array<[number, number, number, number]> {
+        const result: Array<[number, number, number, number]> = [];
+
+        for (const [x1, y1, x2, y2] of lines) {
+            const [ox1, oy1, ox2, oy2] = overlap;
+
+            if (y1 === y2 && oy1 === oy2 && y1 === oy1) {
+                // the lines are horizontal
+                if (x1 < ox1) result.push([x1, y1, Math.min(x2, ox1), y1]);
+                if (x2 > ox2) result.push([Math.max(x1, ox2), y1, x2, y1]);
+            }
+            else if (x1 === x2 && ox1 === ox2 && x1 === ox1) {
+                // the lines are vertical
+                if (y1 < oy1) result.push([x1, y1, x1, Math.min(y2, oy1)]);
+                if (y2 > oy2) result.push([x1, Math.max(y1, oy2), x1, y2]);
+            } else {
+                // If no overlap, keep the original line
+                result.push([x1, y1, x2, y2]);
+            }
+        }
+
+        return result;
     }
 
     /**

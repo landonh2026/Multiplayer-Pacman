@@ -79,28 +79,17 @@ class DrawManager {
         ctx.shadowBlur = 10;
         ctx.shadowColor = ENVIRONMENT_COLORS.WALL;
 
-        // draw the walls from the block data
-        for (let i = 0; i < board.blockPositions.length; i++) {
-            let blockData = board.blockPositions[i];
+        for (let i = 0; i < board.drawLines.length; i++) {
+            let lineData = board.drawLines[i];
 
             ctx.strokeStyle = ENVIRONMENT_COLORS.WALL;
             ctx.beginPath();
-            ctx.roundRect(blockData[0], blockData[1], blockData[2], blockData[3], 5 * (gameManager.tileSize / 40));
+            ctx.moveTo(lineData[0], lineData[1]);
+            ctx.lineTo(lineData[2], lineData[3]);
             ctx.stroke();
-        };
-
-        // for (let i = 0; i < board.drawLines.length; i++) {
-        //     let lineData = board.drawLines[i];
-
-        //     ctx.strokeStyle = ENVIRONMENT_COLORS.WALL;
-        //     ctx.beginPath();
-        //     ctx.moveTo(lineData[0], lineData[1]);
-        //     ctx.lineTo(lineData[2], lineData[3]);
-        //     ctx.stroke();
-        // }
+        }
 
         ctx.shadowBlur = 0;
-        ctx.shadowColor = ENVIRONMENT_COLORS.WALL;
 
         // if (!this.pelletShrinkAnimation.isDone()) this.drawPellets(this.oldPellets, deltaTime, true);
         this.drawPellets(board.pellets, deltaTime, false);
