@@ -200,20 +200,24 @@ class DrawManager {
         ctx.moveTo(x, y);
         ctx.arc(x, y, radius, (radiusDifference * Math.PI) + arcOffset, ((2 - radiusDifference) * Math.PI) + arcOffset, false);
         ctx.lineTo(x, y);
+
+        const doFlash = this.shouldDoEntityFlash();
+
+        if (doFlash) {
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "white";
+        }
         
         if (!frightened) {
             ctx.fill();
             return;
         }
 
-        const gradient = ctx.createLinearGradient(x - radius, y - radius, x + radius, y + radius);    
-        gradient.addColorStop(0, ENTITY_STATE_COLORS.FRIGHTENED_BRIGHT);
-        gradient.addColorStop(1,  ENTITY_STATE_COLORS.FRIGHTENED_DARK);
-        ctx.fillStyle = gradient;
-
-        if (this.shouldDoEntityFlash()) {
-            ctx.fillStyle = "white";
-            ctx.strokeStyle = "white";
+        if (!doFlash) {
+            const gradient = ctx.createLinearGradient(x - radius, y - radius, x + radius, y + radius);    
+            gradient.addColorStop(0, ENTITY_STATE_COLORS.FRIGHTENED_BRIGHT);
+            gradient.addColorStop(1,  ENTITY_STATE_COLORS.FRIGHTENED_DARK);
+            ctx.fillStyle = gradient;
         }
         
         ctx.lineWidth = 2;
