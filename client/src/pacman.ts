@@ -57,6 +57,7 @@ class Pacman {
         this.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
         this.animations.killAnimation = new GameAnimation(41, true, 1, false);
         this.animations.powerAnimation = new GameAnimation(8, false, 1, false);
+        this.animations.warpAnimation = new GameAnimation(6, false, 1, false);
 
         this.animations.bodyAnimation.setActive(true);
     }
@@ -87,7 +88,6 @@ class Pacman {
     public shouldRenderFrightened(): boolean {
         if (this.isPoweredUp) return false;
 
-        
         const other_pacman = [];
         if (!this.isLocal) other_pacman.push(gameManager.localPacman);
         
@@ -97,6 +97,7 @@ class Pacman {
             other_pacman.push(pacman);
         }
 
+        // loop over all other pacman and if they are powered up we are vuln
         let vulnerable = false;
         for (let pacman of other_pacman) {
             if (pacman.isPoweredUp) {
@@ -198,20 +199,22 @@ class Pacman {
      */
     public draw(deltaTime: number) {
         let customRadius = this.radius * (this.isPoweredUp ? 1.5 : 1);
+        const vulnerable = this.shouldRenderFrightened();
+
+        // if we are moving step the mouth animation
+        if (this.shouldMove) this.animations.bodyAnimation.step_frame(deltaTime);
+        this.animations.warpAnimation.step_frame(deltaTime);
+        this.animations.powerAnimation.step_frame(deltaTime);
         
         if (!this.animations.powerAnimation.isDone()) {
             let powerupAnimationScale = this.radius / 2;
 
             // play the animation forwards or in reverse
-            this.animations.powerAnimation.step_frame(deltaTime);
             customRadius = this.radius + powerUpSizingFunction(
                 this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
                 (1 - this.animations.powerAnimation.get_progress())
             ) * powerupAnimationScale;
         }
-
-
-        const vulnerable = this.shouldRenderFrightened();
 
         if (vulnerable) ctx.strokeStyle = this.color.color;
         else {
@@ -223,15 +226,33 @@ class Pacman {
             ctx.fillStyle = gradient;
         }
 
-        
-        // if we are moving step the mouth animation
-        if (this.shouldMove) this.animations.bodyAnimation.step_frame(deltaTime);
-
         // if we are dead draw the dead pacman animation
         if (this.isDead) {
             this.animations.killAnimation.step_frame(deltaTime);
             gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animations.killAnimation.get_frame(), vulnerable);
             return;
+        }
+
+        if (!this.animations.warpAnimation.isDone()) {
+            const [x, y, dir] = [this.animations.warpAnimation.meta.position.x, this.animations.warpAnimation.meta.position.y, this.animations.warpAnimation.meta.position.direction];
+            
+            ctx.globalAlpha = 1 - this.animations.warpAnimation.get_progress();
+            
+            if (this.animations.warpAnimation.get_progress() < 0.5)
+            gameManager.drawManager.drawPacman(x, y, customRadius, this.animations.bodyAnimation.get_frame(), dir, vulnerable);
+
+            ctx.globalAlpha = Math.sqrt(1 - this.animations.warpAnimation.get_progress());
+            ctx.strokeStyle = this.color.color;
+
+            const distanceMultiplier = Math.min(this.animations.warpAnimation.get_progress() * 2,5, 1);
+            const [dx, dy] = [(this.x-x) * distanceMultiplier, (this.y-y) * distanceMultiplier];
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + dx, y + dy);
+            ctx.stroke();
+
+            ctx.globalAlpha = 1;
         }
         
         // draw the pacman
@@ -423,11 +444,22 @@ class Pacman {
     }
 
     public warpTunnel() {
+        const oldPosition = {x: this.x, y: this.y, direction: this.facingDirection};
+
+        let warped = false;
         if (this.x < 20) {
             this.x = 660;
+            warped = true;
         }
         else if (this.x > 660) {
             this.x = 20;
+            warped = true;
+        }
+
+        if (warped) {
+            this.animations.warpAnimation.reset();
+            this.animations.warpAnimation.setActive(true);
+            this.animations.warpAnimation.meta.position = oldPosition;
         }
     }
 
