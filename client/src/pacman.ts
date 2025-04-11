@@ -57,7 +57,7 @@ class Pacman {
         this.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
         this.animations.killAnimation = new GameAnimation(41, true, 1, false);
         this.animations.powerAnimation = new GameAnimation(8, false, 1, false);
-        this.animations.warpAnimation = new GameAnimation(6, false, 1, false);
+        this.animations.warpAnimation = new GameAnimation(3, false, 1, false);
 
         this.animations.bodyAnimation.setActive(true);
     }
@@ -237,26 +237,13 @@ class Pacman {
             const [x, y, dir] = [this.animations.warpAnimation.meta.position.x, this.animations.warpAnimation.meta.position.y, this.animations.warpAnimation.meta.position.direction];
             
             ctx.globalAlpha = 1 - this.animations.warpAnimation.get_progress();
-            
-            if (this.animations.warpAnimation.get_progress() < 0.5)
             gameManager.drawManager.drawPacman(x, y, customRadius, this.animations.bodyAnimation.get_frame(), dir, vulnerable);
-
-            ctx.globalAlpha = Math.sqrt(1 - this.animations.warpAnimation.get_progress());
-            ctx.strokeStyle = this.color.color;
-
-            const distanceMultiplier = Math.min(this.animations.warpAnimation.get_progress() * 2,5, 1);
-            const [dx, dy] = [(this.x-x) * distanceMultiplier, (this.y-y) * distanceMultiplier];
-            
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + dx, y + dy);
-            ctx.stroke();
-
-            ctx.globalAlpha = 1;
+            ctx.globalAlpha = this.animations.warpAnimation.get_progress(); // fade in animation for real pacman
         }
         
         // draw the pacman
         gameManager.drawManager.drawPacman(this.x, this.y, customRadius, this.animations.bodyAnimation.get_frame(), this.facingDirection, vulnerable);
+        ctx.globalAlpha = 1;
     }
 
     /**
