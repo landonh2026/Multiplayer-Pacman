@@ -1,7 +1,7 @@
 import type { Server, ServerWebSocket } from "bun";
 import * as utils from "./utils.ts";
 import * as globals from "./globals.ts";
-import { GameBoard, gameBoards, PELLET_TYPES } from "./gameBoard.ts";
+import { GameBoard, gameBoards, PathIntersection, PELLET_TYPES, PATH_INTERSECTION_TYPES } from "./gameBoard.ts";
 import { Player, PLAYER_TIMER_TYPES } from "./player.ts";
 import { Simulator } from "./simulator.ts";
 import { Ghost } from "./ghost.ts";
@@ -89,7 +89,8 @@ export class Room {
             "eat-pellet": this.handlePelletEat.bind(this),
             "player-collide": this.handlePlayerCollision.bind(this),
             "kill-pacman": this.handlePlayerDead.bind(this),
-            "eat-ghost": this.handleGhostEat.bind(this)
+            "eat-ghost": this.handleGhostEat.bind(this),
+            "use-tunnel": this.handleWarpTunnelUse.bind(this)
         };
 
         this.topics = this.makeTopics();
@@ -137,7 +138,9 @@ export class Room {
         return {
             board: this.gameBoard.rawBlockPositions,
             pellets: this.gameBoard.pellets,
-            pathIntersections: this.gameBoard.pathIntersections
+            pathIntersections: this.gameBoard.pathIntersections.map(p => {
+                return {x: p.x, y: p.y, id: p.id, type: p.type, directions: p.directions}
+            })
         }
     }
 
@@ -194,7 +197,7 @@ export class Room {
     }
 
     /**
-     * Verify the new position of a player
+     * Move and verify the movement of this player
      * @param player The player to check the position of
      * @param newPosition The new position to check to see if the player can move here
      * @returns Should the player be allowed to move here?
@@ -237,6 +240,40 @@ export class Room {
         }
 
         player.publishLocation();
+    }
+
+    public handleWarpTunnelUse(player: Player, data: {data: any}) {
+        let passedNode = null as null|PathIntersection;
+        for (let node of this.gameBoard.pathIntersections) {
+            if (node.type == PATH_INTERSECTION_TYPES.NORMAL || node.id != data.data.nodeID) continue;
+
+            passedNode = node;
+            break;
+        }
+
+        if (passedNode == null) {
+            // reject
+            console.warn("should reject thing here");
+            return;
+        }
+
+        let newPacmanPosition: globals.PositionData = {...player.pacman.lastLocation};
+        newPacmanPosition.x = passedNode.x;
+        newPacmanPosition.y = passedNode.y;
+        newPacmanPosition.timestamp = data.data.timestamp;
+
+        if (!this.verifyNewPosition(player, newPacmanPosition)) {
+            // reject
+            console.warn("move not allowed");
+            return;
+        }
+
+        const warpTo = passedNode.connection;
+        if (warpTo == null) throw new Error("No connection on warp path intersection: " + warpTo + "\n" + passedNode);
+
+        player.pacman.lastLocation.x = warpTo.x * globals.tile_size;
+        player.pacman.lastLocation.y = warpTo.y * globals.tile_size;
+        player.sendLocalPlayerState(true, true);
     }
 
     /**

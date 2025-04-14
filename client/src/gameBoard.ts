@@ -26,7 +26,7 @@ class GameBoard {
     constructor(
         rawBlockPositions: Array<[number, number, number, number]>,
         rawPellets: Array<Pellet>,
-        pathIntersections: Array<{x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]}>,
+        pathIntersections: Array<{x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean], type: number}>,
         tileSize: number|null = null
     ) {
 
@@ -148,11 +148,11 @@ class GameBoard {
      * @param tileSize The tilesize to compute the pixels to put the tile
      * @returns The path intersections
      */
-    public makePathIntersections(data: Array<{x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]}>, tileSize: number) {
+    public makePathIntersections(data: Array<{x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean], type: number}>, tileSize: number) {
         const intersections = [];
 
         for (let node of data) {
-            intersections.push(new PathIntersection(node.x*tileSize, node.y*tileSize, node.id, node.directions));
+            intersections.push(new PathIntersection(node.x*tileSize, node.y*tileSize, node.id, node.directions, node.type));
         }
         
         return intersections;
@@ -302,6 +302,11 @@ class GameBoard {
     }
 }
 
+enum PATH_INTERSECTION_TYPES {
+    NORMAL,
+    WARP_TUNNEL
+}
+
 /**
  * Represents a path intersection where pacman and ghosts can turn
  */
@@ -309,15 +314,17 @@ class PathIntersection {
     x: number;
     y: number;
     id: number;
+    type: PATH_INTERSECTION_TYPES;
 
     /** Which directions can a ghost or pacman turn here? [right, down, left, right] */
     directions: [boolean, boolean, boolean, boolean];
     
-    constructor(x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean]) {
+    constructor(x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean], type: PATH_INTERSECTION_TYPES = PATH_INTERSECTION_TYPES.NORMAL) {
         this.x = x;
         this.y = y;
         this.id = id;
         this.directions = directions;
+        this.type = type;
     }
 }
 

@@ -160,6 +160,12 @@ class EventHandler {
     public localInfo(parsedData: any) {
         gameManager.localPacman.color = PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS];
 
+        if (parsedData.data.shouldFade) {
+            gameManager.localPacman.animations.fadeAnimation.reset();
+            gameManager.localPacman.animations.fadeAnimation.setActive(true);
+            gameManager.localPacman.animations.fadeAnimation.meta.position = {x: gameManager.localPacman.x, y: gameManager.localPacman.y, direction: gameManager.localPacman.facingDirection};
+        }
+
         // local pacman just revived
         if (gameManager.localPacman.isDead && parsedData.data.isAlive) {
             gameManager.localPacman.animations.killAnimation.reset();

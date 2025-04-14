@@ -51,7 +51,7 @@ export class Player {
     /**
      * Sends this player's player state to the client
      */
-    public sendLocalPlayerState(send_position: boolean = true) {
+    public sendLocalPlayerState(send_position: boolean = true, fade: boolean = false) {
         let powerupTime = this.pacman.powerupTime != null ? (this.pacman.powerupTime - performance.now()) : null;
         if (powerupTime != null && powerupTime < 0) powerupTime = null;
         
@@ -65,7 +65,8 @@ export class Player {
                     powerupTimer: powerupTime,
                     color: this.pacman.color,
                     session: this.session,
-                    moveSpeed: this.pacman.movementSpeed
+                    moveSpeed: this.pacman.movementSpeed,
+                    shouldFade: fade
                 }
             )
         );

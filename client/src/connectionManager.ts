@@ -168,7 +168,13 @@ class ConnectionManager {
         ));
     }
 
-    public useWarpTunnel() {
-        
+    public useWarpTunnel(passedNode: PathIntersection) {
+        this.socket.send(this.makeMessage(
+            "use-tunnel",
+            {
+                nodeID: passedNode.id,
+                timestamp: this.getTimestamp()
+            }
+        ));
     }
 }

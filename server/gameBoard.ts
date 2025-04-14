@@ -9,6 +9,8 @@ export class GameBoard {
     /** The block positions as pixels */
     blockPositions: Array<[number, number, number, number]>;
 
+    forcedPathIntersections: Array<PathIntersection>;
+
     /** The pellet positions as tile positions */
     // pellets: Array<[number, number, number]>;
     pellets: Array<Pellet>;
@@ -24,9 +26,10 @@ export class GameBoard {
 
     pathfinder: Pathfinder;
 
-    constructor(blockPositions: Array<[number, number, number, number]>) {
+    constructor(blockPositions: Array<[number, number, number, number]>, forcedPathIntersections: Array<PathIntersection>) {
         this.rawBlockPositions = [...blockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>;
         this.blockPositions = blockPositions;
+        this.forcedPathIntersections = forcedPathIntersections;
         this.bottomRight = [0, 0];
 
         for (let i = 0; i < this.blockPositions.length; i++) {
@@ -39,7 +42,7 @@ export class GameBoard {
         }
 
         this.pellets = this.makePellets();
-        this.pathIntersections = this.findPathIntersections();
+        this.pathIntersections = [...forcedPathIntersections, ...this.findPathIntersections()];
 
         this.wallCollisionFunctions = [
             // left of wall check
@@ -100,7 +103,7 @@ export class GameBoard {
             // If this node is not connected to at least 1 horizontal and vertical node, then it is not a path intersection node
             if (!((passedDirections[0] || passedDirections[2]) && (passedDirections[1] || passedDirections[3]))) continue;
 
-            pathIntersections.push(new PathIntersection(pellet.x, pellet.y, i, passedDirections));
+            pathIntersections.push(new PathIntersection(pellet.x, pellet.y, passedDirections));
         }
 
         return pathIntersections;
@@ -194,32 +197,49 @@ export class GameBoard {
      * @returns 
      */
     public duplicate(): GameBoard {
-        return new GameBoard([...this.rawBlockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>);
+        return new GameBoard([...this.rawBlockPositions.map(innerArray => [...innerArray])] as Array<[number, number, number, number]>, this.forcedPathIntersections);
+    }
+
+    static make_tunnel_nodes(nodes: Array<[PathIntersection, PathIntersection]>): Array<PathIntersection> {
+        for (let tunnelGroup of nodes) {
+            tunnelGroup[0].connection = tunnelGroup[1];
+            tunnelGroup[1].connection = tunnelGroup[0];
+        }
+
+        return nodes.flat();
     }
 }
 
-enum PATH_INTERSECTION_TYPES {
+export enum PATH_INTERSECTION_TYPES {
     NORMAL,
     WARP_TUNNEL
 }
 
 export class PathIntersection {
+    static globalID = 0;
+
     x: number;
     y: number;
     id: number;
     directions: [boolean, boolean, boolean, boolean];
     type: PATH_INTERSECTION_TYPES;
+    connection: PathIntersection|null;
     
-    constructor(x: number, y: number, id: number, directions: [boolean, boolean, boolean, boolean], type: PATH_INTERSECTION_TYPES = PATH_INTERSECTION_TYPES.NORMAL) {
+    constructor(
+        x: number, y: number, directions: [boolean, boolean, boolean, boolean],
+        type: PATH_INTERSECTION_TYPES = PATH_INTERSECTION_TYPES.NORMAL,
+        connection: PathIntersection|null = null
+    ) {
         this.x = x;
         this.y = y;
-        this.id = id;
+        this.id = PathIntersection.globalID++;
         this.directions = directions;
         this.type = type;
+        this.connection = connection
     }
 }
 
-enum PELLET_TYPES {
+export enum PELLET_TYPES {
     NORMAL,
     POWER,
     FOOD
@@ -239,7 +259,7 @@ export class Pellet {
     }
 }
 
-let gameBoards: any = {
+export const gameBoards: any = {
     default: new GameBoard([
         [0, 0, 17, 1], // top wall
         [1, 18, 15, 1], // bottom wall
@@ -296,7 +316,8 @@ let gameBoards: any = {
         [6, 16, 1, 1],
         [10, 16, 1, 1],
         [12, 16, 3, 1],
-    ])
+    ], 
+    GameBoard.make_tunnel_nodes([
+        [new PathIntersection(0.5, 8.5, [true, false, false, false], PATH_INTERSECTION_TYPES.WARP_TUNNEL), new PathIntersection(16.5, 8.5, [true, false, false, false], PATH_INTERSECTION_TYPES.WARP_TUNNEL)]
+    ]))
 };
-
-export {gameBoards, PELLET_TYPES};

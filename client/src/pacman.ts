@@ -57,7 +57,7 @@ class Pacman {
         this.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
         this.animations.killAnimation = new GameAnimation(41, true, 1, false);
         this.animations.powerAnimation = new GameAnimation(8, false, 1, false);
-        this.animations.warpAnimation = new GameAnimation(3, false, 1, false);
+        this.animations.fadeAnimation = new GameAnimation(3, false, 1, false);
 
         this.animations.bodyAnimation.setActive(true);
     }
@@ -203,7 +203,7 @@ class Pacman {
 
         // if we are moving step the mouth animation
         if (this.shouldMove) this.animations.bodyAnimation.step_frame(deltaTime);
-        this.animations.warpAnimation.step_frame(deltaTime);
+        this.animations.fadeAnimation.step_frame(deltaTime);
         this.animations.powerAnimation.step_frame(deltaTime);
         
         if (!this.animations.powerAnimation.isDone()) {
@@ -233,12 +233,12 @@ class Pacman {
             return;
         }
 
-        if (!this.animations.warpAnimation.isDone()) {
-            const [x, y, dir] = [this.animations.warpAnimation.meta.position.x, this.animations.warpAnimation.meta.position.y, this.animations.warpAnimation.meta.position.direction];
+        if (!this.animations.fadeAnimation.isDone()) {
+            const [x, y, dir] = [this.animations.fadeAnimation.meta.position.x, this.animations.fadeAnimation.meta.position.y, this.animations.fadeAnimation.meta.position.direction];
             
-            ctx.globalAlpha = 1 - this.animations.warpAnimation.get_progress();
+            ctx.globalAlpha = 1 - this.animations.fadeAnimation.get_progress();
             gameManager.drawManager.drawPacman(x, y, customRadius, this.animations.bodyAnimation.get_frame(), dir, vulnerable);
-            ctx.globalAlpha = this.animations.warpAnimation.get_progress(); // fade in animation for real pacman
+            ctx.globalAlpha = this.animations.fadeAnimation.get_progress(); // fade in animation for real pacman
         }
         
         // draw the pacman
@@ -253,23 +253,24 @@ class Pacman {
         // get the next node if we were to continue this path
         const currentNode = gameManager.currentBoard.getNextIntersectionNode([this.x, this.y], this.facingDirection);
 
+        let snap = this.facingDirection != this.queuedDirection;
+
         // no reason to continue if we are not queueing a direction
-        if (this.facingDirection == this.queuedDirection) {
+        if (this.facingDirection == this.queuedDirection && currentNode?.node.type == PATH_INTERSECTION_TYPES.NORMAL) {
             this.lastQueuedDirectionNode = currentNode;
             return;
         }
 
         // send a warning if we can't find a node
-        // if (currentNode == null) {
-        //     console.warn("Unable to find a path intersection node! Player coords:", this.x, this.y);
-        // }
+        if (currentNode == null) {
+            console.warn("Unable to find a path intersection node! Player coords:", this.x, this.y);
+        }
         
         // no previous node -- this pacman obj was probably just created
         if (this.lastQueuedDirectionNode == null) {
             this.lastQueuedDirectionNode = currentNode;
 
-            // if we don't have a current node or a past node, assume we are going through the warp tunnel
-            // todo: change
+            // if we don't have a current node or a past node, simply allow the turn
             if (currentNode == null) {
                 this.facingDirection = this.queuedDirection;
                 this.shouldMove = true;
@@ -281,7 +282,7 @@ class Pacman {
 
         // check if this node allows us to turn in our queued direction
         // so we don't turn on a node that would make us face a wall
-        if (!this.lastQueuedDirectionNode.node.directions[this.queuedDirection.enumValue]) {
+        if (this.lastQueuedDirectionNode.node.type == PATH_INTERSECTION_TYPES.NORMAL && !this.lastQueuedDirectionNode.node.directions[this.queuedDirection.enumValue]) {
             this.lastQueuedDirectionNode = currentNode;
             return;
         }
@@ -305,10 +306,16 @@ class Pacman {
         }
         
         // we just passed the node! make a turn.
-        [this.x, this.y] = [this.lastQueuedDirectionNode.node.x, this.lastQueuedDirectionNode.node.y];
-        this.facingDirection = this.queuedDirection;
-        this.shouldMove = true;
-        this.lastQueuedDirectionNode = currentNode;
+        if (this.lastQueuedDirectionNode.node.type == PATH_INTERSECTION_TYPES.NORMAL) {
+            if (snap) [this.x, this.y] = [this.lastQueuedDirectionNode.node.x, this.lastQueuedDirectionNode.node.y];
+            this.facingDirection = this.queuedDirection;
+            this.shouldMove = true;
+            this.lastQueuedDirectionNode = currentNode;
+            return;
+        }
+
+        // we passed a warp tunnel node, warp through it instead
+        gameManager.connectionManager.useWarpTunnel(this.lastQueuedDirectionNode.node);
     }
 
     /**
@@ -430,26 +437,6 @@ class Pacman {
         }
     }
 
-    public warpTunnel() {
-        const oldPosition = {x: this.x, y: this.y, direction: this.facingDirection};
-
-        let warped = false;
-        if (this.x < 20) {
-            this.x = 660;
-            warped = true;
-        }
-        else if (this.x > 660) {
-            this.x = 20;
-            warped = true;
-        }
-
-        if (warped) {
-            this.animations.warpAnimation.reset();
-            this.animations.warpAnimation.setActive(true);
-            this.animations.warpAnimation.meta.position = oldPosition;
-        }
-    }
-
     public collideGhosts() {
         // todo: find a server side way of doing this
         for (let id of Object.keys(gameManager.ghosts)) {
@@ -496,8 +483,6 @@ class Pacman {
         if (((!gameManager.performanceMode) || this.isLocal)) {
             this.checkQueuedDirection();
         }
-
-        this.warpTunnel();
         
         // handle if we are active in the bump animation
         if (this.bumpAnimation(deltaTime)) {

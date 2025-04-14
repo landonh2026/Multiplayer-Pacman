@@ -99,7 +99,7 @@ class DrawManager {
             for (let i = 0; i < board.pathIntersections.length; i++) {
                 let intersectionData = board.pathIntersections[i];
                 
-                ctx.strokeStyle = "red";
+                ctx.strokeStyle = intersectionData.type == PATH_INTERSECTION_TYPES.NORMAL ? "red" : "green";
                 ctx.beginPath();
                 ctx.arc(intersectionData.x, intersectionData.y, 10, 0, 2*Math.PI);
                 ctx.stroke();
