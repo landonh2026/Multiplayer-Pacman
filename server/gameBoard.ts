@@ -261,7 +261,7 @@ export class Pellet {
 
 export const gameBoards: any = {
     default: new GameBoard([
-        [7, 8, 3, 1], // ghost home
+        [8, 8, 1, 1], // ghost home
 
         [0, 0, 17, 1], // top wall
         [1, 18, 15, 1], // bottom wall
