@@ -1,4 +1,5 @@
-import {GameBoard, gameBoards} from "./gameBoard.ts";
+import {GameBoard, gameBoards, PATH_INTERSECTION_TYPES} from "./gameBoard.ts";
+import * as globals from "./globals.ts";
 
 export class Pathfinder
 {
@@ -178,16 +179,8 @@ export class Pathfinder
     private makeNodes(customNodes: PathNode[]|null = null) {
         if (this.board == null) throw Error("Board property is null");
         
-        let nodes: PathNode[] = [];
-    
         // use default nodes if customNodes is null
-        if (customNodes == null) {
-            for (let intersection of this.board.pathIntersections) {
-                nodes.push(new PathNode(intersection.x*40, intersection.y*40));
-            }
-        } else {
-            nodes = customNodes;
-        }
+        let nodes: PathNode[] = customNodes ?? this.board.pathIntersections.map(p => new PathNode(p.x*globals.tile_size, p.y*globals.tile_size));
     
         // go through each node and connect them to all other nodes that are visible in each cardinal direction
         for (let node of nodes) {

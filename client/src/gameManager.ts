@@ -57,7 +57,8 @@ class GameManager {
         this.debug = {
             intersectionPoints: false,
             pacmanWallCollision: false,
-            ghostPath: false
+            ghostPath: false,
+            invulnerable: true
         };
 
         this.tileSize = 40;

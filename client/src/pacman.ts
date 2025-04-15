@@ -350,6 +350,7 @@ class Pacman {
     }
 
     public kill() {
+        if (gameManager.debug.invulnerable) return;
         if (this.isDead) return;
         if (this.isLocal) gameManager.connectionManager.killLocalPacman();
 

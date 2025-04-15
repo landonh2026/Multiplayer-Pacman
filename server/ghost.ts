@@ -387,7 +387,7 @@ export class Ghost {
         if (!this.fallback_last) this.sendLocation();
         this.fallback_last = true;
 
-        this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), 1000);
+        this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), 250);
     }
 
     public getTimeToTurn(nextNode: PathNode|null = null) {
