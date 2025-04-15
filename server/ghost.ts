@@ -102,7 +102,7 @@ export class Ghost {
         for (let node of nodes) {
             const distance = Math.abs(this.x - node.x) + Math.abs(this.y - node.y);
 
-            if (utils.getDirectionFromNodes({x: this.x, y: this.y}, node) != reversedFacingDirection) {
+            if (utils.getTurnDirection({x: this.x, y: this.y}, node) != reversedFacingDirection) {
                 continue;
             }
 
@@ -294,7 +294,7 @@ export class Ghost {
         }
 
         // Either face towards pacman or the next node
-        this.facingDirection = this.room.gameBoard.pathfinder.getTurnDirection(
+        this.facingDirection = utils.getTurnDirection(
             {x: this.x, y: this.y},
             this.path.nodes[0] ?? this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime)
         );
@@ -352,7 +352,7 @@ export class Ghost {
         }
         
         // Either face towards pacman or the next node
-        this.facingDirection = this.room.gameBoard.pathfinder.getTurnDirection(
+        this.facingDirection = utils.getTurnDirection(
             {x: this.x, y: this.y},
             this.path.nodes[0]
         );

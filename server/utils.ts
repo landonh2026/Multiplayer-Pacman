@@ -135,7 +135,7 @@ export function getDirectionDelta(direction: 0|1|2|3) {
  * @param otherNode 
  * @returns 
  */
-export function getDirectionFromNodes(node: {x: number, y: number}|PathNode, otherNode: {x: number, y: number}|PathNode): 0|1|2|3|null {
+export function getTurnDirection(node: {x: number, y: number}|PathNode, otherNode: {x: number, y: number}|PathNode): 0|1|2|3|null {
     if (Math.abs(node.y-otherNode.y) == 0) return node.x - otherNode.x > 0 ? 2 : 0;
     if (Math.abs(node.x-otherNode.x) == 0) return node.y - otherNode.y > 0 ? 3 : 1;
 

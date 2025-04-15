@@ -1,5 +1,6 @@
-import {GameBoard, gameBoards, PATH_INTERSECTION_TYPES} from "./gameBoard.ts";
+import {GameBoard, gameBoards, PATH_INTERSECTION_TYPES, PathIntersection} from "./gameBoard.ts";
 import * as globals from "./globals.ts";
+import * as utils from "./utils.ts";
 
 export class Pathfinder
 {
@@ -27,19 +28,6 @@ export class Pathfinder
         }
 
         return closest;
-    }
-
-    /**
-     * Get the direction between a start node and another node. The given nodes should be in the same position in at least 1 axis.
-     * @param node The node which the direction is relative to
-     * @param otherNode The other node
-     * @returns The direction from the first node to the second node
-     */
-    public getTurnDirection(node: PathNode|{x: number, y: number}, otherNode: PathNode|{x: number, y: number}): 0|1|2|3|null {
-        if (Math.abs(node.y-otherNode.y) == 0) return node.x - otherNode.x > 0 ? 2 : 0;
-        if (Math.abs(node.x-otherNode.x) == 0) return node.y - otherNode.y > 0 ? 3 : 1;
-
-        return null;
     }
 
     /**
@@ -180,20 +168,31 @@ export class Pathfinder
         if (this.board == null) throw Error("Board property is null");
         
         // use default nodes if customNodes is null
-        let nodes: PathNode[] = customNodes ?? this.board.pathIntersections.map(p => new PathNode(p.x*globals.tile_size, p.y*globals.tile_size));
+        let nodes: PathNode[] = customNodes ?? this.board.pathIntersections.map(p => new PathNode(p.x*globals.tile_size, p.y*globals.tile_size, p.type, p.connection));
     
         // go through each node and connect them to all other nodes that are visible in each cardinal direction
         for (let node of nodes) {
             // the closest nodes by direction (right, down, left, up)
             let closestNodesByDirection: Array<null|{distance: number, node: PathNode}> = [null, null, null, null];
+
+            // if this is a warp block, add it's connection as a connecting node
+            warp_check: if (customNodes == null && node.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL && node.tunnelConnection != null) {
+                const index = this.board.pathIntersections.indexOf(node.tunnelConnection);
+                if (index == -1) break warp_check;
+
+                const turnDirection = utils.getTurnDirection(this.board.pathIntersections[index], node);
+                if (turnDirection == null) break warp_check;
+
+                closestNodesByDirection[turnDirection] = {distance: 0, node: nodes[index]};
+            }
     
             for (let otherNode of nodes) {
                 if (otherNode.id == node.id) continue;
-    
+
                 if (this.lineOfSightCheck(node, otherNode)) {
                     const distance = Math.abs(node.x-otherNode.x) + Math.abs(node.y-otherNode.y);
     
-                    let direction = this.getTurnDirection(node, otherNode);
+                    let direction = utils.getTurnDirection(node, otherNode);
     
                     if (direction == null) {
                         console.warn("Direction not found... ", [node.x, node.y], [otherNode.x, otherNode.y]);
@@ -263,6 +262,9 @@ export class PathNode {
     x: number;
     y: number;
 
+    type: PATH_INTERSECTION_TYPES;
+    tunnelConnection: PathIntersection|null;
+
     /** A list of connections that this node has made */
     connections: { node: PathNode, weight: number }[];
 
@@ -281,13 +283,15 @@ export class PathNode {
     /** The current node ID used for creating nodes */
     static id_count = 0;
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, type: PATH_INTERSECTION_TYPES = PATH_INTERSECTION_TYPES.NORMAL, connection: PathIntersection|null = null) {
         this.x = x;
         this.y = y;
         this.connections = [];
         this.g = Infinity;
         this.f = Infinity;
         this.cameFrom = null;
+        this.type = type;
+        this.tunnelConnection = connection;
 
         this.id = PathNode.id_count++;
     }
