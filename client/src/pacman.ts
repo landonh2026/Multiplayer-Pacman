@@ -315,7 +315,7 @@ class Pacman {
         }
 
         // we passed a warp tunnel node, warp through it instead
-        gameManager.connectionManager.useWarpTunnel(this.lastQueuedDirectionNode.node);
+        if (this.isLocal) gameManager.connectionManager.useWarpTunnel(this.lastQueuedDirectionNode.node);
     }
 
     /**
