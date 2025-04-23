@@ -181,7 +181,11 @@ export class Pathfinder
                 if (index == -1) break warp_check;
 
                 const turnDirection = utils.getTurnDirection(this.board.pathIntersections[index], node);
+                console.log("turn", turnDirection);
+                console.log(this.board.pathIntersections[index].x, this.board.pathIntersections[index].y, node.x, node.y)
                 if (turnDirection == null) break warp_check;
+
+                console.log("added intersection");
 
                 closestNodesByDirection[turnDirection] = {distance: 0, node: nodes[index]};
             }
