@@ -227,6 +227,8 @@ export class Ghost {
     private getAdjacentNodeDirections(node: PathNode, avoidNode: PathNode|null = null) {
         const possibleDirections: Array<{node: PathNode, direction: 0|1|2|3}> = [];
 
+        // todo: check if warp tunnel and if so do stuff with that yay
+
         for (let connection of node.connections) {
             const otherNode = connection.node;
 
@@ -271,6 +273,12 @@ export class Ghost {
         // [this.x, this.y] = [node.x, node.y];
 
         const adjacentNode = this.getAdjacentNodeDirections(node, lastNode ?? null);
+
+        if (adjacentNode == undefined) {
+            console.error("Adjacent node is undefined ...");
+            return;
+        }
+
         this.facingDirection = adjacentNode.direction;
         
         this.path = new Path([node, adjacentNode.node]);
