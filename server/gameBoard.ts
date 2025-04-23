@@ -129,7 +129,7 @@ export class GameBoard {
 
                 pellets.push(new Pellet(
                     x+0.5, y+0.5, id++,
-                    Math.random() > 0.9 ? PELLET_TYPES.POWER : PELLET_TYPES.NORMAL
+                    Math.random() > 0.95 ? PELLET_TYPES.POWER : PELLET_TYPES.NORMAL
                 ));
             }
         }

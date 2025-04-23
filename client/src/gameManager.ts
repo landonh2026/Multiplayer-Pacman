@@ -55,10 +55,10 @@ class GameManager {
 
     constructor() {
         this.debug = {
-            intersectionPoints: true,
+            intersectionPoints: false,
             pacmanWallCollision: false,
             ghostPath: false,
-            invulnerable: true
+            invulnerable: false
         };
 
         this.tileSize = 40;
