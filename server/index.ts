@@ -39,7 +39,7 @@ function log(this: ServerWebSocket<globals.SocketData>, ...data: any[]) {
  */
 async function fetch(req: Request, server: Server) {
     const url = new URL(req.url);
-    console.log(url.pathname);
+    // console.log(url.pathname);
 
     // if this is the socket url, upgrade it to a ws
     if (url.pathname == socketURL) {

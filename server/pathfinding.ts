@@ -38,6 +38,11 @@ export class Pathfinder
      */
     public findPathWithNodes(start: PathNode, goal: PathNode): Path | null {
         this.resetNodes();
+
+        // TODO: add a param to enable using the warp tunnels
+        // if enabled, we also need to manually find the distance if we went through one of the warp tunnels
+        //      how? idk
+        // we need to do this because a* naturally only goes in the direction which has the lowest distance, meaning it will never explore backwards
         return this.aStar(start, goal);
     }
 
@@ -134,6 +139,9 @@ export class Pathfinder
      * @returns The score for this path
      */
     private heuristic(a: PathNode, b: PathNode): number {
+        if (a.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL && b.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
+            return 0;
+        }
         return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
@@ -176,16 +184,15 @@ export class Pathfinder
             let closestNodesByDirection: Array<null|{distance: number, node: PathNode}> = [null, null, null, null];
 
             // if this is a warp block, add it's connection as a connecting node
-            warp_check: if (customNodes == null && node.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL && node.tunnelConnection != null) {
+            warp_check: if (node.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL && node.tunnelConnection != null) {
                 const index = this.board.pathIntersections.indexOf(node.tunnelConnection);
                 if (index == -1) break warp_check;
 
-                const turnDirection = utils.getTurnDirection(this.board.pathIntersections[index], node);
-                console.log("turn", turnDirection);
-                console.log(this.board.pathIntersections[index].x, this.board.pathIntersections[index].y, node.x, node.y)
+                const turnDirection = utils.getTurnDirection(
+                    {x: node.tunnelConnection.x*globals.tile_size, y: node.tunnelConnection.y*globals.tile_size},
+                    node
+                );
                 if (turnDirection == null) break warp_check;
-
-                console.log("added intersection");
 
                 closestNodesByDirection[turnDirection] = {distance: 0, node: nodes[index]};
             }
@@ -219,6 +226,17 @@ export class Pathfinder
     
                 node.addConnection(object.node);
                 // object.node.addConnection(node);
+            }
+        }
+
+        for (let node of nodes) {
+            if (node.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
+                console.log(node.connections.length);
+                for (let otherNode of node.connections) {
+                    if (otherNode.node.type != PATH_INTERSECTION_TYPES.WARP_TUNNEL) continue;
+
+                    console.log(otherNode.weight);
+                }
             }
         }
     
