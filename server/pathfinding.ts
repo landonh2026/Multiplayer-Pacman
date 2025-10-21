@@ -4,13 +4,15 @@ import * as utils from "./utils.ts";
 
 export class Pathfinder
 {
-    /** The list of connected nodes used in the search algorithm */
+    /** The list of connected nodes used in the search algorithm. Position is scaled to screen size. */
     nodes: PathNode[];
     board: GameBoard|null;
+    tunnelNodes: PathNode[];
 
     constructor(board: GameBoard|null, customNodes: PathNode[]|null = null) {
         this.board = board;
         this.nodes = this.makeNodes(customNodes);
+        this.tunnelNodes = this.findTunnelNodes();
     }
 
     public getManhattanClosestNode(x: number, y: number) {
@@ -36,14 +38,45 @@ export class Pathfinder
      * @param goal The target node to pathfind to
      * @returns The path from the start node to the target node. null if no path is found.
      */
-    public findPathWithNodes(start: PathNode, goal: PathNode): Path | null {
+    public findPathWithNodes(start: PathNode, goal: PathNode, allow_tunnel: boolean = true): Path | null {
         this.resetNodes();
 
         // TODO: add a param to enable using the warp tunnels
         // if enabled, we also need to manually find the distance if we went through one of the warp tunnels
         //      how? idk
         // we need to do this because a* naturally only goes in the direction which has the lowest distance, meaning it will never explore backwards
-        return this.aStar(start, goal);
+
+        // TODO: we might only need to calculate if we are going to use. See below note.
+        // const directPath = this.aStar(start, goal);
+
+        // get the closer warp tunnel
+        const bestTunnel = utils.getLargest(this.tunnelNodes, (node) => {
+            return -this.heuristic(start, node);
+        });
+
+        let tunnelDistance = null;
+        if (bestTunnel != null && bestTunnel.tunnelConnection != null) {
+            // console.log(bestTunnel.tunnelConnection.x, bestTunnel.tunnelConnection.y);
+            // we need to scale the screen here
+            tunnelDistance = this.heuristic(start, bestTunnel) +
+                this.heuristic(new PathNode(bestTunnel.tunnelConnection.x * globals.tile_size, bestTunnel.tunnelConnection.y * globals.tile_size), goal);
+        }
+
+        // determine if we should even use this warp tunnel based on heuristic distance
+        if (tunnelDistance != null && bestTunnel != null && tunnelDistance < this.heuristic(start, goal)) {
+            return this.aStar(start, bestTunnel);
+        }
+
+        // if manhattan distance is smaller, check the actual distance
+        // TODO: should we also check the total manhattan distance to the tunnel and to the pacman?
+        // is the manhattan distance actually a good estimate of the best distance
+        // I would think so, since there is not a ton of spots where you can't travel similarly to that
+
+        // return the shorter of the two paths
+        // console.log(bestTunnel?.tunnelConnection.id);
+
+        const directPath = this.aStar(start, goal);
+        return directPath;
     }
 
     /**
@@ -55,15 +88,16 @@ export class Pathfinder
     public findPathWithCoordinates(start: {x: number, y: number}, goal: {x: number, y: number}): Path | null {
         if (this.board == null) throw Error("Board property is null");
 
-        const customNodes: PathNode[] = [];
         // create a copy of each path intersection
+        const customNodes: PathNode[] = [];
         for (let intersection of this.board.pathIntersections) {
             // skip this intersection if it matches the starting position
             if(start.x == intersection.x*40 && start.y == intersection.y*40) {
                 continue;
             }
 
-            customNodes.push(new PathNode(intersection.x*40, intersection.y*40));
+            // TODO: doesn't update connection to be connected to the newly created other node
+            customNodes.push(new PathNode(intersection.x*40, intersection.y*40, intersection.type, intersection.connection));
         }
 
         // make 2 more nodes which can be used in the search
@@ -229,18 +263,34 @@ export class Pathfinder
             }
         }
 
-        for (let node of nodes) {
-            if (node.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
-                console.log(node.connections.length);
-                for (let otherNode of node.connections) {
-                    if (otherNode.node.type != PATH_INTERSECTION_TYPES.WARP_TUNNEL) continue;
+        // for (let node of nodes) {
+        //     if (node.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
+        //         console.log(node.connections.length);
+        //         for (let otherNode of node.connections) {
+        //             if (otherNode.node.type != PATH_INTERSECTION_TYPES.WARP_TUNNEL) continue;
 
-                    console.log(otherNode.weight);
-                }
-            }
-        }
+        //             console.log(otherNode.weight);
+        //         }
+        //     }
+        // }
     
         return nodes;
+    }
+
+    /**
+     * Find tunnel nodes inside this.nodes and return an array of them
+     * @returns 
+     */
+    private findTunnelNodes(): PathNode[] {
+        const tunnelNodes = [];
+
+        for (let node of this.nodes) {
+            if (node.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
+                tunnelNodes.push(node);
+            }
+        }
+
+        return tunnelNodes;
     }
 
     /**
@@ -280,6 +330,9 @@ export class Pathfinder
     }
 }
 
+/**
+ * Represents a path node which stores information relating to A*
+ */
 export class PathNode {
     x: number;
     y: number;
@@ -316,6 +369,7 @@ export class PathNode {
         this.tunnelConnection = connection;
 
         this.id = PathNode.id_count++;
+        if (PathNode.id_count == Number.MAX_SAFE_INTEGER) PathNode.id_count = 0;
     }
 
     /**
@@ -328,6 +382,9 @@ export class PathNode {
     }
 }
 
+/**
+ * Stores a list of PathNodes in a list
+ */
 export class Path {
     /** A list of nodes in this path */
     nodes: PathNode[]

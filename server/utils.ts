@@ -141,3 +141,27 @@ export function getTurnDirection(node: {x: number, y: number}|PathNode, otherNod
 
     return null;
 }
+
+/**
+ * Finds the biggest value according to the provided value function
+ * @param nodes The nodes to search through and compare
+ * @param value The value function which determines a node's value
+ * @returns The node with the biggest value
+ */
+export function getLargest<T>(nodes: T[], value: (node: T) => number): T|null {
+    if (nodes.length == 0) return null;
+    if (nodes.length == 1) return nodes[0];
+
+    let extreme: {value: number|null, node: T|null} = {value: null, node: null};
+
+    for (let node of nodes) {
+        const v = value(node);
+
+        if (extreme.node == null || extreme.value == null || v > extreme.value) {
+            extreme.node = node;
+            extreme.value = v;
+        }
+    }
+
+    return extreme.node;
+}

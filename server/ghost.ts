@@ -4,6 +4,7 @@ import { Room } from "./room.ts";
 import { PathNode } from "./pathfinding.ts";
 import * as globals from "./globals.ts";
 import * as utils from "./utils.ts";
+import { PATH_INTERSECTION_TYPES } from "./gameBoard.ts";
 
 /*
 MOVEMENT REFERENCE:
@@ -17,26 +18,34 @@ export enum GHOST_PHASES {
 }
 
 export class Ghost {
+    room: Room;
+
+    id: string;
     x: number;
     y: number;
-    movementSpeed: number;
-    facingDirection: 0|1|2|3|null;
-    currentTarget: Player|null;
-    path: Path|null;
-    room: Room;
-    nextTurnTimeout: Timer|null;
-    id: string;
-    color: globals.Colors;
-    fallback_last: boolean;
-    eaten: boolean;
-    lastNodeTimestamp: number|null;
+    
     phase: GHOST_PHASES;
+    color: globals.Colors;
+    movementSpeed: number;
+    path: Path|null;
+    
+    eaten: boolean;
+    fallback_last: boolean;
+    
+    facingDirection: 0|1|2|3|null;
+    currentTarget: Player|null
+    
+    nextTurnTimeout: Timer|null;
+    lastNodeTimestamp: number|null;
+    
+    // warp_tunneling_node: PathNode|null;
 
     constructor(x: number, y: number, room: Room) {
         this.x = x;
         this.y = y;
         this.movementSpeed = 5;
         this.lastNodeTimestamp = null;
+        // this.warp_tunneling_node = null;
 
         // this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
         this.color = "RED" as globals.Colors;
@@ -74,6 +83,7 @@ export class Ghost {
     public getMovementSpeed() {
         if (this.eaten) return this.movementSpeed * 2;
         if (this.phase == GHOST_PHASES.FRIGHTENED) return this.movementSpeed * 0.75;
+        // if (this.warp_tunneling_node != null) return this.movementSpeed * 0.5;
         return this.movementSpeed;
     }
 
@@ -227,8 +237,6 @@ export class Ghost {
     private getAdjacentNodeDirections(node: PathNode, avoidNode: PathNode|null = null) {
         const possibleDirections: Array<{node: PathNode, direction: 0|1|2|3}> = [];
 
-        // todo: check if warp tunnel and if so do stuff with that yay
-
         for (let connection of node.connections) {
             const otherNode = connection.node;
 
@@ -245,16 +253,34 @@ export class Ghost {
         return selected;
     }
 
+    /**
+     * Continue following along the current path
+     * @returns
+     */
     private followPathTurn(): boolean {
         // if the path is null set the fallback timer
         if (this.path == null || this.path.nodes.length === 0) {
+            // if (this.warp_tunneling_node != null) {
+            //     console.log("warped");
+            //     [this.x, this.y] = [this.warp_tunneling_node.x, this.warp_tunneling_node.y];
+            // }
+
             this.setFallbackTimeout();
             return false;
         }
 
         if (this.facingDirection != null) {
-            [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
-            this.path.nodes.shift();
+            if (this.path.nodes[0]?.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
+                console.log("set warp tunnel node");
+                const connectionNode = this.path.nodes[0].tunnelConnection;
+                // console.log(connectionNode);
+                if (connectionNode != null) {
+                    [this.x, this.y] = [connectionNode.x * globals.tile_size, connectionNode.y * globals.tile_size];
+                }
+            } else {
+                [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];
+                this.path.nodes.shift();
+            }
         }
 
         return true;
