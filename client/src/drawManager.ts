@@ -244,7 +244,7 @@ class DrawManager {
         const beforeLineWidth = ctx.lineWidth;
         ctx.fillStyle = particle.color;
         ctx.strokeStyle = particle.color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
 
         ctx.beginPath();
         ctx.arc(particle.x - particle.radius/2, particle.y - particle.radius/2, particle.radius, 0, 360);
