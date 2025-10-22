@@ -108,38 +108,21 @@ class DrawManager {
     }
 
     public drawDeadPacman(x: number, y: number, radius: number, frame: number, frightened: boolean = false) {
+        // draw dead pacman particles
+        if (Math.round(frame) == 35) {
+            const offset = 20;
+            const hVel = 4;
+            const vVel = 4;
+
+            gameManager.particleManager.particles.push(new FallingParticle(x + offset, y + offset, +hVel, +vVel));
+            gameManager.particleManager.particles.push(new FallingParticle(x + offset, y - offset, +hVel, -vVel));
+            gameManager.particleManager.particles.push(new FallingParticle(x - offset, y + offset, -hVel, +vVel));
+            gameManager.particleManager.particles.push(new FallingParticle(x - offset, y - offset, -hVel, -vVel));
+            
+            return;
+        }
+
         if (frame > 35) {
-            ctx.strokeStyle = "white";
-
-            frame -= 35;
-            ctx.beginPath();
-            
-            const particlePositions = [[-1, -1], [-1, 1], [1, 1], [1, -1]];
-
-            const start_shrinking_frame = 3;
-            const starting_distance = 5;
-
-            for (let particle of particlePositions) {
-                let p_start = [particle[0]*starting_distance, particle[1]*starting_distance];
-                let distance = frame;
-
-                if (distance > start_shrinking_frame) {
-                    p_start = [particle[0]*(starting_distance+start_shrinking_frame+1), particle[1]*(starting_distance+start_shrinking_frame+1)];
-                    particle = [-particle[0], -particle[1]];
-                    distance = (start_shrinking_frame - (frame-start_shrinking_frame));
-                }
-
-                distance *= 1.5;
-
-                ctx.moveTo(x + p_start[0], y + p_start[1]);
-                ctx.lineTo(x + p_start[0] + (particle[0] * distance), y + p_start[1] + (particle[1] * distance));
-            }
-
-            
-            const oldWidth = ctx.lineWidth;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.lineWidth = oldWidth;
             return;
         }
 
@@ -255,5 +238,24 @@ class DrawManager {
         ctx.fillStyle = "#FFFFFF";
         ctx.arc(x, y, 1, 0, 2*Math.PI);
         ctx.fill();
+    }
+
+    public drawParticle(particle: Particle) {
+        const beforeLineWidth = ctx.lineWidth;
+        ctx.fillStyle = particle.color;
+        ctx.strokeStyle = particle.color;
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+        ctx.arc(particle.x - particle.radius/2, particle.y - particle.radius/2, particle.radius, 0, 360);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(particle.x, particle.y);
+        ctx.lineTo(particle.lastX, particle.lastY);
+        ctx.stroke();
+        ctx.closePath();
+
+        ctx.lineWidth = beforeLineWidth;
     }
 }

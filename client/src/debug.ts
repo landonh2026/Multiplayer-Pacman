@@ -1,6 +1,14 @@
 class Debugger {
     constructor() {
-        
+        document.addEventListener("click", this.mouseClick);
+    }
+
+    public mouseClick(e: MouseEvent) {
+        console.log(e);
+
+        const p = new FallingParticle(e.layerX, e.layerY, Math.random() * 20 - 10, -10);
+
+        gameManager.particleManager.particles.push(p);
     }
 
     public onFrameUpdate(deltaTime: number) {

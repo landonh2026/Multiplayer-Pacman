@@ -46,6 +46,7 @@ class GameManager {
     eventHandler: EventHandler;
     infoBoard: InfoBoard;
     connectionManager: ConnectionManager;
+    particleManager: ParticleManager;
     debugger: Debugger;
 
     /** The local session ID */
@@ -57,8 +58,8 @@ class GameManager {
         this.debug = {
             intersectionPoints: false,
             pacmanWallCollision: false,
-            ghostPath: true,
-            invulnerable: true
+            ghostPath: false,
+            invulnerable: false
         };
 
         this.tileSize = 40;
@@ -81,6 +82,7 @@ class GameManager {
         this.drawManager = new DrawManager();
         this.eventHandler = new EventHandler();
         this.infoBoard = new InfoBoard();
+        this.particleManager = new ParticleManager();
         this.debugger = new Debugger();
         
         this.connectionManager = new ConnectionManager();
@@ -144,6 +146,11 @@ class GameManager {
         // step and draw the local pacman
         this.localPacman.stepMovement(deltaTime);
         this.localPacman.draw(deltaTime);
+
+        for (let particle of this.particleManager.particles) {
+            particle.step();
+            particle.draw();
+        }
 
         // update the debugger
         this.debugger.onFrameUpdate(deltaTime);
