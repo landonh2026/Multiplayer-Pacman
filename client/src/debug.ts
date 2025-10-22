@@ -4,11 +4,10 @@ class Debugger {
     }
 
     public mouseClick(e: MouseEvent) {
-        console.log(e);
+        // console.log(e);
 
-        const p = new FallingParticle(e.layerX, e.layerY, Math.random() * 20 - 10, -10);
-
-        gameManager.particleManager.particles.push(p);
+        // const p = new FallingParticle(e.layerX, e.layerY, Math.random() * 20 - 10, -10);
+        // gameManager.particleManager.particles.push(p);
     }
 
     public onFrameUpdate(deltaTime: number) {

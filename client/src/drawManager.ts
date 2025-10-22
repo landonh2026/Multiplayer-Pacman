@@ -110,7 +110,7 @@ class DrawManager {
     public drawDeadPacman(x: number, y: number, radius: number, frame: number, frightened: boolean = false) {
         // draw dead pacman particles
         if (Math.round(frame) == 35) {
-            const offset = 20;
+            const offset = 16;
             const hVel = 4;
             const vVel = 4;
 
