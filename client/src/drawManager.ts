@@ -76,9 +76,6 @@ class DrawManager {
         this.pelletShrinkAnimation.step_frame(deltaTime);
         this.powerPelletFlash.step_frame(deltaTime);
 
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = ENVIRONMENT_COLORS.WALL;
-
         for (let i = 0; i < board.drawLines.length; i++) {
             let lineData = board.drawLines[i];
 
@@ -104,6 +101,36 @@ class DrawManager {
                 ctx.arc(intersectionData.x, intersectionData.y, 10, 0, 2*Math.PI);
                 ctx.stroke();
             }
+        }
+    }
+
+    /**
+     * Draws the board's grid again. Assumes the fillstyle is already set to the pacman's glow gradient.
+     */
+    public drawPacmanGlowOnBoard(x: number, y: number, distance: number, board: GameBoard|null = null) {
+        if (board == null) board = gameManager.currentBoard;
+        
+        distance = gameManager.tileSize * 10;
+
+        const allowed = (bx: number, by: number) => {
+            return Math.abs(bx - x) + Math.abs(by - y) < distance;
+        }
+
+        for (let i = 0; i < board.blockPositions.length; i++) {
+            const block = board.blockPositions[i];
+
+            let shouldDraw = allowed(block[0], block[1]) ||
+                allowed(block[0], block[1]+block[3]) ||
+                allowed(block[0]+block[2], block[1]) ||
+                allowed(block[0]+block[2], block[1]+block[3]);
+
+            if (!shouldDraw) {
+                continue;
+            }
+
+            // ctx.fillStyle = ENVIRONMENT_COLORS.BACKGROUND;
+            ctx.beginPath();
+            ctx.fillRect(block[0], block[1], block[2], block[3]);
         }
     }
 
@@ -151,6 +178,21 @@ class DrawManager {
         ctx.fill();
         ctx.stroke();
         ctx.lineWidth = 1;
+    }
+
+    public drawPacmanGlow(x: number, y: number, size: number, color: string) {
+        if (this.shouldDoEntityFlash()) {
+            color = "#FFFFFF";
+        }
+
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+        gradient.addColorStop(0, color + "B0");
+        gradient.addColorStop(1, color + "00");
+        ctx.fillStyle = gradient;
+
+        // ctx.beginPath();
+        // ctx.arc(x, y, size, 0, Math.PI * 2);
+        // ctx.fill();
     }
 
     /**
@@ -247,7 +289,7 @@ class DrawManager {
         ctx.lineWidth = 2;
 
         ctx.beginPath();
-        ctx.arc(particle.x - particle.radius/2, particle.y - particle.radius/2, particle.radius, 0, 360);
+        ctx.arc(particle.x - particle.radius/2, particle.y - particle.radius/2, particle.radius, 0, 2 * Math.PI);
         ctx.fill();
 
         ctx.beginPath();

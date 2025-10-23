@@ -73,4 +73,21 @@ function ease_curve(x: number): number {
     return bezier_curve(x, [0.17, 0.67, 0.83, 1]);
 }
 
-console.log(powerUpSizingFunction(1));
+function add_alpha(color: string, alpha: number): string {
+    const alphaCanvas = document.createElement('canvas');
+    const alphaCtx = alphaCanvas.getContext('2d') as CanvasRenderingContext2D;
+
+    alphaCtx.fillStyle = color;
+    
+    const computedColor = alphaCtx.fillStyle;
+
+    const match = computedColor.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = match[1];
+        const g = match[2];
+        const b = match[3];
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    return color;
+}

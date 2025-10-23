@@ -193,6 +193,24 @@ class Pacman {
         }
     }
 
+    public drawGlow() {
+        const size = this.radius * 4;
+
+        gameManager.drawManager.drawPacmanGlow(
+            this.x,
+            this.y,
+            size,
+            this.shouldRenderFrightened() ? this.color.color : this.color.color
+        );
+        // gameManager.drawManager.drawPacmanGlow(this.x, this.y, this.radius * 4, this.color.color);
+
+        // const vulnerable = this.shouldRenderFrightened();
+        // drawManager.shouldDoEntityFlash
+
+        // specify max distances for some efficiency
+        gameManager.drawManager.drawPacmanGlowOnBoard(this.x, this.y, size);
+    }
+
     /**
      * Draws this pacman
      * @param deltaTime 

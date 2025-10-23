@@ -58,8 +58,8 @@ class GameManager {
         this.debug = {
             intersectionPoints: false,
             pacmanWallCollision: false,
-            ghostPath: false,
-            invulnerable: false
+            ghostPath: true,
+            invulnerable: true
         };
 
         this.tileSize = 40;
@@ -121,8 +121,18 @@ class GameManager {
      * @param deltaTime 
      */
     private draw(deltaTime: number) {
-        // clear the canvas and draw the board
+        // clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        this.localPacman.drawGlow();
+
+        // draw the glowing effect for each player before the board
+        for (let session in this.remotePlayers) {
+            const pacman = this.remotePlayers[session as keyof typeof this.remotePlayers].pacman;
+
+            pacman.drawGlow();
+        }
+
         this.drawManager.drawBoard(deltaTime);
     
         // step the movement and draw each remote player
