@@ -89,10 +89,10 @@ class DrawManager {
             let lineData = board.drawLines[i];
 
             ctx.strokeStyle = ENVIRONMENT_COLORS.WALL;
-            // ctx.beginPath();
-            // ctx.moveTo(lineData[0], lineData[1]);
-            // ctx.lineTo(lineData[2], lineData[3]);
-            // ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(lineData[0], lineData[1]);
+            ctx.lineTo(lineData[2], lineData[3]);
+            ctx.stroke();
         }
 
         ctx.shadowBlur = 0;
@@ -114,25 +114,6 @@ class DrawManager {
     }
 
     public drawDeadPacman(x: number, y: number, radius: number, frame: number, frightened: boolean = false) {
-        // draw dead pacman particles
-        if (Math.round(frame) == 35) {
-            const offset = 16;
-            const hVel = 4;
-            const vVel = 4;
-
-            // TODO: make it so we only send out 1 set of particles
-            gameManager.particleManager.particles.push(new FallingParticle(x + offset, y + offset, +hVel + Math.random()*2-1, +vVel + Math.random()*2-1));
-            gameManager.particleManager.particles.push(new FallingParticle(x + offset, y - offset, +hVel + Math.random()*2-1, -vVel + Math.random()*2-1));
-            gameManager.particleManager.particles.push(new FallingParticle(x - offset, y + offset, -hVel + Math.random()*2-1, +vVel + Math.random()*2-1));
-            gameManager.particleManager.particles.push(new FallingParticle(x - offset, y - offset, -hVel + Math.random()*2-1, -vVel + Math.random()*2-1));
-            
-            return;
-        }
-
-        if (frame > 35) {
-            return;
-        }
-
         frame = Math.max(frame-5, 0);
 
         frame = Math.round(frame / 3);

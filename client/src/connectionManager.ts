@@ -44,6 +44,7 @@ class ConnectionManager {
 
         if (parsed.messageType in gameManager.eventHandler.typeHandlers) {
             console.log("Received", parsed.messageType, "packet");
+            // console.log(parsed);
             gameManager.eventHandler.typeHandlers[parsed.messageType](parsed);
             return;
         }

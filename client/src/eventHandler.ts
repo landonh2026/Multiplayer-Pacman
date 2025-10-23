@@ -213,9 +213,13 @@ class EventHandler {
             workingPacman.animations.powerAnimation.setActive(true);
         }
 
+        if (!workingPacman.isDead && !parsedData.data.isAlive) {
+            workingPacman.animations.killAnimation.setActive(true);
+        }
+
         workingPacman.isPoweredUp = parsedData.data.poweredUp;
-        workingPacman.isDead = !parsedData.data.isAlive;
         workingPacman.powerupExpiresAt = parsedData.data.powerupTimer ? performance.now() + parsedData.data.powerupTimer : null;
+        workingPacman.isDead = !parsedData.data.isAlive;
 
         if (!parsedData.data.no_pos) {
             workingPacman.x = parsedData.data.x;

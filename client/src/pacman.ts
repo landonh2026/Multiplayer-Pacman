@@ -55,7 +55,7 @@ class Pacman {
         this.animations = this.animationManager.animations;
         this.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
         this.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
-        this.animations.killAnimation = new GameAnimation(36, true, 1, false);
+        this.animations.killAnimation = new GameAnimation(35, true, 1, false);
         this.animations.powerAnimation = new GameAnimation(8, false, 1, false);
         this.animations.fadeAnimation = new GameAnimation(3, false, 1, false);
 
@@ -194,22 +194,25 @@ class Pacman {
     }
 
     public drawGlow() {
-        // const size = this.radius * 4;
+        // skip if dead animation is already done
+        if (this.isDead && this.animations.killAnimation.isDone()) {
+            return;
+        }
+
         let size = this.radius * 4;
 
         if (!this.animations.powerAnimation.isDone()) {
-            // play the animation forwards or in reverse
-            size *= powerUpSizingFunction(
-                this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
-                (1 - this.animations.powerAnimation.get_progress())
-            );
+            size *= powerUpSizingFunction(this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
+                (1 - this.animations.powerAnimation.get_progress()));
+            size = Math.max(4 * this.radius, size);
+        } else if (this.isPoweredUp) {
+            size *= 1.5;
+        } else if (!this.animations.killAnimation.isDone()) {
+            size *= 1 - Math.pow(this.animations.killAnimation.get_progress(), 4);
         }
 
-        if (this.isPoweredUp) {
-            size *= 1.6;
-        }
-
-        size = Math.min(Math.max(this.radius * 4, size), this.radius * 4 * 1.7);
+        // size = Math.min(Math.max(this.radius * 4, size), this.radius * 4 * 1.5);
+        size = Math.min(size, this.radius * 4 * 1.5);
 
         gameManager.drawManager.getObjectGlowGradient(
             this.x,
@@ -218,10 +221,6 @@ class Pacman {
             // this.shouldRenderFrightened() ? ENTITY_STATE_COLORS.FRIGHTENED : this.color.color
             this.color.color
         );
-        // gameManager.drawManager.drawPacmanGlow(this.x, this.y, this.radius * 4, this.color.color);
-
-        // const vulnerable = this.shouldRenderFrightened();
-        // drawManager.shouldDoEntityFlash
 
         // specify max distances for some efficiency
         gameManager.drawManager.drawGlowOnBoard(this.x, this.y, size);
@@ -262,7 +261,22 @@ class Pacman {
 
         // if we are dead draw the dead pacman animation
         if (this.isDead) {
+            if (this.animations.killAnimation.isDone()) return;
             this.animations.killAnimation.step_frame(deltaTime);
+
+            // we just finished the animation
+            if(this.animations.killAnimation.isDone()) {
+                const offset = 16;
+                const hVel = 4;
+                const vVel = 4;
+
+                gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y + offset, +hVel + Math.random()*2-1, +vVel + Math.random()*2-1));
+                gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y - offset, +hVel + Math.random()*2-1, -vVel + Math.random()*2-1));
+                gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y + offset, -hVel + Math.random()*2-1, +vVel + Math.random()*2-1));
+                gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y - offset, -hVel + Math.random()*2-1, -vVel + Math.random()*2-1));
+            
+            }
+
             gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animations.killAnimation.get_frame(), vulnerable);
             return;
         }
