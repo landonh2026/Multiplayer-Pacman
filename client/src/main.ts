@@ -21,9 +21,6 @@ window.addEventListener('load', function() {
 // setInterval(draw, ms_per_frame);
 
 function fitCanvas() {
-    // canvas.width = canvas.clientWidth / 2;
-    // canvas.height = canvas.clientHeight / 2;
-
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
 

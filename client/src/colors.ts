@@ -30,7 +30,7 @@ const ENVIRONMENT_COLORS = {
     TEXT: "white",
     BACKGROUND: "rgb(1, 1, 0)",
     WALL: "rgb(33, 32, 254)",
-    PELLET: "rgb(250, 184, 177)",
+    PELLET: "#fab8b1",
     DARK_PELLET: "rgb(94, 64, 61)"
 };
 

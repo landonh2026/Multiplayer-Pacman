@@ -5,11 +5,20 @@ class DrawManager {
     powerPelletFlash: GameAnimation;
     pelletShrinkAnimation: GameAnimation;
     oldPellets: Array<Pellet>;
+    lightingCanvas: HTMLCanvasElement;
+    lctx: CanvasRenderingContext2D;
 
     constructor() {
         this.powerPelletFlash = new GameAnimation(24, true, 1, true);
         this.pelletShrinkAnimation = new GameAnimation(12, false, 1, false);
         this.oldPellets = [];
+
+        this.lightingCanvas = document.createElement("canvas");
+        this.lctx = this.lightingCanvas.getContext("2d") as CanvasRenderingContext2D;
+    }
+
+    public newFrame() {
+
     }
 
     public shouldDoEntityFlash(): boolean {
@@ -80,10 +89,10 @@ class DrawManager {
             let lineData = board.drawLines[i];
 
             ctx.strokeStyle = ENVIRONMENT_COLORS.WALL;
-            ctx.beginPath();
-            ctx.moveTo(lineData[0], lineData[1]);
-            ctx.lineTo(lineData[2], lineData[3]);
-            ctx.stroke();
+            // ctx.beginPath();
+            // ctx.moveTo(lineData[0], lineData[1]);
+            // ctx.lineTo(lineData[2], lineData[3]);
+            // ctx.stroke();
         }
 
         ctx.shadowBlur = 0;
@@ -104,36 +113,6 @@ class DrawManager {
         }
     }
 
-    /**
-     * Draws the board's grid again. Assumes the fillstyle is already set to the pacman's glow gradient.
-     */
-    public drawPacmanGlowOnBoard(x: number, y: number, distance: number, board: GameBoard|null = null) {
-        if (board == null) board = gameManager.currentBoard;
-        
-        distance = gameManager.tileSize * 10;
-
-        const allowed = (bx: number, by: number) => {
-            return Math.abs(bx - x) + Math.abs(by - y) < distance;
-        }
-
-        for (let i = 0; i < board.blockPositions.length; i++) {
-            const block = board.blockPositions[i];
-
-            let shouldDraw = allowed(block[0], block[1]) ||
-                allowed(block[0], block[1]+block[3]) ||
-                allowed(block[0]+block[2], block[1]) ||
-                allowed(block[0]+block[2], block[1]+block[3]);
-
-            if (!shouldDraw) {
-                continue;
-            }
-
-            // ctx.fillStyle = ENVIRONMENT_COLORS.BACKGROUND;
-            ctx.beginPath();
-            ctx.fillRect(block[0], block[1], block[2], block[3]);
-        }
-    }
-
     public drawDeadPacman(x: number, y: number, radius: number, frame: number, frightened: boolean = false) {
         // draw dead pacman particles
         if (Math.round(frame) == 35) {
@@ -141,10 +120,11 @@ class DrawManager {
             const hVel = 4;
             const vVel = 4;
 
-            gameManager.particleManager.particles.push(new FallingParticle(x + offset, y + offset, +hVel, +vVel));
-            gameManager.particleManager.particles.push(new FallingParticle(x + offset, y - offset, +hVel, -vVel));
-            gameManager.particleManager.particles.push(new FallingParticle(x - offset, y + offset, -hVel, +vVel));
-            gameManager.particleManager.particles.push(new FallingParticle(x - offset, y - offset, -hVel, -vVel));
+            // TODO: make it so we only send out 1 set of particles
+            gameManager.particleManager.particles.push(new FallingParticle(x + offset, y + offset, +hVel + Math.random()*2-1, +vVel + Math.random()*2-1));
+            gameManager.particleManager.particles.push(new FallingParticle(x + offset, y - offset, +hVel + Math.random()*2-1, -vVel + Math.random()*2-1));
+            gameManager.particleManager.particles.push(new FallingParticle(x - offset, y + offset, -hVel + Math.random()*2-1, +vVel + Math.random()*2-1));
+            gameManager.particleManager.particles.push(new FallingParticle(x - offset, y - offset, -hVel + Math.random()*2-1, -vVel + Math.random()*2-1));
             
             return;
         }
@@ -180,19 +160,54 @@ class DrawManager {
         ctx.lineWidth = 1;
     }
 
-    public drawPacmanGlow(x: number, y: number, size: number, color: string) {
+    /**
+     * Draws the board's grid again. Assumes the fillstyle is already set to the pacman's glow gradient.
+     */
+    public drawGlowOnBoard(x: number, y: number, distance: number, board: GameBoard|null = null) {
+        if (board == null) board = gameManager.currentBoard;
+        
+        distance = gameManager.tileSize * 10;
+
+        const allowed = (bx: number, by: number) => {
+            return Math.abs(bx - x) + Math.abs(by - y) < distance;
+        }
+
+        for (let i = 0; i < board.blockPositions.length; i++) {
+            const block = board.blockPositions[i];
+
+            let shouldDraw = allowed(block[0], block[1]) ||
+                allowed(block[0], block[1]+block[3]) ||
+                allowed(block[0]+block[2], block[1]) ||
+                allowed(block[0]+block[2], block[1]+block[3]);
+
+            if (!shouldDraw) {
+                continue;
+            }
+
+            // ctx.fillStyle = ENVIRONMENT_COLORS.BACKGROUND;
+            ctx.beginPath();
+            ctx.fillRect(block[0], block[1], block[2], block[3]);
+        }
+    }
+
+    public getObjectGlowGradient(x: number, y: number, size: number, color: string, opacity: string = "B0") {
         if (this.shouldDoEntityFlash()) {
             color = "#FFFFFF";
         }
 
+        // console.log(color);
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
-        gradient.addColorStop(0, color + "B0");
+        gradient.addColorStop(0, color + opacity);
         gradient.addColorStop(1, color + "00");
         ctx.fillStyle = gradient;
 
         // ctx.beginPath();
         // ctx.arc(x, y, size, 0, Math.PI * 2);
         // ctx.fill();
+    }
+
+    public addToGlowWallLighting(x: number, y: number, distance: number, board: GameBoard|null = null) {
+        // this.lctx
     }
 
     /**

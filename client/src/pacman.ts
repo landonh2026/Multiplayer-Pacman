@@ -194,13 +194,29 @@ class Pacman {
     }
 
     public drawGlow() {
-        const size = this.radius * 4;
+        // const size = this.radius * 4;
+        let size = this.radius * 4;
 
-        gameManager.drawManager.drawPacmanGlow(
+        if (!this.animations.powerAnimation.isDone()) {
+            // play the animation forwards or in reverse
+            size *= powerUpSizingFunction(
+                this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
+                (1 - this.animations.powerAnimation.get_progress())
+            );
+        }
+
+        if (this.isPoweredUp) {
+            size *= 1.6;
+        }
+
+        size = Math.min(Math.max(this.radius * 4, size), this.radius * 4 * 1.7);
+
+        gameManager.drawManager.getObjectGlowGradient(
             this.x,
             this.y,
             size,
-            this.shouldRenderFrightened() ? this.color.color : this.color.color
+            // this.shouldRenderFrightened() ? ENTITY_STATE_COLORS.FRIGHTENED : this.color.color
+            this.color.color
         );
         // gameManager.drawManager.drawPacmanGlow(this.x, this.y, this.radius * 4, this.color.color);
 
@@ -208,7 +224,7 @@ class Pacman {
         // drawManager.shouldDoEntityFlash
 
         // specify max distances for some efficiency
-        gameManager.drawManager.drawPacmanGlowOnBoard(this.x, this.y, size);
+        gameManager.drawManager.drawGlowOnBoard(this.x, this.y, size);
     }
 
     /**

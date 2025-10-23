@@ -48,6 +48,16 @@ class Particle {
         // TODO: IMPLEMENT SCREEN WIDTH AND HEIGHT
         let shouldDelete = (this.x < 0 && this.y < 0);
         // and actually use this
+
+        if (this.x > canvas.clientWidth) {
+            this.x = canvas.clientWidth;
+            this.dx *= -1;
+        }
+
+        if (this.x < 0) {
+            this.x = 0;
+            this.dx *= -1;
+        }
     }
 
     public draw() {
