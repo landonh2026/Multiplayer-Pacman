@@ -48,6 +48,24 @@ class Particle {
         // TODO: IMPLEMENT SCREEN WIDTH AND HEIGHT
         let shouldDelete = (this.x < 0 && this.y < 0);
         // and actually use this
+    }
+
+    public draw() {
+        gameManager.drawManager.drawParticle(this);
+    }
+}
+
+class FallingParticle extends Particle {
+    bounced: boolean;
+
+    constructor(x: number, y: number, dx: number = 0, dy: number = 0) {
+        super(x, y, dx, dy);
+        this.bounced = false;
+    }
+
+    public step() {
+        this.dy += 0.3; // gravity
+        super.step();
 
         if (this.x > canvas.clientWidth) {
             this.x = canvas.clientWidth;
@@ -58,16 +76,18 @@ class Particle {
             this.x = 0;
             this.dx *= -1;
         }
-    }
 
-    public draw() {
-        gameManager.drawManager.drawParticle(this);
-    }
-}
+        if (this.y > canvas.clientHeight) {
+            if (this.bounced) {
+                // TODO: check and remove
+                return;
+            }
+            
+            this.dy *= -0.3;
+            this.dx *= 0.7;
+            this.y = canvas.clientHeight;
 
-class FallingParticle extends Particle {
-    public step() {
-        this.dy += 0.3; // gravity
-        super.step();
+            this.bounced = true;
+        }
     }
 }

@@ -270,11 +270,10 @@ class Pacman {
                 const hVel = 4;
                 const vVel = 4;
 
-                gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y + offset, +hVel + Math.random()*2-1, +vVel + Math.random()*2-1));
-                gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y - offset, +hVel + Math.random()*2-1, -vVel + Math.random()*2-1));
-                gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y + offset, -hVel + Math.random()*2-1, +vVel + Math.random()*2-1));
-                gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y - offset, -hVel + Math.random()*2-1, -vVel + Math.random()*2-1));
-            
+                gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y + offset, +hVel + Math.random()*5-1, +vVel + Math.random()*5-1));
+                gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y - offset, +hVel + Math.random()*5-1, -vVel + Math.random()*5-1));
+                gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y + offset, -hVel + Math.random()*5-1, +vVel + Math.random()*5-1));
+                gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y - offset, -hVel + Math.random()*5-1, -vVel + Math.random()*5-1));
             }
 
             gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animations.killAnimation.get_frame(), vulnerable);
