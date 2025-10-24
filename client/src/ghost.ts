@@ -68,5 +68,14 @@ class Ghost {
         if (this.eat_pending) return;
         this.eat_pending = true;
         gameManager.connectionManager.eatGhost(this.id);
+
+        const offset = 16;
+        const hVel = 4;
+        const vVel = 4;
+
+        gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y + offset, +hVel + Math.random()*5-1, +vVel + Math.random()*5-1));
+        gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y - offset, +hVel + Math.random()*5-1, -vVel + Math.random()*5-1));
+        gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y + offset, -hVel + Math.random()*5-1, +vVel + Math.random()*5-1));
+        gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y - offset, -hVel + Math.random()*5-1, -vVel + Math.random()*5-1));
     }
 }
