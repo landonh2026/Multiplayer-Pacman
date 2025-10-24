@@ -121,6 +121,8 @@ class GameManager {
      * @param deltaTime 
      */
     private draw(deltaTime: number) {
+        this.drawManager.newFrame(deltaTime);
+
         // clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 

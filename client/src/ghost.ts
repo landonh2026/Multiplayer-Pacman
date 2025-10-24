@@ -44,12 +44,12 @@ class Ghost {
      * Draw this ghost
      */
     public draw() {
-        ctx.fillStyle = this.color;
+        let color = this.color;
 
-        if (this.phase == GHOST_PHASES.FRIGHTENED) ctx.fillStyle = ENTITY_STATE_COLORS.FRIGHTENED;
-        if (this.eaten) ctx.fillStyle = "gray";
+        if (this.phase == GHOST_PHASES.FRIGHTENED) color = ENTITY_STATE_COLORS.FRIGHTENED;
+        if (this.eaten) color = "gray";
 
-        gameManager.drawManager.drawGhost(this.x, this.y, this.facingDirection);
+        gameManager.drawManager.drawGhost(this.x, this.y, color, !this.eaten, this.facingDirection);
     }
 
     /**

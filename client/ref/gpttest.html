@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Canvas Ghost Icon</title>
+    <style>
+        /* center the canvas on the page */
+        html,body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        canvas { image-rendering: crisp-edges; }
+    </style>
+</head>
+<body>
+    <canvas id="ghostCanvas" width="512" height="512"></canvas>
+
+    <script>
+        // Grab canvas and 2D context
+        const canvas = document.getElementById('ghostCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Sizes and layout (all relative to canvas)
+        const W = canvas.width;
+        const H = canvas.height;
+
+        // Padding around the ghost
+        const pad = Math.round(W * 0.03);
+
+        // Ghost main width and left/right bounds
+        const gw = W - pad * 2;
+        const gx = pad;             // left x of ghost bounding box
+        const gyTop = pad + Math.round(H * 0.02);  // top y (small offset)
+        const cx = W / 2;          // center x
+
+        // Top arc radius (half of ghost width)
+        const topRadius = gw / 2;
+
+        // how far down the straight sides go before the scallops start
+        const scallopRadius = Math.round(gw / 6); // three scallops -> approx gw/6 radius each
+        const bottomY = H - pad;   // bottom of canvas
+        const straightY = bottomY - scallopRadius; // y where scallops' centers sit horizontally
+
+        // Ghost color (dark grey)
+        const ghostColor = '#1f1f1f';
+
+        // --- Draw ghost body path ---
+        ctx.beginPath();
+
+        // Move to leftmost point of top semicircle
+        ctx.moveTo(cx - topRadius, gyTop + topRadius);
+
+        // Top semicircle (left to right)
+        // center of this arc is (cx, gyTop + topRadius)
+        ctx.arc(cx, gyTop + topRadius, topRadius, Math.PI, 0, false);
+
+        // Right straight side: from end of arc down to scallop baseline
+        ctx.lineTo(cx + topRadius, straightY);
+
+        // Right scallop (three semicircles along bottom)
+        // We'll draw semicircles going from right to left so path stays continuous.
+
+        // Right scallop center
+        const scRightCx = cx + scallopRadius * 2;
+        // Draw arc downward then upward (clockwise semicircle)
+        ctx.arc(scRightCx, straightY, scallopRadius, -Math.PI / 2, Math.PI / 2, false);
+
+        // Middle scallop
+        const scMidCx = cx;
+        ctx.arc(scMidCx, straightY, scallopRadius, -Math.PI / 2, Math.PI / 2, false);
+
+        // Left scallop
+        const scLeftCx = cx - scallopRadius * 2;
+        ctx.arc(scLeftCx, straightY, scallopRadius, -Math.PI / 2, Math.PI / 2, false);
+
+        // Left straight side: go up to left arc end
+        ctx.lineTo(cx - topRadius, gyTop + topRadius);
+
+        // Close the path and fill
+        ctx.closePath();
+        ctx.fillStyle = ghostColor;
+        ctx.fill();
+
+        // --- Create eye holes using compositing ---
+        // We want crescent-shaped transparent holes that face inward.
+        // Strategy:
+        // 1) Use destination-out to cut an outer oval (entire eye area).
+        // 2) Use source-over with ghost color to draw a circle that fills back
+        //    the inner part of the oval, leaving a crescent-shaped hole.
+
+        // Eye layout relative to canvas
+        const eyeOffsetX = Math.round(gw * 0.2);   // horizontal offset from center
+        const eyeY = gyTop + topRadius * 0.6;      // vertical position of the eyes
+        const eyeOvalRx = Math.round(gw * 0.14);   // oval rx (horizontal)
+        const eyeOvalRy = Math.round(gw * 0.24);   // oval ry (vertical)
+        const innerFillRadius = Math.round(Math.min(eyeOvalRx, eyeOvalRy) * 0.75);
+
+        // Function to draw an ellipse path (helper)
+        function ellipsePath(cx, cy, rx, ry) {
+            ctx.beginPath();
+            // Use ellipse if available (modern browsers)
+            if (ctx.ellipse) {
+                ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+            } else {
+                // fallback approximation
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(rx, ry);
+                ctx.arc(0, 0, 1, 0, Math.PI * 2);
+                ctx.restore();
+            }
+            ctx.closePath();
+        }
+
+        // Cut out left eye oval
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ellipsePath(cx - eyeOffsetX, eyeY, eyeOvalRx, eyeOvalRy);
+        ctx.fill();
+        ctx.restore();
+
+        // Cut out right eye oval
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ellipsePath(cx + eyeOffsetX, eyeY, eyeOvalRx, eyeOvalRy);
+        ctx.fill();
+        ctx.restore();
+
+        // Fill back inner circles (to make crescent shape)
+        // Left inner fill (pushes back part of the oval so the remaining hole is a crescent)
+        ctx.beginPath();
+        ctx.fillStyle = ghostColor;
+        ctx.arc(cx - eyeOffsetX + innerFillRadius * 0.3, eyeY, innerFillRadius, 0, Math.PI * 2); 
+        // note: offset the inner circle slightly towards the outer edge so the crescent faces inward
+        ctx.fill();
+
+        // Right inner fill
+        ctx.beginPath();
+        ctx.fillStyle = ghostColor;
+        ctx.arc(cx + eyeOffsetX - innerFillRadius * 0.3, eyeY, innerFillRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // (Optional) If you want to save as an image or scale, you can export the canvas toDataURL or resize.
+    </script>
+</body>
+</html>

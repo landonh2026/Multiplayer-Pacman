@@ -8,6 +8,8 @@ class DrawManager {
     lightingCanvas: HTMLCanvasElement;
     lctx: CanvasRenderingContext2D;
 
+    ghostAnimation: GameAnimation;
+
     constructor() {
         this.powerPelletFlash = new GameAnimation(24, true, 1, true);
         this.pelletShrinkAnimation = new GameAnimation(12, false, 1, false);
@@ -15,10 +17,13 @@ class DrawManager {
 
         this.lightingCanvas = document.createElement("canvas");
         this.lctx = this.lightingCanvas.getContext("2d") as CanvasRenderingContext2D;
+
+        // this.ghostAnimation = new GameAnimation(2, true, 0.01, true);
+        this.ghostAnimation = new GameAnimation(2, true, 0.2, true);
     }
 
-    public newFrame() {
-
+    public newFrame(deltaTime: number) {
+        this.ghostAnimation.step_frame(deltaTime);
     }
 
     public shouldDoEntityFlash(): boolean {
@@ -248,19 +253,68 @@ class DrawManager {
     }
 
     /**
-     * Unfinished. Draws a ghost given many arguments.
+     * Draws a ghost given a position and looking direction
      * @param x The x position of the ghost
      * @param y The y position of the ghost
      * @param direction The direction that the ghost is facing
      */
-    public drawGhost(x: number, y: number, direction: Direction|null) {
+    public drawGhost(x: number, y: number, color: string, alive: boolean, direction: Direction|null) {
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+
         if (this.shouldDoEntityFlash()) {
             ctx.fillStyle = "white";
             ctx.strokeStyle = "white";
         }
 
+        let deltas = direction?.getDeltas();
+        if (deltas == undefined) deltas = {dx: 0, dy: 0};
+
+        const xRad = 13;
+        const yRad = 12.5;
+        const numTail = 7 - (this.ghostAnimation.get_frame() == 1 ? 2 : 0);
+
+        const tailW = (xRad * 2) / numTail;
+        const tailH = 3;
+
+        y -= tailH / 2;
+        
+        if (alive) {
+            // top ellipse and body
+            ctx.beginPath();
+            ctx.ellipse(x, y, xRad, yRad, 0, 0, Math.PI, true);
+            ctx.fill();
+    
+            ctx.fillRect(x - xRad, y - 1, xRad * 2, yRad + 1);
+    
+            // draw tail whisps things
+            for (let i = 0; i < numTail; i++) {
+                if (i % 2 == 1) continue;
+    
+                ctx.beginPath();
+                ctx.roundRect(x - xRad + tailW * (i), y + yRad, tailW, tailH);
+                ctx.fill();
+            }
+        }
+
+
+        // eyes
+        ctx.fillStyle = "white";
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2*Math.PI);
+        ctx.ellipse(x - 5.5 - 1, y, 4, 5, 0, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(x + 5.5 - 1, y, 4, 5, 0, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x - 5.5 - 1 + deltas.dx, y + deltas.dy, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(x + 5.5 - 1 + deltas.dx, y + deltas.dy, 2, 0, 2 * Math.PI);
         ctx.fill();
     }
 
