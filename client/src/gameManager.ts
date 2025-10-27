@@ -159,8 +159,14 @@ class GameManager {
         this.localPacman.stepMovement(deltaTime);
         this.localPacman.draw(deltaTime);
 
-        for (let particle of this.particleManager.particles) {
-            particle.step();
+        for (let i = this.particleManager.particles.length - 1; i >= 0; i--) {
+            const particle = this.particleManager.particles[i];
+            
+            // check if we should remove this particle
+            if(particle.step()) {
+                this.particleManager.particles.splice(i, 1);
+            }
+
             particle.draw();
         }
 

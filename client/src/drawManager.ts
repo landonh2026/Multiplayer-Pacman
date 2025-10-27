@@ -308,7 +308,7 @@ class DrawManager {
         ctx.ellipse(x + 5.5 - 1, y, 4, 5, 0, 0, 2 * Math.PI);
         ctx.fill();
 
-        ctx.fillStyle = color;
+        ctx.fillStyle = "blue";
         ctx.beginPath();
         ctx.arc(x - 5.5 - 1 + deltas.dx, y + deltas.dy, 2, 0, 2 * Math.PI);
         ctx.fill();

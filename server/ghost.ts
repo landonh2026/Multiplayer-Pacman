@@ -47,8 +47,8 @@ export class Ghost {
         this.lastNodeTimestamp = null;
         // this.warp_tunneling_node = null;
 
-        // this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
-        this.color = "RED" as globals.Colors;
+        this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
+        // this.color = "RED" as globals.Colors;
         this.id = crypto.randomUUID().toString();
 
         this.facingDirection = null;

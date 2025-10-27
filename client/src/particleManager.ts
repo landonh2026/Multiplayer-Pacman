@@ -35,7 +35,7 @@ class Particle {
 
 
     // TODO: use deltatime
-    public step() {
+    public step(): boolean {
         this.lastX = this.x;
         this.lastY = this.y;
 
@@ -45,9 +45,7 @@ class Particle {
         this.dx *= 0.995;
         this.dy *= 0.995;
 
-        // TODO: IMPLEMENT SCREEN WIDTH AND HEIGHT
-        let shouldDelete = (this.x < 0 && this.y < 0);
-        // and actually use this
+        return this.x < 0 || this.x > canvas.clientWidth || this.y < 0 || this.y > canvas.clientHeight;
     }
 
     public draw() {
@@ -79,8 +77,7 @@ class FallingParticle extends Particle {
 
         if (this.y > canvas.clientHeight) {
             if (this.bounced) {
-                // TODO: check and remove
-                return;
+                return true;
             }
             
             this.dy *= -0.3;
@@ -89,5 +86,7 @@ class FallingParticle extends Particle {
 
             this.bounced = true;
         }
+
+        return false;
     }
 }
