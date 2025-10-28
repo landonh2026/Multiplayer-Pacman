@@ -16,7 +16,6 @@ class DrawManager {
 
         this.wallClipPath = new Path2D();
 
-        // this.ghostAnimation = new GameAnimation(2, true, 0.01, true);
         this.ghostAnimation = new GameAnimation(2, true, 0.2, true);
     }
 
@@ -25,10 +24,7 @@ class DrawManager {
         
         manager.currentBoard.blockPositions.forEach((b) => {
             this.wallClipPath.rect(b[0], b[1], b[2], b[3]);
-            // console.log(b);
         });
-
-        console.log(this.wallClipPath);
     }
 
     public newFrame(deltaTime: number) {

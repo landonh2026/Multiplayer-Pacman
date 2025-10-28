@@ -52,16 +52,18 @@ class Ghost {
     }
 
     public drawGlow() {
+        if (this.eaten) return;
+        
         const size = 20 * 4;
+        let color = this.color;
 
-        console.log(this.color);
-
+        if (this.phase == GHOST_PHASES.FRIGHTENED) color = ENTITY_STATE_COLORS.FRIGHTENED;
+        
         gameManager.drawManager.setObjectGlowGradient(
             this.x,
             this.y,
             size,
-            this.eaten ? "#FFFFFF" : this.color
-            // this.color
+            color
         );
 
         // specify max distances for some efficiency
