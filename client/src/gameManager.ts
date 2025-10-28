@@ -87,6 +87,8 @@ class GameManager {
         
         this.connectionManager = new ConnectionManager();
         // this.connectionManager = new ConnectionManager("ws:/2.tcp.us-cal-1.ngrok.io:10734/gamesocket");
+
+        this.drawManager.newBoard(this);
     }
 
     /**
@@ -135,6 +137,13 @@ class GameManager {
             pacman.drawGlow();
         }
 
+        // draw ghost glowing effect
+        for (let id of Object.keys(this.ghosts)) {
+            const ghost = this.ghosts[id];
+
+            ghost.drawGlow();
+        }
+
         this.drawManager.drawBoard(deltaTime);
     
         // step the movement and draw each remote player
@@ -172,5 +181,9 @@ class GameManager {
 
         // update the debugger
         this.debugger.onFrameUpdate(deltaTime);
+    }
+
+    public newBoard() {
+        this.drawManager.newBoard(this);
     }
 }

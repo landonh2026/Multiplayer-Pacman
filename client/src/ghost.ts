@@ -51,6 +51,23 @@ class Ghost {
         gameManager.drawManager.drawGhost(this.x, this.y, color, !this.eaten, this.facingDirection);
     }
 
+    public drawGlow() {
+        // const size = 20 * 4;
+
+        // console.log(this.color);
+
+        // gameManager.drawManager.setObjectGlowGradient(
+        //     this.x,
+        //     this.y,
+        //     size,
+        //     this.eaten ? "#FFFFFF" : this.color
+        //     // this.color
+        // );
+
+        // // specify max distances for some efficiency
+        // gameManager.drawManager.drawGlowOnBoard(this.x, this.y, size);
+    }
+
     /**
      * Step the movement of the ghost
      * @param deltaTime 

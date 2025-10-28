@@ -211,10 +211,9 @@ class Pacman {
             size *= 1 - Math.pow(this.animations.killAnimation.get_progress(), 4);
         }
 
-        // size = Math.min(Math.max(this.radius * 4, size), this.radius * 4 * 1.5);
         size = Math.min(size, this.radius * 4 * 1.5);
 
-        gameManager.drawManager.getObjectGlowGradient(
+        gameManager.drawManager.setObjectGlowGradient(
             this.x,
             this.y,
             size,

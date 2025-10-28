@@ -151,6 +151,8 @@ class EventHandler {
             parsedData.data.pellets.map((p: any) => new Pellet(p.x, p.y, p.id, p.type)),
             parsedData.data.pathIntersections
         );
+
+        gameManager.newBoard();
     }
 
     /**

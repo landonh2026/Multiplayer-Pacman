@@ -5,8 +5,7 @@ class DrawManager {
     powerPelletFlash: GameAnimation;
     pelletShrinkAnimation: GameAnimation;
     oldPellets: Array<Pellet>;
-    lightingCanvas: HTMLCanvasElement;
-    lctx: CanvasRenderingContext2D;
+    wallClipPath: Path2D;
 
     ghostAnimation: GameAnimation;
 
@@ -15,11 +14,21 @@ class DrawManager {
         this.pelletShrinkAnimation = new GameAnimation(12, false, 1, false);
         this.oldPellets = [];
 
-        this.lightingCanvas = document.createElement("canvas");
-        this.lctx = this.lightingCanvas.getContext("2d") as CanvasRenderingContext2D;
+        this.wallClipPath = new Path2D();
 
         // this.ghostAnimation = new GameAnimation(2, true, 0.01, true);
         this.ghostAnimation = new GameAnimation(2, true, 0.2, true);
+    }
+
+    public newBoard(manager: GameManager) {
+        this.wallClipPath = new Path2D();
+        
+        manager.currentBoard.blockPositions.forEach((b) => {
+            this.wallClipPath.rect(b[0], b[1], b[2], b[3]);
+            // console.log(b);
+        });
+
+        console.log(this.wallClipPath);
     }
 
     public newFrame(deltaTime: number) {
@@ -149,34 +158,18 @@ class DrawManager {
     /**
      * Draws the board's grid again. Assumes the fillstyle is already set to the pacman's glow gradient.
      */
-    public drawGlowOnBoard(x: number, y: number, distance: number, board: GameBoard|null = null) {
-        if (board == null) board = gameManager.currentBoard;
+    public drawGlowOnBoard(x: number, y: number, radius: number) {
+        ctx.save();
+        ctx.clip(this.wallClipPath);
         
-        distance = gameManager.tileSize * 10;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.fill();
 
-        const allowed = (bx: number, by: number) => {
-            return Math.abs(bx - x) + Math.abs(by - y) < distance;
-        }
-
-        for (let i = 0; i < board.blockPositions.length; i++) {
-            const block = board.blockPositions[i];
-
-            let shouldDraw = allowed(block[0], block[1]) ||
-                allowed(block[0], block[1]+block[3]) ||
-                allowed(block[0]+block[2], block[1]) ||
-                allowed(block[0]+block[2], block[1]+block[3]);
-
-            if (!shouldDraw) {
-                continue;
-            }
-
-            // ctx.fillStyle = ENVIRONMENT_COLORS.BACKGROUND;
-            ctx.beginPath();
-            ctx.fillRect(block[0], block[1], block[2], block[3]);
-        }
+        ctx.restore();
     }
 
-    public getObjectGlowGradient(x: number, y: number, size: number, color: string, opacity: string = "B0") {
+    public setObjectGlowGradient(x: number, y: number, size: number, color: string, opacity: string = "B0") {
         if (this.shouldDoEntityFlash()) {
             color = "#FFFFFF";
         }
