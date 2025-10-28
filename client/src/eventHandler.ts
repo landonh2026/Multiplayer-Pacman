@@ -32,7 +32,13 @@ class EventHandler {
         const localGhost = gameManager.ghosts[parsedData.data.id];
 
         if (!localGhost) {
-            const ghost = new Ghost(parsedData.data.position.x, parsedData.data.position.y, parsedData.data.id, parsedData.data.color, true);
+            const ghost = new Ghost(
+                parsedData.data.position.x,
+                parsedData.data.position.y,
+                parsedData.data.id,
+                GHOST_COLORS[parsedData.data.color as keyof typeof GHOST_COLORS],
+                true
+            );
             ghost.facingDirection = Direction.fromEnum(parsedData.data.position.direction) as Direction;
             return;
         }

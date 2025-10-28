@@ -36,7 +36,10 @@ const ENVIRONMENT_COLORS = {
 
 /** Ghost colors */
 const GHOST_COLORS = {
-    PINKY: "rgb(253, 180, 255)"
+    PINK: "#e36dda",
+    RED: "#dd1f09",
+    BLUE: "#00b2d9",
+    YELLOW: "#ddc300"
 };
 
 /** Pacman colors */

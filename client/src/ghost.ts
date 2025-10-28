@@ -52,20 +52,20 @@ class Ghost {
     }
 
     public drawGlow() {
-        // const size = 20 * 4;
+        const size = 20 * 4;
 
-        // console.log(this.color);
+        console.log(this.color);
 
-        // gameManager.drawManager.setObjectGlowGradient(
-        //     this.x,
-        //     this.y,
-        //     size,
-        //     this.eaten ? "#FFFFFF" : this.color
-        //     // this.color
-        // );
+        gameManager.drawManager.setObjectGlowGradient(
+            this.x,
+            this.y,
+            size,
+            this.eaten ? "#FFFFFF" : this.color
+            // this.color
+        );
 
-        // // specify max distances for some efficiency
-        // gameManager.drawManager.drawGlowOnBoard(this.x, this.y, size);
+        // specify max distances for some efficiency
+        gameManager.drawManager.drawGlowOnBoard(this.x, this.y, size);
     }
 
     /**
