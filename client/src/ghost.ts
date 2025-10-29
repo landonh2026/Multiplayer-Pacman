@@ -54,7 +54,7 @@ class Ghost {
     public drawGlow() {
         if (this.eaten) return;
         
-        const size = 20 * 4;
+        const size = 20 * 3;
         let color = this.color;
 
         if (this.phase == GHOST_PHASES.FRIGHTENED) color = ENTITY_STATE_COLORS.FRIGHTENED;

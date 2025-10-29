@@ -219,6 +219,7 @@ export class Ghost {
         this.currentTarget = this.determineTarget(Object.values(this.room.players));
 
         if (this.currentTarget == undefined) {
+            // this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
             this.facingDirection = null;
             return;
         }
