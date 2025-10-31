@@ -292,7 +292,8 @@ export class Ghost {
 
         if (this.path != null) {
             lastNode = this.path.nodes[0];
-            if (lastNode != undefined) [this.x, this.y] = [this.path.nodes[1].x, this.path.nodes[1].y];
+            if (lastNode != undefined && this.path.nodes.length > 1)
+                [this.x, this.y] = [this.path.nodes[1].x, this.path.nodes[1].y];
         }
         
         const node = this.room.gameBoard.pathfinder.getManhattanClosestNode(this.x, this.y).node;
@@ -345,22 +346,22 @@ export class Ghost {
         if (this.path == null) {
             console.error("Error in returning to path: path is null");
             console.log(this.x, this.y);
-            return;
+            this.path = new Path([]);
         }
 
         let passingNode = this.path.nodes[this.path.nodes.length - 1];
 
-        if (!this.followPathTurn()) {
+        if (passingNode != undefined && !this.followPathTurn()) {
             console.error("Can't follow return path.", this.path == null, this.path?.nodes.length === 0, this.currentTarget == undefined);
             return;
         }
 
         if (this.path.nodes.length === 0) {
             // assume we reached the target
-            [this.x, this.y] = [passingNode.x, passingNode.y];
+            if (passingNode != undefined) [this.x, this.y] = [passingNode.x, passingNode.y];
             this.eaten = false;
 
-            this.path = new Path([passingNode]);
+            if (passingNode != undefined) this.path = new Path([passingNode]);
             
             this.lastNodeTimestamp = performance.now();
 

@@ -4,6 +4,19 @@ class ParticleManager {
     constructor() {
         this.particles = [];
     }
+    
+    public stepAndDraw() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i];
+            
+            // check if we should remove this particle
+            if(particle.step()) {
+                this.particles.splice(i, 1);
+            }
+
+            particle.draw();
+        }
+    }
 }
 
 class Particle {

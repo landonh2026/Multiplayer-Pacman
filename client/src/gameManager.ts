@@ -47,6 +47,7 @@ class GameManager {
     infoBoard: InfoBoard;
     connectionManager: ConnectionManager;
     particleManager: ParticleManager;
+    effectManager: EffectsManager;
     debugger: Debugger;
 
     /** The local session ID */
@@ -83,6 +84,7 @@ class GameManager {
         this.eventHandler = new EventHandler();
         this.infoBoard = new InfoBoard();
         this.particleManager = new ParticleManager();
+        this.effectManager = new EffectsManager();
         this.debugger = new Debugger();
         
         this.connectionManager = new ConnectionManager();
@@ -168,16 +170,8 @@ class GameManager {
         this.localPacman.stepMovement(deltaTime);
         this.localPacman.draw(deltaTime);
 
-        for (let i = this.particleManager.particles.length - 1; i >= 0; i--) {
-            const particle = this.particleManager.particles[i];
-            
-            // check if we should remove this particle
-            if(particle.step()) {
-                this.particleManager.particles.splice(i, 1);
-            }
-
-            particle.draw();
-        }
+        this.particleManager.stepAndDraw();
+        this.effectManager.stepAndDraw();
 
         // update the debugger
         this.debugger.onFrameUpdate(deltaTime);

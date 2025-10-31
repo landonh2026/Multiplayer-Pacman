@@ -95,5 +95,7 @@ class Ghost {
         gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y - offset, +hVel + Math.random()*5-1, -vVel + Math.random()*5-1));
         gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y + offset, -hVel + Math.random()*5-1, +vVel + Math.random()*5-1));
         gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y - offset, -hVel + Math.random()*5-1, -vVel + Math.random()*5-1));
+
+        gameManager.effectManager.effects.push(new CircleEffect(this.x, this.y));
     }
 }
