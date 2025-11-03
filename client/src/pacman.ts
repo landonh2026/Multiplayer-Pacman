@@ -122,6 +122,13 @@ class Pacman {
                     break;
                 }
 
+                if (pellet.type == PELLET_TYPES.FOOD) {
+                    gameManager.effectManager.effects.push(new CircleEffect(pellet.x, pellet.y));
+                }
+                // else if (pellet.type == PELLET_TYPES.POWER) {
+                //     gameManager.particleManager.particles.push(new FallingParticle(pellet.x, pellet.y, Math.random()*6-3, Math.random()*-3 - 3));
+                // }
+
                 // send to the server that we want to eat this pellet
                 pellet.local_state = PELLET_STATES.EAT_PENDING;
                 gameManager.connectionManager.eatPellet(this, pellet.id);
@@ -199,19 +206,24 @@ class Pacman {
             return;
         }
 
-        let size = this.radius * 4;
+        let size = this.radius;
 
         if (!this.animations.powerAnimation.isDone()) {
+            // scale size based on how far we are through the power up animation
             size *= powerUpSizingFunction(this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
                 (1 - this.animations.powerAnimation.get_progress()));
-            size = Math.max(4 * this.radius, size);
+            size = Math.max(this.radius, size);
+
         } else if (this.isPoweredUp) {
+            // constant size if we are already powered up
             size *= 1.5;
+            
         } else if (!this.animations.killAnimation.isDone()) {
+            // scale down size if we are doing the dying animation
             size *= 1 - Math.pow(this.animations.killAnimation.get_progress(), 4);
         }
 
-        size = Math.min(size, this.radius * 4 * 1.5);
+        size = Math.min(size, this.radius * 1.5) * 4;
 
         gameManager.drawManager.setObjectGlowGradient(
             this.x,

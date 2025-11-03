@@ -55,7 +55,6 @@ class CircleEffect extends Effect {
     }
 
     public step(): boolean {
-        // this.radius += 30;
         this.radius += 20;
 
         if (this.radius > CircleEffect.diagonalSize) {
@@ -72,7 +71,6 @@ class CircleEffect extends Effect {
         ctx.lineWidth = 5;
         ctx.beginPath();
         ctx.strokeStyle = "#FFFFFF" + "60";
-        // ctx.strokeStyle = "#FFFFFF";
         ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
         ctx.stroke();
         ctx.lineWidth = 1;
