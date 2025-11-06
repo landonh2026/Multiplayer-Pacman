@@ -4,8 +4,8 @@ enum GAME_STATES {
     FINDING_ROOM,
     PREGAME,
     IN_GAME,
-    AFTER_GAME
-};
+    AFTER_GAME,
+}
 
 /**
  * The primary game manager that manages the Pacman game
@@ -13,13 +13,13 @@ enum GAME_STATES {
 class GameManager {
     performanceMode: boolean;
 
-    debug: {[identifier: string]: boolean};
+    debug: { [identifier: string]: boolean };
 
     /** A dictionary of remote players with the session being the key and the value being the RemotePlayer object */
-    remotePlayers: {[session: string]: RemotePlayer};
-    
+    remotePlayers: { [session: string]: RemotePlayer };
+
     /** A list of ghosts that are current active in the game */
-    ghosts: {[id: string]: Ghost};
+    ghosts: { [id: string]: Ghost };
 
     /** The current game state */
     currentState: GAME_STATES;
@@ -30,7 +30,7 @@ class GameManager {
 
     /** The tile size in terms of pixels */
     tileSize: number;
-    
+
     /** The time since the game has started */
     serverTime: number;
 
@@ -51,7 +51,7 @@ class GameManager {
     debugger: Debugger;
 
     /** The local session ID */
-    uuid: string|null;
+    uuid: string | null;
 
     static GAME_STATES = GAME_STATES;
 
@@ -60,7 +60,7 @@ class GameManager {
             intersectionPoints: false,
             pacmanWallCollision: false,
             ghostPath: false,
-            invulnerable: true
+            invulnerable: true,
         };
 
         this.tileSize = 40;
@@ -72,13 +72,33 @@ class GameManager {
 
         this.lastFrame = 0;
         this.target_fps = 24;
-        this.ms_per_frame = 1/this.target_fps*1000;
+        this.ms_per_frame = (1 / this.target_fps) * 1000;
         this.uuid = null;
 
         this.currentState = GameManager.GAME_STATES.DISCONNECTED;
-        this.currentBoard = new GameBoard([[0, 12, 12, 1], [0, 0, 12, 1], [0, 1, 1, 11], [11, 1, 1, 11]], [], [], this.tileSize);
+        this.currentBoard = new GameBoard(
+            [
+                [0, 12, 12, 1],
+                [0, 0, 12, 1],
+                [0, 1, 1, 11],
+                [11, 1, 1, 11],
+            ],
+            [],
+            [],
+            this.tileSize
+        );
 
-        this.localPacman = new Pacman(this.tileSize*1.5, this.tileSize*2.5, PACMAN_COLORS.YELLOW, directions.DOWN, directions.DOWN, false, 0, true, this.tileSize);
+        this.localPacman = new Pacman(
+            this.tileSize * 1.5,
+            this.tileSize * 2.5,
+            PACMAN_COLORS.YELLOW,
+            directions.DOWN,
+            directions.DOWN,
+            false,
+            0,
+            true,
+            this.tileSize
+        );
         this.inputManager = new InputManager();
         this.drawManager = new DrawManager();
         this.eventHandler = new EventHandler();
@@ -86,7 +106,7 @@ class GameManager {
         this.particleManager = new ParticleManager();
         this.effectManager = new EffectsManager();
         this.debugger = new Debugger();
-        
+
         this.connectionManager = new ConnectionManager();
         // this.connectionManager = new ConnectionManager("ws:/2.tcp.us-cal-1.ngrok.io:10734/gamesocket");
 
@@ -105,15 +125,15 @@ class GameManager {
      */
     private nextFrame() {
         const now = performance.now();
-        const ms_taken = (now-this.lastFrame);
-        this.infoBoard.updateFPS();        
-        
+        const ms_taken = now - this.lastFrame;
+        this.infoBoard.updateFPS();
+
         let deltaTime = ms_taken / this.ms_per_frame;
-        if (ms_taken > this.ms_per_frame*3) {
+        if (ms_taken > this.ms_per_frame * 3) {
             console.warn("Allowing Slowdown");
             deltaTime = 1;
         }
-    
+
         this.lastFrame = now;
         this.draw(deltaTime);
 
@@ -122,7 +142,7 @@ class GameManager {
 
     /**
      * Draw the next frame given the time difference from the target fps
-     * @param deltaTime 
+     * @param deltaTime
      */
     private draw(deltaTime: number) {
         this.drawManager.newFrame(deltaTime);
@@ -134,7 +154,9 @@ class GameManager {
 
         // draw the glowing effect for each player before the board
         for (let session in this.remotePlayers) {
-            const pacman = this.remotePlayers[session as keyof typeof this.remotePlayers].pacman;
+            const pacman =
+                this.remotePlayers[session as keyof typeof this.remotePlayers]
+                    .pacman;
 
             pacman.drawGlow();
         }
@@ -147,11 +169,12 @@ class GameManager {
         }
 
         this.drawManager.drawBoard(deltaTime);
-    
+
         // step the movement and draw each remote player
         for (let session in this.remotePlayers) {
-            let remotePlayer = this.remotePlayers[session as keyof typeof this.remotePlayers];
-            
+            let remotePlayer =
+                this.remotePlayers[session as keyof typeof this.remotePlayers];
+
             remotePlayer.pacman.stepMovement(deltaTime);
             remotePlayer.pacman.draw(deltaTime);
         }
@@ -165,7 +188,7 @@ class GameManager {
 
             if (this.debug.ghostPath) ghost.path?.draw();
         }
-    
+
         // step and draw the local pacman
         this.localPacman.stepMovement(deltaTime);
         this.localPacman.draw(deltaTime);

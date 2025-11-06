@@ -6,6 +6,7 @@ class DrawManager {
     pelletShrinkAnimation: GameAnimation;
     oldPellets: Array<Pellet>;
     wallClipPath: Path2D;
+    drawOffset: [number, number];
 
     ghostAnimation: GameAnimation;
 
@@ -15,6 +16,7 @@ class DrawManager {
         this.oldPellets = [];
 
         this.wallClipPath = new Path2D();
+        this.drawOffset = [0, 0];
 
         this.ghostAnimation = new GameAnimation(2, true, 0.2, true);
     }
@@ -28,6 +30,7 @@ class DrawManager {
     }
 
     public newFrame(deltaTime: number) {
+        ctx.setTransform(1, 0, 0, 1, ...this.drawOffset);
         this.ghostAnimation.step_frame(deltaTime);
     }
 

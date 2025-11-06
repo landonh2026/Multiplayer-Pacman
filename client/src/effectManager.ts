@@ -40,7 +40,7 @@ class Effect {
 }
 
 class CircleEffect extends Effect {
-    public static diagonalSize: number;
+    public static screenDiagonalSize: number;
     
     x: number;
     y: number;
@@ -51,13 +51,13 @@ class CircleEffect extends Effect {
         this.x = x;
         this.y = y;
         this.radius = 0;
-        CircleEffect.diagonalSize = Math.sqrt(canvas.clientWidth * canvas.clientWidth + canvas.clientHeight * canvas.clientHeight);
+        CircleEffect.screenDiagonalSize = Math.sqrt(canvas.clientWidth * canvas.clientWidth + canvas.clientHeight * canvas.clientHeight);
     }
 
     public step(): boolean {
         this.radius += 20;
 
-        if (this.radius > CircleEffect.diagonalSize) {
+        if (this.radius > CircleEffect.screenDiagonalSize) {
             return true;
         }
 
@@ -76,5 +76,37 @@ class CircleEffect extends Effect {
         ctx.lineWidth = 1;
 
         ctx.restore();
+    }
+}
+
+class ScreenShake extends Effect {
+    dx: number;
+    dy: number;
+    time: number;
+    
+    
+    constructor(dx: number, dy: number, time: number) {
+        super();
+
+        this.dx = dx;
+        this.dy = dy;
+        this.time = time;
+    }
+
+    public step(): boolean {
+        if (this.time-- == 0) {
+            gameManager.drawManager.drawOffset = [0, 0];
+            return true;
+        }
+
+        gameManager.drawManager.drawOffset = [
+            (Math.random() * this.dx * 2) - this.dx,
+            (Math.random() * this.dy * 2) - this.dy
+        ]
+        return false;
+    }
+
+    public draw(): void {
+        
     }
 }
