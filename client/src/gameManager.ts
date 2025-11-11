@@ -147,9 +147,6 @@ class GameManager {
     private draw(deltaTime: number) {
         this.drawManager.newFrame(deltaTime);
 
-        // clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         this.localPacman.drawGlow();
 
         // draw the glowing effect for each player before the board
@@ -193,8 +190,9 @@ class GameManager {
         this.localPacman.stepMovement(deltaTime);
         this.localPacman.draw(deltaTime);
 
-        this.particleManager.stepAndDraw();
-        this.effectManager.stepAndDraw();
+        // TOOD: actually use the deltatime in these step functions
+        this.particleManager.stepAndDraw(deltaTime);
+        this.effectManager.stepAndDraw(deltaTime);
 
         // update the debugger
         this.debugger.onFrameUpdate(deltaTime);

@@ -5,12 +5,12 @@ class EffectsManager {
         this.effects = [];
     }
 
-    public stepAndDraw() {
+    public stepAndDraw(deltaTime: number) {
         for (let i = this.effects.length - 1; i >= 0; i--) {
             const effect = this.effects[i];
 
             // check if we should remove this particle
-            if (effect.step()) {
+            if (effect.step(deltaTime)) {
                 this.effects.splice(i, 1);
             }
 
@@ -27,7 +27,7 @@ class Effect {
      * Steps the effect
      * @returns Is the effect done?
      */
-    public step(): boolean {
+    public step(deltaTime: number): boolean {
         throw Error("Not Implemented");
     }
 
@@ -54,8 +54,8 @@ class CircleEffect extends Effect {
         CircleEffect.screenDiagonalSize = Math.sqrt(canvas.clientWidth * canvas.clientWidth + canvas.clientHeight * canvas.clientHeight);
     }
 
-    public step(): boolean {
-        this.radius += 20;
+    public step(deltaTime: number): boolean {
+        this.radius += 50 * deltaTime;
 
         if (this.radius > CircleEffect.screenDiagonalSize) {
             return true;
@@ -93,7 +93,7 @@ class ScreenShake extends Effect {
         this.time = time;
     }
 
-    public step(): boolean {
+    public step(deltaTime: number): boolean {
         if (this.time-- == 0) {
             gameManager.drawManager.drawOffset = [0, 0];
             return true;

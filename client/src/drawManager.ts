@@ -30,7 +30,12 @@ class DrawManager {
     }
 
     public newFrame(deltaTime: number) {
-        ctx.setTransform(1, 0, 0, 1, ...this.drawOffset);
+        // clear the canvas
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.setTransform(1, 0, 0, 1,
+            this.drawOffset[0] + 12, this.drawOffset[1] + 12);
         this.ghostAnimation.step_frame(deltaTime);
     }
 

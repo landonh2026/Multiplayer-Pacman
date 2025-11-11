@@ -5,12 +5,12 @@ class ParticleManager {
         this.particles = [];
     }
     
-    public stepAndDraw() {
+    public stepAndDraw(deltaTime: number) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
             
             // check if we should remove this particle
-            if(particle.step()) {
+            if(particle.step(deltaTime)) {
                 this.particles.splice(i, 1);
             }
 
@@ -48,15 +48,17 @@ class Particle {
 
 
     // TODO: use deltatime
-    public step(): boolean {
+    public step(deltaTime: number): boolean {
         this.lastX = this.x;
         this.lastY = this.y;
 
-        this.x += this.dx;
-        this.y += this.dy;
+        console.log(deltaTime);
+        this.x += this.dx * deltaTime * 2.5;
+        this.y += this.dy * deltaTime * 2.5;
 
-        this.dx *= 0.995;
-        this.dy *= 0.995;
+        const decay = Math.pow(0.995, deltaTime*2.5);
+        this.dx *= decay;
+        this.dy *= decay;
 
         return this.x < 0 || this.x > canvas.clientWidth || this.y < 0 || this.y > canvas.clientHeight;
     }
@@ -74,9 +76,9 @@ class FallingParticle extends Particle {
         this.bounced = false;
     }
 
-    public step() {
-        this.dy += 0.3; // gravity
-        super.step();
+    public step(deltaTime: number) {
+        this.dy += 0.75 * deltaTime; // gravity
+        super.step(deltaTime);
 
         if (this.x > canvas.clientWidth) {
             this.x = canvas.clientWidth;

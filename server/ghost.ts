@@ -93,7 +93,7 @@ export class Ghost {
         this.eaten = true; // update after getting our position because we were moving a different speed before
         this.facingDirection = null;
 
-        this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: 340, y: 300});
+        this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: 340, y: 300});   
         
         if (this.path?.nodes[0].x == this.x && this.path?.nodes[0].y == this.y) this.path.nodes.shift();
         if (this.path?.nodes.length == 0) this.facingDirection = null;
