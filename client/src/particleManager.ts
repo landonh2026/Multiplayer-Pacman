@@ -80,8 +80,8 @@ class FallingParticle extends Particle {
         this.dy += 0.75 * deltaTime; // gravity
         super.step(deltaTime);
 
-        if (this.x > canvas.clientWidth) {
-            this.x = canvas.clientWidth;
+        if (this.x > gameManager.tileSize * 17) {
+            this.x = gameManager.tileSize * 17;
             this.dx *= -1;
         }
 
@@ -90,14 +90,14 @@ class FallingParticle extends Particle {
             this.dx *= -1;
         }
 
-        if (this.y > canvas.clientHeight) {
+        if (this.y > gameManager.tileSize * 19) {
             if (this.bounced) {
                 return true;
             }
             
             this.dy *= -0.3;
             this.dx *= 0.7;
-            this.y = canvas.clientHeight;
+            this.y = gameManager.tileSize * 19;
 
             this.bounced = true;
         }

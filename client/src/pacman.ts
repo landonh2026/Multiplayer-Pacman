@@ -416,6 +416,7 @@ class Pacman {
 
         this.animations.killAnimation.reset();
         this.animations.killAnimation.setActive(true);
+        gameManager.effectManager.effects.push(new ScreenShake(3, 3, 5));
     }
 
     /**
