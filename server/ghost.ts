@@ -4,7 +4,7 @@ import { Room } from "./room.ts";
 import { PathNode } from "./pathfinding.ts";
 import * as globals from "./globals.ts";
 import * as utils from "./utils.ts";
-import { PATH_INTERSECTION_TYPES } from "./gameBoard.ts";
+import { PATH_INTERSECTION_TYPES, PathIntersection } from "./gameBoard.ts";
 
 /*
 MOVEMENT REFERENCE:
@@ -65,6 +65,9 @@ export class Ghost {
         this.sendLocation();
     }
 
+    /**
+     * Send the ghost's last node and it's facing direction to clients
+     */
     public sendLocation() {
         this.room.server.publish(
             this.room.topics.event,
@@ -80,34 +83,67 @@ export class Ghost {
         ));
     }
 
+    /**
+     * Get the ghost's current movement speed based off of it's state
+     * @returns 
+     */
     public getMovementSpeed() {
         if (this.eaten) return this.movementSpeed * 2;
         if (this.phase == GHOST_PHASES.FRIGHTENED) return this.movementSpeed * 0.75;
-        // if (this.warp_tunneling_node != null) return this.movementSpeed * 0.5;
         return this.movementSpeed;
     }
 
+    /**
+     * Get the path to the given position
+     * @param goal The position to path to
+     * @returns The path object or null if no path is found
+     */
+    public getPathTo(goal: {x: number, y: number}): Path | null {
+        const path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, goal);
+
+        // remove duplicate first node that is at our current pos
+        if (path?.nodes[0].x == this.x && path?.nodes[0].y == this.y) path.nodes.shift();
+        // if (this.path?.nodes.length == 0) this.facingDirection = null;
+
+        return path;
+    }
+
+    /**
+     * Set the current path to the path to the goal
+     * @param goal The position to path to
+     */
+    public setPathTo(goal: {x: number, y: number}) {
+        this.path = this.getPathTo(goal);
+        if (this.path?.nodes.length == 0) this.facingDirection = null;
+    }
+
+    /**
+     * A pacman ate the ghost, update it's attributes and make it path to it's home
+     */
     public eat() {
         [this.x, this.y] = this.getInBetweenPosition();
         this.lastNodeTimestamp = performance.now();
         this.eaten = true; // update after getting our position because we were moving a different speed before
         this.facingDirection = null;
 
-        this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: 340, y: 300});   
-        
-        if (this.path?.nodes[0].x == this.x && this.path?.nodes[0].y == this.y) this.path.nodes.shift();
-        if (this.path?.nodes.length == 0) this.facingDirection = null;
+        this.setPathTo({x: 340, y: 300});   
         
         if (this.nextTurnTimeout != null) clearTimeout(this.nextTurnTimeout);        
         
         this.onTurn();
     }
 
-    public findCameFromNode(nodes: Array<PathNode>) {
+    /**
+     * Find the node that the ghost just came from
+     * @param nodes 
+     * @returns 
+     */
+    public findCameFromNode(nodes: Array<PathNode>|Array<PathIntersection>|null = null) {
         if (this.facingDirection == null) return;
+        if (nodes == null) nodes = this.room.gameBoard.pathIntersections;
 
         const reversedFacingDirection = (this.facingDirection + 2) % 4;
-        let closestNode = {distance: Infinity, node: null as null|PathNode};
+        let closestNode = {distance: Infinity, node: null as null|PathNode|PathIntersection|{x: number, y: number}};
 
         for (let node of nodes) {
             const distance = Math.abs(this.x - node.x) + Math.abs(this.y - node.y);
@@ -115,6 +151,8 @@ export class Ghost {
             if (utils.getTurnDirection({x: this.x, y: this.y}, node) != reversedFacingDirection) {
                 continue;
             }
+
+            console.log("AAA NODE");
 
             if (distance < closestNode.distance) {
                 closestNode = {distance: distance, node: node};
@@ -133,12 +171,15 @@ export class Ghost {
         if (this.nextTurnTimeout != null) clearTimeout(this.nextTurnTimeout);
 
         reverseDir: if (this.facingDirection != null && this.path != null) {
-            const fromNode = this.findCameFromNode(this.path.nodes[0].connections.map(c => c.node))?.node;
-            if (!fromNode) break reverseDir;
+            const fromNode = this.findCameFromNode()?.node;
+            if (!fromNode) {
+                console.log("Can't find the node we came from");
+                break reverseDir;
+            }
 
             this.facingDirection = (this.facingDirection + 2) % 4 as 0|1|2|3;
 
-            this.path = new Path([fromNode, fromNode]);
+            this.setPathTo({x: fromNode.x, y: fromNode.y});
             
             this.sendLocation();
             const time = this.getTimeToTurn(fromNode);
@@ -182,7 +223,6 @@ export class Ghost {
 
         const deltaTime = performance.now() - this.lastNodeTimestamp;
         const distance = globals.target_client_fps * this.getMovementSpeed() * (deltaTime/1000);
-        // const distance = globals.target_client_fps * 5 * 0.75 * (deltaTime/1000);
         const movementDelta = utils.getDirectionDelta(this.facingDirection);
 
         movementDelta.dx *= distance;
@@ -219,20 +259,14 @@ export class Ghost {
         this.currentTarget = this.determineTarget(Object.values(this.room.players));
 
         if (this.currentTarget == undefined) {
-            // this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
+            // this.path = this.getPathTo({x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
             this.facingDirection = null;
             return;
         }
 
         const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
 
-        this.path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, {x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
-        
-        if (this.path?.nodes[0].x == this.x && this.path?.nodes[0].y == this.y) {
-            this.path.nodes.shift();
-        }
-
-        if (this.path?.nodes.length == 0) this.facingDirection = null;
+        this.setPathTo({x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
     }
 
     private getAdjacentNodeDirections(node: PathNode, avoidNode: PathNode|null = null) {
@@ -426,7 +460,7 @@ export class Ghost {
         this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), 250);
     }
 
-    public getTimeToTurn(nextNode: PathNode|null = null) {
+    public getTimeToTurn(nextNode: PathNode|{x: number, y: number}|null = null) {
         if (this.path == null) throw new Error("Path property is null");
         
         if (nextNode == null) nextNode = this.path.nodes[0];
