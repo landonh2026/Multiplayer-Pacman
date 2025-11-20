@@ -59,7 +59,7 @@ class GameManager {
         this.debug = {
             intersectionPoints: false,
             pacmanWallCollision: false,
-            ghostPath: false,
+            ghostPath: true,
             invulnerable: true,
         };
 
@@ -190,7 +190,6 @@ class GameManager {
         this.localPacman.stepMovement(deltaTime);
         this.localPacman.draw(deltaTime);
 
-        // TOOD: actually use the deltatime in these step functions
         this.particleManager.stepAndDraw(deltaTime);
         this.effectManager.stepAndDraw(deltaTime);
 
