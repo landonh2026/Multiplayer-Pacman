@@ -248,8 +248,8 @@ export class GameBoard {
             pos: { x: number; y: number };
             block: [number, number, number, number];
         }> = [];
-        for (let i = 0; i < this.pixelBlockPositions.length; i++) {
-            const thisWall = this.pixelBlockPositions[i];
+        for (let i = 0; i < this.blockPositions.length; i++) {
+            const thisWall = this.blockPositions[i];
 
             // convert this wall into a line, used to use the lineIntersection function
             const directionData = directionCheck(thisWall);

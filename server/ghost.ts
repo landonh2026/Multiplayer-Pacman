@@ -95,9 +95,7 @@ export class Ghost {
      * @returns The path object or null if no path is found
      */
     public getPathTo(goal: {x: number, y: number}): Path | null {
-        console.log(goal);
         const path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, goal);
-        // console.log(path);
 
         // remove duplicate first node that is at our current pos
         if (path?.nodes[0].x == this.x && path?.nodes[0].y == this.y) path.nodes.shift();
@@ -283,8 +281,7 @@ export class Ghost {
         }
 
         const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
-
-        this.setPathTo({x: Math.round(estimatedPos.x / globals.tile_size), y: Math.round(estimatedPos.y / globals.tile_size)});
+        this.setPathTo({x: Math.round(10 * estimatedPos.x / globals.tile_size) / 10, y: Math.round(10 * estimatedPos.y / globals.tile_size) / 10});
     }
 
     /**

@@ -109,11 +109,6 @@ export class Pathfinder
         const customNodesPathfinder = new Pathfinder(this.board, customNodes);
         const path = customNodesPathfinder.findPathWithNodes(startNode, goalNode);
 
-        console.log(startNode.connections.length, goalNode.connections.length);
-
-        // console.log(customNodesPathfinder.nodes[1].x, customNodesPathfinder.nodes[1].y);
-        console.log("s, g", start, goal);
-
         return path;
     }
 

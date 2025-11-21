@@ -123,7 +123,6 @@ export class Player {
      */
     public isTimestampAllowed(timestamp: number) {
         const timeDifference = performance.now() - this.timestamp - timestamp;
-        // console.log(timeDifference);
         return timeDifference < 1000 && timeDifference > 0;
     }
 
