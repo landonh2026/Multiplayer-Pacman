@@ -4,7 +4,7 @@ import { Room } from "./room.ts";
 import { PathNode } from "./pathfinding.ts";
 import * as globals from "./globals.ts";
 import * as utils from "./utils.ts";
-import { PATH_INTERSECTION_TYPES, PathIntersection } from "./gameBoard.ts";
+import { gameBoards, PATH_INTERSECTION_TYPES, PathIntersection } from "./gameBoard.ts";
 
 /*
 MOVEMENT REFERENCE:
@@ -26,8 +26,8 @@ export class Ghost {
     
     phase: GHOST_PHASES;
     color: globals.Colors;
-    baseMovementSpeed: number;
     path: Path|null;
+    baseMovementSpeed: number;
     
     eaten: boolean;
     fallback_last: boolean;
@@ -41,7 +41,7 @@ export class Ghost {
     constructor(x: number, y: number, room: Room) {
         this.x = x;
         this.y = y;
-        this.baseMovementSpeed = 5;
+        this.baseMovementSpeed = 5 / globals.tile_size;
         this.lastNodeTimestamp = null;
 
         this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
@@ -69,7 +69,7 @@ export class Ghost {
             this.room.topics.event,
             utils.makeMessage("ghost-position",
             {
-                position: {x: this.x, y: this.y, direction: this.facingDirection},
+                position: {x: this.x * globals.tile_size, y: this.y * globals.tile_size, direction: this.facingDirection},
                 eaten: this.eaten,
                 id: this.id,
                 color: this.color,
@@ -95,11 +95,12 @@ export class Ghost {
      * @returns The path object or null if no path is found
      */
     public getPathTo(goal: {x: number, y: number}): Path | null {
+        console.log(goal);
         const path = this.room.gameBoard.pathfinder.findPathWithCoordinates({x: this.x, y: this.y}, goal);
+        // console.log(path);
 
         // remove duplicate first node that is at our current pos
         if (path?.nodes[0].x == this.x && path?.nodes[0].y == this.y) path.nodes.shift();
-        // if (this.path?.nodes.length == 0) this.facingDirection = null;
 
         return path;
     }
@@ -117,12 +118,14 @@ export class Ghost {
      * A pacman ate the ghost, update it's attributes and make it path to it's home
      */
     public eat() {
+        // get the position the ghost is in
         [this.x, this.y] = this.getInBetweenPosition();
         this.lastNodeTimestamp = performance.now();
+
         this.eaten = true; // update after getting our position because we were moving a different speed before
         this.facingDirection = null;
 
-        this.setPathTo({x: this.room.gameBoard.ghostHome[0] * globals.tile_size, y: this.room.gameBoard.ghostHome[1] * globals.tile_size});   
+        this.setPathTo({x: this.room.gameBoard.ghostHome[0], y: this.room.gameBoard.ghostHome[1]});   
         
         if (this.nextTurnTimeout != null) clearTimeout(this.nextTurnTimeout);        
         
@@ -134,15 +137,15 @@ export class Ghost {
      * @param nodes List of nodes to search in. Uses all gameboard path intersections if null
      * @returns Then node this ghost just came from, or null
      */
-    public findCameFromNode(nodes: Array<PathNode>|Array<PathIntersection>|null = null): {x: number, y: number}|null {
+    public findCameFromNode(nodes: Array<PathIntersection>|null = null): {x: number, y: number}|null {
         if (this.facingDirection == null) return null;
         if (nodes == null) nodes = this.room.gameBoard.pathIntersections;
 
         const reversedFacingDirection = (this.facingDirection + 2) % 4;
-        let closestNode = {distance: Infinity, node: null as null|PathNode|PathIntersection|{x: number, y: number}};
+        let closestNode = {distance: Infinity, node: null as null|PathIntersection|{x: number, y: number}};
 
         for (let node of nodes) {
-            const workingNode = {x: node.x * globals.tile_size, y: node.y * globals.tile_size};
+            const workingNode = {x: node.x, y: node.y};
 
             const distance = Math.abs(this.x - workingNode.x) + Math.abs(this.y - workingNode.y);
 
@@ -203,7 +206,6 @@ export class Ghost {
 
         continueDirection: if (this.facingDirection != null && this.path != null) {
             const toNode = this.path.nodes[1];
-            // console.log(toNode?.x, toNode?.y);
 
             if (!toNode) break continueDirection;
 
@@ -254,7 +256,7 @@ export class Ghost {
         for (let player of players) {
             if (!player.pacman.isAlive || player.pacman.isPoweredUp) continue;
 
-            const distance = heuristic(this.x, this.y, player.pacman.lastLocation.x, player.pacman.lastLocation.y);
+            const distance = heuristic(this.x, this.y, player.pacman.lastLocation.x / globals.tile_size, player.pacman.lastLocation.y / globals.tile_size);
 
             if (distance < closest.distance) {
                 closest = {
@@ -282,7 +284,7 @@ export class Ghost {
 
         const estimatedPos = this.currentTarget.pacman.getEstimatedPosition(performance.now()-this.currentTarget.pacman.lastPosPacketTime);
 
-        this.setPathTo({x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
+        this.setPathTo({x: Math.round(estimatedPos.x / globals.tile_size), y: Math.round(estimatedPos.y / globals.tile_size)});
     }
 
     /**
@@ -323,9 +325,11 @@ export class Ghost {
 
         if (this.facingDirection != null) {
             if (this.path.nodes[0]?.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
+                // does this ever trigger?
+                console.log("IT TRIGGERD AHHH");
                 const connectionNode = this.path.nodes[0].tunnelConnection;
                 if (connectionNode != null) {
-                    [this.x, this.y] = [connectionNode.x * globals.tile_size, connectionNode.y * globals.tile_size];
+                    [this.x, this.y] = [connectionNode.x, connectionNode.y];
                 }
             } else {
                 [this.x, this.y] = [this.path.nodes[0].x, this.path.nodes[0].y];

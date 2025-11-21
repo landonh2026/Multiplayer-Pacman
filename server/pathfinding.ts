@@ -59,7 +59,7 @@ export class Pathfinder
             // console.log(bestTunnel.tunnelConnection.x, bestTunnel.tunnelConnection.y);
             // we need to scale the screen here
             tunnelDistance = this.heuristic(start, bestTunnel) +
-                this.heuristic(new PathNode(bestTunnel.tunnelConnection.x * globals.tile_size, bestTunnel.tunnelConnection.y * globals.tile_size), goal);
+                this.heuristic(new PathNode(bestTunnel.tunnelConnection.x, bestTunnel.tunnelConnection.y), goal);
         }
 
         // determine if we should even use this warp tunnel based on heuristic distance
@@ -92,12 +92,12 @@ export class Pathfinder
         const customNodes: PathNode[] = [];
         for (let intersection of this.board.pathIntersections) {
             // skip this intersection if it matches the starting position
-            if(start.x == intersection.x*40 && start.y == intersection.y*40) {
+            if(start.x == intersection.x && start.y == intersection.y) {
                 continue;
             }
 
             // TODO: doesn't update connection to be connected to the newly created other node
-            customNodes.push(new PathNode(intersection.x*40, intersection.y*40, intersection.type, intersection.connection));
+            customNodes.push(new PathNode(intersection.x, intersection.y, intersection.type, intersection.connection));
         }
 
         // make 2 more nodes which can be used in the search
@@ -108,6 +108,11 @@ export class Pathfinder
 
         const customNodesPathfinder = new Pathfinder(this.board, customNodes);
         const path = customNodesPathfinder.findPathWithNodes(startNode, goalNode);
+
+        console.log(startNode.connections.length, goalNode.connections.length);
+
+        // console.log(customNodesPathfinder.nodes[1].x, customNodesPathfinder.nodes[1].y);
+        console.log("s, g", start, goal);
 
         return path;
     }
@@ -210,7 +215,7 @@ export class Pathfinder
         if (this.board == null) throw Error("Board property is null");
         
         // use default nodes if customNodes is null
-        let nodes: PathNode[] = customNodes ?? this.board.pathIntersections.map(p => new PathNode(p.x*globals.tile_size, p.y*globals.tile_size, p.type, p.connection));
+        let nodes: PathNode[] = customNodes ?? this.board.pathIntersections.map(p => new PathNode(p.x, p.y, p.type, p.connection));
     
         // go through each node and connect them to all other nodes that are visible in each cardinal direction
         for (let node of nodes) {
@@ -223,7 +228,7 @@ export class Pathfinder
                 if (index == -1) break warp_check;
 
                 const turnDirection = utils.getTurnDirection(
-                    {x: node.tunnelConnection.x*globals.tile_size, y: node.tunnelConnection.y*globals.tile_size},
+                    {x: node.tunnelConnection.x, y: node.tunnelConnection.y},
                     node
                 );
                 if (turnDirection == null) break warp_check;

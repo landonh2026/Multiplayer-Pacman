@@ -57,7 +57,7 @@ class GameManager {
 
     constructor() {
         this.debug = {
-            intersectionPoints: false,
+            intersectionPoints: true,
             pacmanWallCollision: false,
             ghostPath: true,
             invulnerable: true,

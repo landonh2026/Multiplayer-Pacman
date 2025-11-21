@@ -1,6 +1,7 @@
 import * as utils from "./utils.ts";
 import * as globals from "./globals.ts";
 import { Pathfinder } from "./pathfinding.ts";
+import path from "path";
 
 export class GameBoard {
     /** The raw block positions as tile positions */
@@ -54,7 +55,7 @@ export class GameBoard {
             ];
 
             for (let t = 0; t < 4; t++) {
-                block[t] *= 40;
+                block[t] *= globals.tile_size;
             }
         }
 

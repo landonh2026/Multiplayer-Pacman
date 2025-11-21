@@ -104,7 +104,7 @@ export class Room {
         this.topics = this.makeTopics();
 
         for (let i = 0; i < 1; i++) {
-            const ghost = new Ghost(this.gameBoard.ghostHome[0] * globals.tile_size, this.gameBoard.ghostHome[1] * globals.tile_size, this);
+            const ghost = new Ghost(this.gameBoard.ghostHome[0], this.gameBoard.ghostHome[1], this);
             this.ghosts[ghost.id] = ghost;
             ghost.startPathing();
         }
@@ -531,7 +531,7 @@ export class Room {
         }
 
         // get the pellet position and the distance the pacman is from the pellet, reject the pellet if the player is too far
-        const pellet_pos = [pellet.x * 40, pellet.y * 40];
+        const pellet_pos = [pellet.x * globals.tile_size, pellet.y * globals.tile_size];
         const distance_from_pellet = [
             Math.abs(player.pacman.lastLocation.x - pellet_pos[0]),
             Math.abs(player.pacman.lastLocation.y - pellet_pos[1]),
