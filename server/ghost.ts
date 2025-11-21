@@ -26,7 +26,7 @@ export class Ghost {
     
     phase: GHOST_PHASES;
     color: globals.Colors;
-    movementSpeed: number;
+    baseMovementSpeed: number;
     path: Path|null;
     
     eaten: boolean;
@@ -37,24 +37,20 @@ export class Ghost {
     
     nextTurnTimeout: Timer|null;
     lastNodeTimestamp: number|null;
-    
-    // warp_tunneling_node: PathNode|null;
 
     constructor(x: number, y: number, room: Room) {
         this.x = x;
         this.y = y;
-        this.movementSpeed = 5;
+        this.baseMovementSpeed = 5;
         this.lastNodeTimestamp = null;
-        // this.warp_tunneling_node = null;
 
         this.color = globals.colors[Math.floor(globals.colors.length * Math.random())] as globals.Colors;
-        // this.color = "RED" as globals.Colors;
         this.id = crypto.randomUUID().toString();
 
+        this.room = room;
         this.facingDirection = null;
         this.currentTarget = null;
         this.path = null;
-        this.room = room;
         this.nextTurnTimeout = null;
 
         this.fallback_last = false;
@@ -88,9 +84,9 @@ export class Ghost {
      * @returns 
      */
     public getMovementSpeed() {
-        if (this.eaten) return this.movementSpeed * 2;
-        if (this.phase == GHOST_PHASES.FRIGHTENED) return this.movementSpeed * 0.75;
-        return this.movementSpeed;
+        if (this.eaten) return this.baseMovementSpeed * 2;
+        if (this.phase == GHOST_PHASES.FRIGHTENED) return this.baseMovementSpeed * 0.75;
+        return this.baseMovementSpeed;
     }
 
     /**
@@ -126,7 +122,7 @@ export class Ghost {
         this.eaten = true; // update after getting our position because we were moving a different speed before
         this.facingDirection = null;
 
-        this.setPathTo({x: 340, y: 300});   
+        this.setPathTo({x: this.room.gameBoard.ghostHome[0] * globals.tile_size, y: this.room.gameBoard.ghostHome[1] * globals.tile_size});   
         
         if (this.nextTurnTimeout != null) clearTimeout(this.nextTurnTimeout);        
         
@@ -135,33 +131,36 @@ export class Ghost {
 
     /**
      * Find the node that the ghost just came from
-     * @param nodes 
-     * @returns 
+     * @param nodes List of nodes to search in. Uses all gameboard path intersections if null
+     * @returns Then node this ghost just came from, or null
      */
-    public findCameFromNode(nodes: Array<PathNode>|Array<PathIntersection>|null = null) {
-        if (this.facingDirection == null) return;
+    public findCameFromNode(nodes: Array<PathNode>|Array<PathIntersection>|null = null): {x: number, y: number}|null {
+        if (this.facingDirection == null) return null;
         if (nodes == null) nodes = this.room.gameBoard.pathIntersections;
 
         const reversedFacingDirection = (this.facingDirection + 2) % 4;
         let closestNode = {distance: Infinity, node: null as null|PathNode|PathIntersection|{x: number, y: number}};
 
         for (let node of nodes) {
-            const distance = Math.abs(this.x - node.x) + Math.abs(this.y - node.y);
+            const workingNode = {x: node.x * globals.tile_size, y: node.y * globals.tile_size};
 
-            if (utils.getTurnDirection({x: this.x, y: this.y}, node) != reversedFacingDirection) {
+            const distance = Math.abs(this.x - workingNode.x) + Math.abs(this.y - workingNode.y);
+
+            if (utils.getTurnDirection({x: this.x, y: this.y}, workingNode) != reversedFacingDirection) {
                 continue;
             }
 
-            console.log("AAA NODE");
-
             if (distance < closestNode.distance) {
-                closestNode = {distance: distance, node: node};
+                closestNode = {distance: distance, node: workingNode};
             }
         }
 
-        return closestNode;
+        return closestNode.node;
     }
 
+    /**
+     * Enter the frightened mode and setup to begin moving around randomly
+     */
     public enterFrightened() {
         if (this.eaten) return;
 
@@ -171,15 +170,16 @@ export class Ghost {
         if (this.nextTurnTimeout != null) clearTimeout(this.nextTurnTimeout);
 
         reverseDir: if (this.facingDirection != null && this.path != null) {
-            const fromNode = this.findCameFromNode()?.node;
+            // try to find the node we just came from
+            const fromNode = this.findCameFromNode();
             if (!fromNode) {
                 console.log("Can't find the node we came from");
                 break reverseDir;
             }
 
+            // turn around
             this.facingDirection = (this.facingDirection + 2) % 4 as 0|1|2|3;
-
-            this.setPathTo({x: fromNode.x, y: fromNode.y});
+            this.path = new Path([new PathNode(this.x, this.y), new PathNode(fromNode.x, fromNode.y)]);
             
             this.sendLocation();
             const time = this.getTimeToTurn(fromNode);
@@ -190,6 +190,9 @@ export class Ghost {
         this.setFallbackTimeout();
     }
 
+    /**
+     * Ghost isn't frightened anymore
+     */
     public exitFrightened() {
         if (this.eaten) return;
 
@@ -200,12 +203,12 @@ export class Ghost {
 
         continueDirection: if (this.facingDirection != null && this.path != null) {
             const toNode = this.path.nodes[1];
-            console.log(toNode?.x, toNode?.y);
+            // console.log(toNode?.x, toNode?.y);
 
             if (!toNode) break continueDirection;
 
+            // continue along the current path we were going while frightened
             this.path = new Path([toNode]);
-            // this.path = new Path([]);
 
             this.sendLocation();
             const time = this.getTimeToTurn(toNode);
@@ -216,7 +219,11 @@ export class Ghost {
         this.setFallbackTimeout();
     }
 
-    private getInBetweenPosition() {
+    /**
+     * Calculate the position the ghost is in, assuming it kept moving along the path since the last node
+     * @returns 
+     */
+    private getInBetweenPosition(): [number, number] {
         if (this.lastNodeTimestamp == null || this.facingDirection == null) {
             return [this.x, this.y];
         }
@@ -231,8 +238,13 @@ export class Ghost {
         return [this.x + movementDelta.dx, this.y + movementDelta.dy];
     }
 
-    private determineTarget(players: Array<Player>) {
+    /**
+     * Determine the player this ghost should chase
+     * @returns The player we should chase
+     */
+    private determineTarget(): Player|null {
         const heuristic = (x1: number, y1: number, x2: number, y2: number) => { return Math.abs(x1-x2) + Math.abs(y1-y2) };
+        const players = Object.values(this.room.players);
 
         let closest = {
             player: null as null|Player,
@@ -255,8 +267,12 @@ export class Ghost {
         return closest.player;
     }
 
-    private findPathToNextTarget() {
-        this.currentTarget = this.determineTarget(Object.values(this.room.players));
+    /**
+     * Find the player determined by determineTarget and start pathing to their estimated position
+     * @returns 
+     */
+    private setPathToPlayerTarget() {
+        this.currentTarget = this.determineTarget();
 
         if (this.currentTarget == undefined) {
             // this.path = this.getPathTo({x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
@@ -269,7 +285,13 @@ export class Ghost {
         this.setPathTo({x: Math.round(estimatedPos.x), y: Math.round(estimatedPos.y)});
     }
 
-    private getAdjacentNodeDirections(node: PathNode, avoidNode: PathNode|null = null) {
+    /**
+     * Get a random adjacent connection node
+     * @param node 
+     * @param avoidNode 
+     * @returns 
+     */
+    private getRandomAdjacentNode(node: PathNode, avoidNode: PathNode|null = null) {
         const possibleDirections: Array<{node: PathNode, direction: 0|1|2|3}> = [];
 
         for (let connection of node.connections) {
@@ -290,25 +312,18 @@ export class Ghost {
 
     /**
      * Continue following along the current path
-     * @returns
+     * @returns True if we were able to continue along the path, False if unable to
      */
     private followPathTurn(): boolean {
         // if the path is null set the fallback timer
         if (this.path == null || this.path.nodes.length === 0) {
-            // if (this.warp_tunneling_node != null) {
-            //     console.log("warped");
-            //     [this.x, this.y] = [this.warp_tunneling_node.x, this.warp_tunneling_node.y];
-            // }
-
             this.setFallbackTimeout();
             return false;
         }
 
         if (this.facingDirection != null) {
             if (this.path.nodes[0]?.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
-                console.log("set warp tunnel node");
                 const connectionNode = this.path.nodes[0].tunnelConnection;
-                // console.log(connectionNode);
                 if (connectionNode != null) {
                     [this.x, this.y] = [connectionNode.x * globals.tile_size, connectionNode.y * globals.tile_size];
                 }
@@ -321,20 +336,25 @@ export class Ghost {
         return true;
     }
 
+    /**
+     * Choose a random new direction to turn to
+     */
     private frightenedTurn() {
         let lastNode;
 
-        if (this.path != null) {
+        movement: if (this.path != null) {
             lastNode = this.path.nodes[0];
-            if (lastNode != undefined && this.path.nodes.length > 1)
-                [this.x, this.y] = [this.path.nodes[1].x, this.path.nodes[1].y];
+            if (lastNode == undefined || this.path.nodes.length <= 1) {
+                break movement;
+            }
+
+            [this.x, this.y] = [this.path.nodes[1].x, this.path.nodes[1].y];
         }
         
         const node = this.room.gameBoard.pathfinder.getManhattanClosestNode(this.x, this.y).node;
         if (node == null) return;
-        // [this.x, this.y] = [node.x, node.y];
 
-        const adjacentNode = this.getAdjacentNodeDirections(node, lastNode ?? null);
+        const adjacentNode = this.getRandomAdjacentNode(node, lastNode ?? null);
 
         if (adjacentNode == undefined) {
             console.error("Adjacent node is undefined ...");
@@ -349,14 +369,17 @@ export class Ghost {
         this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), this.getTimeToTurn(adjacentNode.node));
     }
 
+    /**
+     * Continue chasing the current target player
+     */
     private chaseTurn() {
         if (!this.followPathTurn()) {
-            this.findPathToNextTarget();
+            this.setPathToPlayerTarget();
             this.setFallbackTimeout();
             return;
         }
         
-        this.findPathToNextTarget();
+        this.setPathToPlayerTarget();
         
         if (this.path == null || this.path.nodes.length === 0 || this.currentTarget == null) {
             this.setFallbackTimeout();
@@ -376,6 +399,9 @@ export class Ghost {
         this.setTurnTimeout();
     }
 
+    /**
+     * Return to the ghost home
+     */
     public eatenReturnTurn() {
         if (this.path == null) {
             console.error("Error in returning to path: path is null");
@@ -434,6 +460,10 @@ export class Ghost {
         this.setTurnTimeout();
     }
 
+    /**
+     * Handle when the ghost reaches it's node and is ready to turn again
+     * @returns 
+     */
     public onTurn() {
         clearTimeout(this.nextTurnTimeout || undefined);
 
@@ -453,6 +483,9 @@ export class Ghost {
         this.lastNodeTimestamp = performance.now();
     }
 
+    /**
+     * Set a fallback timeout so the ghost's logic loop doesn't end
+     */
     private setFallbackTimeout() {
         if (!this.fallback_last) this.sendLocation();
         this.fallback_last = true;
@@ -460,6 +493,11 @@ export class Ghost {
         this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), 250);
     }
 
+    /**
+     * Get the time that it will take to reach the given node
+     * @param nextNode The node to get the time to. If null, defaults to this.path.nodes[0]
+     * @returns The time taken in ms
+     */
     public getTimeToTurn(nextNode: PathNode|{x: number, y: number}|null = null) {
         if (this.path == null) throw new Error("Path property is null");
         
@@ -469,13 +507,19 @@ export class Ghost {
         return (distance * 1000) / (this.getMovementSpeed() * globals.target_client_fps);
     }
 
+    /**
+     * Call `onTurn` when we are estimated to reach the next node (`this.path.nodes[0]`)
+     */
     private setTurnTimeout() {
         this.fallback_last = false;
         this.nextTurnTimeout = setTimeout(this.onTurn.bind(this), this.getTimeToTurn());
     }
 
+    /**
+     * Begin the ghost's logic loop
+     */
     public startPathing() {
-        this.findPathToNextTarget();
+        this.setPathToPlayerTarget();
         
         if (this.path) this.setTurnTimeout();
         else this.setFallbackTimeout();
