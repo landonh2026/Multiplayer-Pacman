@@ -14,35 +14,49 @@ class Pacman {
     movementSpeed: number;
     shouldMove: boolean;
     movingLastFrame: boolean;
-    
+
     isDead: boolean;
     isLocal: boolean;
     isPoweredUp: boolean;
-    powerupExpiresAt: number|null;
+    powerupExpiresAt: number | null;
 
     score: number;
-    lastQueuedDirectionNode: { distance: number, node: PathIntersection, nodeIndex: number } | null;
+    lastQueuedDirectionNode: {
+        distance: number;
+        node: PathIntersection;
+        nodeIndex: number;
+    } | null;
     animationManager: AnimationManager;
     animations: typeof this.animationManager.animations;
 
-    constructor(x: number, y: number, color: PacmanColor, facingDirection: Direction, queuedDirection: Direction, isDead: boolean, score: number, isLocal: boolean, tileSize: number|null = null) {
+    constructor(
+        x: number,
+        y: number,
+        color: PacmanColor,
+        facingDirection: Direction,
+        queuedDirection: Direction,
+        isDead: boolean,
+        score: number,
+        isLocal: boolean,
+        tileSize: number | null = null
+    ) {
         if (tileSize == null) tileSize = gameManager.tileSize;
-        
+
         this.x = x;
         this.y = y;
         this.color = color;
-        
+
         this.facingDirection = facingDirection;
         this.movingDirection = facingDirection;
         this.queuedDirection = queuedDirection;
-        
+
         this.radius = tileSize / 2;
-        
-        this.movementSpeed = tileSize / (6 + (2/3));
+
+        this.movementSpeed = tileSize / (6 + 2 / 3);
 
         this.shouldMove = true;
         this.movingLastFrame = true;
-        
+
         this.isDead = isDead;
         this.isLocal = isLocal;
         this.isPoweredUp = false;
@@ -50,11 +64,16 @@ class Pacman {
 
         this.score = score;
         this.lastQueuedDirectionNode = null;
-        
+
         this.animationManager = new AnimationManager();
         this.animations = this.animationManager.animations;
         this.animations.bodyAnimation = new GameAnimation(4, false, 0.85, true);
-        this.animations.bumpAnimation = new GameAnimation(100, false, 20, false);
+        this.animations.bumpAnimation = new GameAnimation(
+            100,
+            false,
+            20,
+            false
+        );
         this.animations.killAnimation = new GameAnimation(35, true, 1, false);
         this.animations.powerAnimation = new GameAnimation(8, false, 1, false);
         this.animations.fadeAnimation = new GameAnimation(3, false, 1, false);
@@ -68,7 +87,10 @@ class Pacman {
      * @param direction The direction to find the distance away from
      * @returns The position that is the given distance away in the given direction
      */
-    public getPositionAhead(distance: number, direction: Direction|null = null): [number, number] {
+    public getPositionAhead(
+        distance: number,
+        direction: Direction | null = null
+    ): [number, number] {
         if (!direction) direction = this.movingDirection;
 
         switch (direction) {
@@ -82,7 +104,7 @@ class Pacman {
                 return [this.x + distance, this.y];
         }
 
-        return [this.x, this.y]
+        return [this.x, this.y];
     }
 
     public shouldRenderFrightened(): boolean {
@@ -90,7 +112,7 @@ class Pacman {
 
         const other_pacman = [];
         if (!this.isLocal) other_pacman.push(gameManager.localPacman);
-        
+
         for (let player of Object.keys(gameManager.remotePlayers)) {
             const pacman = gameManager.remotePlayers[player].pacman;
             if (pacman == this) continue;
@@ -113,17 +135,22 @@ class Pacman {
      * Eat any pellets that this pacman is in contact with
      */
     public collidePellets() {
-        for (let i = 0; i < gameManager.currentBoard.pellets.length; i++) {
-            let pellet = gameManager.currentBoard.pellets[i];
+        for (let i = 0; i < gameManager.currentBoard.pixelPellets.length; i++) {
+            let pellet = gameManager.currentBoard.pixelPellets[i];
 
             // if we are close enough to this pellet try eating it
-            if (Math.abs(this.x-pellet.x) < this.radius && Math.abs(this.y-pellet.y) < this.radius) {
+            if (
+                Math.abs(this.x - pellet.x) < this.radius &&
+                Math.abs(this.y - pellet.y) < this.radius
+            ) {
                 if (pellet.local_state == PELLET_STATES.EAT_PENDING) {
                     break;
                 }
 
                 if (pellet.type == PELLET_TYPES.FOOD) {
-                    gameManager.effectManager.effects.push(new CircleEffect(pellet.x, pellet.y));
+                    gameManager.effectManager.effects.push(
+                        new CircleEffect(pellet.x, pellet.y)
+                    );
                 }
                 // else if (pellet.type == PELLET_TYPES.POWER) {
                 //     gameManager.particleManager.particles.push(new FallingParticle(pellet.x, pellet.y, Math.random()*6-3, Math.random()*-3 - 3));
@@ -143,14 +170,20 @@ class Pacman {
      * @param distanceFromPacman The distance each collision point should be from pacman
      * @returns The collision data for the 2 points
      */
-    public getCollisionPoints(direction: Direction|null = null, distanceFromPacman: number = 0): [number, number, number, number] {
+    public getCollisionPoints(
+        direction: Direction | null = null,
+        distanceFromPacman: number = 0
+    ): [number, number, number, number] {
         if (!direction) direction = this.movingDirection;
 
-        let [collisionX, collisionY] = this.getPositionAhead(this.radius + distanceFromPacman, direction);
+        let [collisionX, collisionY] = this.getPositionAhead(
+            this.radius + distanceFromPacman,
+            direction
+        );
         let isHorizontal = this.x != collisionX;
 
         let horizontalOffset = isHorizontal ? 0 : this.radius * 0.99;
-        let verticalOffset = isHorizontal ? this.radius * 0.99: 0;
+        let verticalOffset = isHorizontal ? this.radius * 0.99 : 0;
 
         return [collisionX, collisionY, horizontalOffset, verticalOffset];
     }
@@ -160,19 +193,47 @@ class Pacman {
      * @param stopMove If pacman touches a wall, should this.shouldMove be set to false?
      */
     public collideWalls(stopMove: boolean = true) {
-        let [collisionX, collisionY, horizontalOffset, verticalOffset] = this.getCollisionPoints();
+        let [collisionX, collisionY, horizontalOffset, verticalOffset] =
+            this.getCollisionPoints();
 
         // draw debug wall collision that pacman will collide with
-        gameManager.drawManager.drawWallCollision(collisionX+horizontalOffset, collisionY+verticalOffset);
-        gameManager.drawManager.drawWallCollision(collisionX-horizontalOffset, collisionY-verticalOffset);
+        gameManager.drawManager.drawWallCollision(
+            collisionX + horizontalOffset,
+            collisionY + verticalOffset
+        );
+        gameManager.drawManager.drawWallCollision(
+            collisionX - horizontalOffset,
+            collisionY - verticalOffset
+        );
 
         // go through each block and see if we touch them
-        for (let i = 0; i < gameManager.currentBoard.blockPositions.length; i++) {
-            let blockData = gameManager.currentBoard.blockPositions[i];
+        for (
+            let i = 0;
+            i < gameManager.currentBoard.pixelBlockPositions.length;
+            i++
+        ) {
+            let blockData = gameManager.currentBoard.pixelBlockPositions[i];
 
             // skip this block if we are not in it
-            if (!(pointIntersectsRect([collisionX+horizontalOffset, collisionY+verticalOffset], blockData) ||
-                pointIntersectsRect([collisionX-horizontalOffset, collisionY-verticalOffset], blockData))) continue;
+            if (
+                !(
+                    pointIntersectsRect(
+                        [
+                            collisionX + horizontalOffset,
+                            collisionY + verticalOffset,
+                        ],
+                        blockData
+                    ) ||
+                    pointIntersectsRect(
+                        [
+                            collisionX - horizontalOffset,
+                            collisionY - verticalOffset,
+                        ],
+                        blockData
+                    )
+                )
+            )
+                continue;
 
             // move us to an end of the wall depending on our facing direction
             switch (this.movingDirection) {
@@ -210,17 +271,19 @@ class Pacman {
 
         if (!this.animations.powerAnimation.isDone()) {
             // scale size based on how far we are through the power up animation
-            size *= powerUpSizingFunction(this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
-                (1 - this.animations.powerAnimation.get_progress()));
+            size *= powerUpSizingFunction(
+                this.isPoweredUp
+                    ? this.animations.powerAnimation.get_progress()
+                    : 1 - this.animations.powerAnimation.get_progress()
+            );
             size = Math.max(this.radius, size);
-
         } else if (this.isPoweredUp) {
             // constant size if we are already powered up
             size *= 1.5;
-            
         } else if (!this.animations.killAnimation.isDone()) {
             // scale down size if we are doing the dying animation
-            size *= 1 - Math.pow(this.animations.killAnimation.get_progress(), 4);
+            size *=
+                1 - Math.pow(this.animations.killAnimation.get_progress(), 4);
         }
 
         size = Math.min(size, this.radius * 1.5) * 4;
@@ -239,34 +302,44 @@ class Pacman {
 
     /**
      * Draws this pacman
-     * @param deltaTime 
+     * @param deltaTime
      */
     public draw(deltaTime: number) {
         let customRadius = this.radius * (this.isPoweredUp ? 1.5 : 1);
         const vulnerable = this.shouldRenderFrightened();
 
         // if we are moving step the mouth animation
-        if (this.shouldMove) this.animations.bodyAnimation.step_frame(deltaTime);
+        if (this.shouldMove)
+            this.animations.bodyAnimation.step_frame(deltaTime);
         this.animations.fadeAnimation.step_frame(deltaTime);
         this.animations.powerAnimation.step_frame(deltaTime);
-        
+
         if (!this.animations.powerAnimation.isDone()) {
             let powerupAnimationScale = this.radius / 2;
 
             // play the animation forwards or in reverse
-            customRadius = this.radius + powerUpSizingFunction(
-                this.isPoweredUp ? this.animations.powerAnimation.get_progress() :
-                (1 - this.animations.powerAnimation.get_progress())
-            ) * powerupAnimationScale;
+            customRadius =
+                this.radius +
+                powerUpSizingFunction(
+                    this.isPoweredUp
+                        ? this.animations.powerAnimation.get_progress()
+                        : 1 - this.animations.powerAnimation.get_progress()
+                ) *
+                    powerupAnimationScale;
         }
 
         if (vulnerable) ctx.strokeStyle = this.color.color;
         else {
             // create the gradient for this pacman
-            const gradient = ctx.createLinearGradient(this.x - this.radius, this.y - this.radius, this.x + this.radius, this.y + this.radius);    
+            const gradient = ctx.createLinearGradient(
+                this.x - this.radius,
+                this.y - this.radius,
+                this.x + this.radius,
+                this.y + this.radius
+            );
             gradient.addColorStop(0, this.color.gradient_start);
-            gradient.addColorStop(1,  this.color.gradient_end);
-    
+            gradient.addColorStop(1, this.color.gradient_end);
+
             ctx.fillStyle = gradient;
         }
 
@@ -276,31 +349,83 @@ class Pacman {
             this.animations.killAnimation.step_frame(deltaTime);
 
             // we just finished the animation
-            if(this.animations.killAnimation.isDone()) {
+            if (this.animations.killAnimation.isDone()) {
                 const offset = 16;
                 const hVel = 4;
                 const vVel = 4;
 
-                gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y + offset, +hVel + Math.random()*5-1, +vVel + Math.random()*5-1));
-                gameManager.particleManager.particles.push(new FallingParticle(this.x + offset, this.y - offset, +hVel + Math.random()*5-1, -vVel + Math.random()*5-1));
-                gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y + offset, -hVel + Math.random()*5-1, +vVel + Math.random()*5-1));
-                gameManager.particleManager.particles.push(new FallingParticle(this.x - offset, this.y - offset, -hVel + Math.random()*5-1, -vVel + Math.random()*5-1));
+                gameManager.particleManager.particles.push(
+                    new FallingParticle(
+                        this.x + offset,
+                        this.y + offset,
+                        +hVel + Math.random() * 5 - 1,
+                        +vVel + Math.random() * 5 - 1
+                    )
+                );
+                gameManager.particleManager.particles.push(
+                    new FallingParticle(
+                        this.x + offset,
+                        this.y - offset,
+                        +hVel + Math.random() * 5 - 1,
+                        -vVel + Math.random() * 5 - 1
+                    )
+                );
+                gameManager.particleManager.particles.push(
+                    new FallingParticle(
+                        this.x - offset,
+                        this.y + offset,
+                        -hVel + Math.random() * 5 - 1,
+                        +vVel + Math.random() * 5 - 1
+                    )
+                );
+                gameManager.particleManager.particles.push(
+                    new FallingParticle(
+                        this.x - offset,
+                        this.y - offset,
+                        -hVel + Math.random() * 5 - 1,
+                        -vVel + Math.random() * 5 - 1
+                    )
+                );
             }
 
-            gameManager.drawManager.drawDeadPacman(this.x, this.y, this.radius, this.animations.killAnimation.get_frame(), vulnerable);
+            gameManager.drawManager.drawDeadPacman(
+                this.x,
+                this.y,
+                this.radius,
+                this.animations.killAnimation.get_frame(),
+                vulnerable
+            );
             return;
         }
 
         if (!this.animations.fadeAnimation.isDone()) {
-            const [x, y, dir] = [this.animations.fadeAnimation.meta.position.x, this.animations.fadeAnimation.meta.position.y, this.animations.fadeAnimation.meta.position.direction];
-            
+            const [x, y, dir] = [
+                this.animations.fadeAnimation.meta.position.x,
+                this.animations.fadeAnimation.meta.position.y,
+                this.animations.fadeAnimation.meta.position.direction,
+            ];
+
             ctx.globalAlpha = 1 - this.animations.fadeAnimation.get_progress();
-            gameManager.drawManager.drawPacman(x, y, customRadius, this.animations.bodyAnimation.get_frame(), dir, vulnerable);
+            gameManager.drawManager.drawPacman(
+                x,
+                y,
+                customRadius,
+                this.animations.bodyAnimation.get_frame(),
+                dir,
+                vulnerable
+            );
             ctx.globalAlpha = this.animations.fadeAnimation.get_progress(); // fade in animation for real pacman
         }
-        
+
         // draw the pacman
-        gameManager.drawManager.drawPacman(this.x, this.y, customRadius, this.animations.bodyAnimation.get_frame(), this.facingDirection, vulnerable);
+        gameManager.drawManager.drawPacman(
+            this.x,
+            this.y,
+            customRadius,
+            this.animations.bodyAnimation.get_frame(),
+            this.facingDirection,
+            vulnerable
+        );
         ctx.globalAlpha = 1;
     }
 
@@ -309,21 +434,31 @@ class Pacman {
      */
     public checkQueuedDirection() {
         // get the next node if we were to continue this path
-        const currentNode = gameManager.currentBoard.getNextIntersectionNode([this.x, this.y], this.facingDirection);
+        const currentNode = gameManager.currentBoard.getNextIntersectionNode(
+            [this.x, this.y],
+            this.facingDirection
+        );
 
         let snap = this.facingDirection != this.queuedDirection;
 
         // no reason to continue if we are not queueing a direction
-        if (this.facingDirection == this.queuedDirection && currentNode?.node.type == PATH_INTERSECTION_TYPES.NORMAL) {
+        if (
+            this.facingDirection == this.queuedDirection &&
+            currentNode?.node.type == PATH_INTERSECTION_TYPES.NORMAL
+        ) {
             this.lastQueuedDirectionNode = currentNode;
             return;
         }
 
         // send a warning if we can't find a node
         if (currentNode == null) {
-            console.warn("Unable to find a path intersection node! Player coords:", this.x, this.y);
+            console.warn(
+                "Unable to find a path intersection node! Player coords:",
+                this.x,
+                this.y
+            );
         }
-        
+
         // no previous node -- this pacman obj was probably just created
         if (this.lastQueuedDirectionNode == null) {
             this.lastQueuedDirectionNode = currentNode;
@@ -340,40 +475,72 @@ class Pacman {
 
         // check if this node allows us to turn in our queued direction
         // so we don't turn on a node that would make us face a wall
-        if (this.lastQueuedDirectionNode.node.type == PATH_INTERSECTION_TYPES.NORMAL && !this.lastQueuedDirectionNode.node.directions[this.queuedDirection.enumValue]) {
+        if (
+            this.lastQueuedDirectionNode.node.type ==
+                PATH_INTERSECTION_TYPES.NORMAL &&
+            !this.lastQueuedDirectionNode.node.directions[
+                this.queuedDirection.enumValue
+            ]
+        ) {
             this.lastQueuedDirectionNode = currentNode;
             return;
         }
 
         // Get the direction that the next node would be in
-        const checkDirection = this.facingDirection.enumValue % 2 == 0 ? "x" : "y" as "x"|"y";
-        const otherCheckDirection =  this.facingDirection.enumValue % 2 == 0 ? "y" : "x" as "x"|"y";
+        const checkDirection =
+            this.facingDirection.enumValue % 2 == 0 ? "x" : ("y" as "x" | "y");
+        const otherCheckDirection =
+            this.facingDirection.enumValue % 2 == 0 ? "y" : ("x" as "x" | "y");
         const checkOrientation = this.facingDirection.enumValue < 2 ? -1 : 1;
 
         // node is too far apart radius-wise
-        if (Math.abs(this[otherCheckDirection]-this.lastQueuedDirectionNode.node[otherCheckDirection]) != 0) {
+        if (
+            Math.abs(
+                this[otherCheckDirection] -
+                    this.lastQueuedDirectionNode.node[otherCheckDirection]
+            ) != 0
+        ) {
             this.lastQueuedDirectionNode = currentNode;
             return;
         }
-        
+
         // check to see if we passed the node
-        const distanceToNode = (this[checkDirection]-this.lastQueuedDirectionNode.node[checkDirection]) * checkOrientation;
+        const distanceToNode =
+            (this[checkDirection] -
+                this.lastQueuedDirectionNode.node[checkDirection]) *
+            checkOrientation;
         if (distanceToNode > 0) {
             this.lastQueuedDirectionNode = currentNode;
             return;
         }
-        
+
         // we just passed the node! make a turn.
-        if (this.lastQueuedDirectionNode.node.type == PATH_INTERSECTION_TYPES.NORMAL) {
-            if (snap) [this.x, this.y] = [this.lastQueuedDirectionNode.node.x, this.lastQueuedDirectionNode.node.y];
+        if (
+            this.lastQueuedDirectionNode.node.type ==
+            PATH_INTERSECTION_TYPES.NORMAL
+        ) {
+            if (snap)
+                [this.x, this.y] = [
+                    this.lastQueuedDirectionNode.node.x,
+                    this.lastQueuedDirectionNode.node.y,
+                ];
             this.facingDirection = this.queuedDirection;
             this.shouldMove = true;
             this.lastQueuedDirectionNode = currentNode;
             return;
         }
 
+        console.log(this.lastQueuedDirectionNode.node);
+
         // we passed a warp tunnel node, warp through it instead
-        if (this.isLocal) gameManager.connectionManager.useWarpTunnel(this.lastQueuedDirectionNode.node);
+        if (this.isLocal) {
+            this.shouldMove = false;
+            const deltas = this.movingDirection.getDeltas();
+            [this.x, this.y] = [this.lastQueuedDirectionNode.node.x - deltas.dx, this.lastQueuedDirectionNode.node.y - deltas.dy];
+            gameManager.connectionManager.useWarpTunnel(
+                this.lastQueuedDirectionNode.node
+            );
+        }
     }
 
     /**
@@ -389,7 +556,10 @@ class Pacman {
         for (let remotePlayerSession in gameManager.remotePlayers) {
             let remotePlayer = gameManager.remotePlayers[remotePlayerSession];
 
-            if (remotePlayer.pacman.animationManager.animations.bumpAnimation.isActive() || remotePlayer.pacman.isDead) {
+            if (
+                remotePlayer.pacman.animationManager.animations.bumpAnimation.isActive() ||
+                remotePlayer.pacman.isDead
+            ) {
                 continue;
             }
 
@@ -397,12 +567,18 @@ class Pacman {
             // todo add config for powered up size. Maybe use server to set size of pacman
             // let allowedDistance = this.radius * (this.isPoweredUp ? 1.5 : 1) + remotePlayer.pacman.radius * (remotePlayer.pacman.isPoweredUp ? 1.5 : 1);
             let allowedDistance = this.radius + remotePlayer.pacman.radius;
-            if (Math.abs(remotePlayer.pacman.x-this.x) > allowedDistance || Math.abs(remotePlayer.pacman.y-this.y) > allowedDistance) {
+            if (
+                Math.abs(remotePlayer.pacman.x - this.x) > allowedDistance ||
+                Math.abs(remotePlayer.pacman.y - this.y) > allowedDistance
+            ) {
                 continue;
             }
 
             // tell the server that we just bumped this remote pacman
-            gameManager.connectionManager.playerCollision(this, remotePlayer.session);
+            gameManager.connectionManager.playerCollision(
+                this,
+                remotePlayer.session
+            );
             return;
         }
     }
@@ -430,13 +606,13 @@ class Pacman {
         this.facingDirection = collisionFrom;
 
         this.animations.bumpAnimation.meta = {
-            moveDirection: collisionFrom.getOpposite()
+            moveDirection: collisionFrom.getOpposite(),
         };
     }
 
     /**
      * Handle the bump animation
-     * @param deltaTime 
+     * @param deltaTime
      * @returns Is the bump animation still active?
      */
     public bumpAnimation(deltaTime: number) {
@@ -445,7 +621,8 @@ class Pacman {
         // calculate the distance that we should move
         let beforeFrame = this.animations.bumpAnimation.currentFrame;
         this.animations.bumpAnimation.step_frame(deltaTime);
-        let frameChange = this.animations.bumpAnimation.currentFrame - beforeFrame;
+        let frameChange =
+            this.animations.bumpAnimation.currentFrame - beforeFrame;
 
         // set our moving direction to the move direction of the animation
         this.movingDirection = this.animations.bumpAnimation.meta.moveDirection;
@@ -485,7 +662,10 @@ class Pacman {
             }
 
             // if we want to move in the opposite direction then do that
-            if (thisDirection.getOpposite()?.enumValue == this.facingDirection.enumValue) {
+            if (
+                thisDirection.getOpposite()?.enumValue ==
+                this.facingDirection.enumValue
+            ) {
                 this.facingDirection = thisDirection;
                 this.queuedDirection = thisDirection;
                 break;
@@ -506,7 +686,10 @@ class Pacman {
 
             if (this.isPoweredUp) {
                 // if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2*1.5) {
-                if (Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
+                if (
+                    Math.abs(ghost.x - this.x) + Math.abs(ghost.y - this.y) <=
+                    this.radius * 2
+                ) {
                     ghost.eat();
                 }
 
@@ -514,7 +697,11 @@ class Pacman {
             }
 
             // todo: include ghost size instead of just client
-            if (!ghost.eat_pending && Math.abs(ghost.x-this.x) + Math.abs(ghost.y-this.y) <= this.radius*2) {
+            if (
+                !ghost.eat_pending &&
+                Math.abs(ghost.x - this.x) + Math.abs(ghost.y - this.y) <=
+                    this.radius * 2
+            ) {
                 this.kill();
                 break;
             }
@@ -523,8 +710,8 @@ class Pacman {
 
     /**
      * Steps the movement one frame and handles input
-     * @param deltaTime 
-     * @returns 
+     * @param deltaTime
+     * @returns
      */
     public stepMovement(deltaTime: number) {
         const lastDirection = this.facingDirection;
@@ -532,7 +719,7 @@ class Pacman {
         const lastShouldMove = this.shouldMove;
 
         if (this.isDead) this.shouldMove = false;
-        
+
         // handle player input and remote pacman collision
         if (this.isLocal && !this.isDead) {
             this.inputDirection();
@@ -540,10 +727,10 @@ class Pacman {
         }
 
         // weird bump mechanics caused by checking direction?
-        if (((!gameManager.performanceMode) || this.isLocal)) {
+        if (!gameManager.performanceMode || this.isLocal) {
             this.checkQueuedDirection();
         }
-        
+
         // handle if we are active in the bump animation
         if (this.bumpAnimation(deltaTime)) {
             this.collideWalls(false);
@@ -566,11 +753,20 @@ class Pacman {
         this.movingDirection = this.facingDirection;
 
         // Move this pacman ahead and collide with walls
-        [this.x, this.y] = this.getPositionAhead(this.movementSpeed * deltaTime);
+        [this.x, this.y] = this.getPositionAhead(
+            this.movementSpeed * deltaTime
+        );
         this.collideWalls();
 
         // determine if we should send our new position
-        if (((!(lastDirection == this.facingDirection && lastQueuedDirection == this.queuedDirection)) || this.shouldMove != lastShouldMove) && this.isLocal) {
+        if (
+            (!(
+                lastDirection == this.facingDirection &&
+                lastQueuedDirection == this.queuedDirection
+            ) ||
+                this.shouldMove != lastShouldMove) &&
+            this.isLocal
+        ) {
             gameManager.connectionManager.sendPosition(this);
         }
 

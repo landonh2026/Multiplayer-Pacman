@@ -3,15 +3,15 @@
  */
 class EventHandler {
     /** A dictionary containing the event type as the key and the function as the value */
-    typeHandlers: {[key: string]: CallableFunction};
+    typeHandlers: { [key: string]: CallableFunction };
 
     constructor() {
         this.typeHandlers = {
             "player-join": this.playerJoin.bind(this),
             "player-leave": this.playerLeave.bind(this),
-            "position": this.remotePacmanUpdate.bind(this),
+            position: this.remotePacmanUpdate.bind(this),
             "local-player-info": this.localInfo.bind(this),
-            "board-state":this.boardState.bind(this),
+            "board-state": this.boardState.bind(this),
             "eat-pellet": this.eatPellet.bind(this),
             "pellet-reject": this.pelletRejected.bind(this),
             "score-update": this.scoreUpdate.bind(this),
@@ -20,8 +20,8 @@ class EventHandler {
             "ghost-position": this.updateGhostPosition.bind(this),
             "update-scores": this.updateScores.bind(this),
             "kill-pacman": this.remotePacmanDied.bind(this),
-            "reject-ghost-eat": this.ghostEatReject.bind(this)
-        }
+            "reject-ghost-eat": this.ghostEatReject.bind(this),
+        };
     }
 
     public remotePacmanDied(parsedData: any) {
@@ -36,18 +36,31 @@ class EventHandler {
                 parsedData.data.position.x,
                 parsedData.data.position.y,
                 parsedData.data.id,
-                GHOST_COLORS[parsedData.data.color as keyof typeof GHOST_COLORS],
+                GHOST_COLORS[
+                    parsedData.data.color as keyof typeof GHOST_COLORS
+                ],
                 true
             );
-            ghost.facingDirection = Direction.fromEnum(parsedData.data.position.direction) as Direction;
+            ghost.facingDirection = Direction.fromEnum(
+                parsedData.data.position.direction
+            ) as Direction;
             return;
         }
 
         localGhost.eat_pending = false;
         localGhost.x = parsedData.data.position.x;
         localGhost.y = parsedData.data.position.y;
-        localGhost.facingDirection = parsedData.data.position.direction == null ? null : Direction.fromEnum(parsedData.data.position.direction) as Direction;
-        localGhost.path = new Path(parsedData.data.debug_path.map((n: {x: number, y: number}) => new PathNode(n.x, n.y)));
+        localGhost.facingDirection =
+            parsedData.data.position.direction == null
+                ? null
+                : (Direction.fromEnum(
+                      parsedData.data.position.direction
+                  ) as Direction);
+        localGhost.path = new Path(
+            parsedData.data.debug_path.map(
+                (n: { x: number; y: number }) => new PathNode(n.x, n.y)
+            )
+        );
         localGhost.eaten = parsedData.data.eaten;
         localGhost.phase = parsedData.data.phase;
     }
@@ -63,7 +76,8 @@ class EventHandler {
 
             // find which pacman to bump
             let pacman: Pacman;
-            if (gameManager.uuid == collision.session) pacman = gameManager.localPacman;
+            if (gameManager.uuid == collision.session)
+                pacman = gameManager.localPacman;
             else pacman = gameManager.remotePlayers[collision.session].pacman;
 
             // move the pacman to the collision
@@ -71,7 +85,7 @@ class EventHandler {
             pacman.y = collision.y;
 
             // bump the pacman
-            pacman.triggerBump(Direction.fromEnum(collision.from) as Direction);         
+            pacman.triggerBump(Direction.fromEnum(collision.from) as Direction);
         }
     }
 
@@ -97,7 +111,7 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public pelletRejected(parsedData: any) {
-        for (let pellet of gameManager.currentBoard.pellets) {
+        for (let pellet of gameManager.currentBoard.pixelPellets) {
             if (pellet.id == parsedData.data.pelletID) {
                 pellet.local_state = PELLET_STATES.NONE;
                 return;
@@ -129,11 +143,11 @@ class EventHandler {
         this.updateScores(parsedData);
 
         // go through every pellet and remove the one that matches this pellet ID
-        for (let i = 0; i < gameManager.currentBoard.pellets.length; i++) {
-            let pellet = gameManager.currentBoard.pellets[i];
+        for (let i = 0; i < gameManager.currentBoard.pixelPellets.length; i++) {
+            let pellet = gameManager.currentBoard.pixelPellets[i];
 
             if (pellet.id == parsedData.data.pelletID) {
-                gameManager.currentBoard.pellets.splice(i, 1);
+                gameManager.currentBoard.pixelPellets.splice(i, 1);
                 break;
             }
         }
@@ -148,13 +162,16 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public boardState(parsedData: any) {
-        gameManager.drawManager.oldPellets = gameManager.currentBoard.pellets;
+        gameManager.drawManager.oldPellets =
+            gameManager.currentBoard.pixelPellets;
         gameManager.drawManager.pelletShrinkAnimation.reset();
         gameManager.drawManager.pelletShrinkAnimation.setActive(true);
 
         gameManager.currentBoard = new GameBoard(
             parsedData.data.board,
-            parsedData.data.pellets.map((p: any) => new Pellet(p.x, p.y, p.id, p.type)),
+            parsedData.data.pellets.map(
+                (p: any) => new Pellet(p.x, p.y, p.id, p.type)
+            ),
             parsedData.data.pathIntersections
         );
 
@@ -166,12 +183,17 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public localInfo(parsedData: any) {
-        gameManager.localPacman.color = PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS];
+        gameManager.localPacman.color =
+            PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS];
 
         if (parsedData.data.shouldFade) {
             gameManager.localPacman.animations.fadeAnimation.reset();
             gameManager.localPacman.animations.fadeAnimation.setActive(true);
-            gameManager.localPacman.animations.fadeAnimation.meta.position = {x: gameManager.localPacman.x, y: gameManager.localPacman.y, direction: gameManager.localPacman.facingDirection};
+            gameManager.localPacman.animations.fadeAnimation.meta.position = {
+                x: gameManager.localPacman.x,
+                y: gameManager.localPacman.y,
+                direction: gameManager.localPacman.facingDirection,
+            };
         }
 
         // local pacman just revived
@@ -189,16 +211,22 @@ class EventHandler {
         gameManager.localPacman.isDead = !parsedData.data.isAlive;
         gameManager.localPacman.isPoweredUp = parsedData.data.poweredUp;
         gameManager.localPacman.movementSpeed = parsedData.data.moveSpeed;
-        gameManager.localPacman.powerupExpiresAt = parsedData.data.powerupTimer ? performance.now() + parsedData.data.powerupTimer : null;
+        gameManager.localPacman.powerupExpiresAt = parsedData.data.powerupTimer
+            ? performance.now() + parsedData.data.powerupTimer
+            : null;
 
         if (parsedData.data.loc != null) {
-                gameManager.localPacman.x = parsedData.data.loc.x;
-                gameManager.localPacman.y = parsedData.data.loc.y;
-                gameManager.localPacman.facingDirection = Direction.fromEnum(parsedData.data.loc.facingDirection) as Direction;
-                gameManager.localPacman.queuedDirection = Direction.fromEnum(parsedData.data.loc.queuedDirection) as Direction;
-                gameManager.localPacman.shouldMove = parsedData.data.loc.shouldMove;
+            gameManager.localPacman.x = parsedData.data.loc.x;
+            gameManager.localPacman.y = parsedData.data.loc.y;
+            gameManager.localPacman.facingDirection = Direction.fromEnum(
+                parsedData.data.loc.facingDirection
+            ) as Direction;
+            gameManager.localPacman.queuedDirection = Direction.fromEnum(
+                parsedData.data.loc.queuedDirection
+            ) as Direction;
+            gameManager.localPacman.shouldMove = parsedData.data.loc.shouldMove;
         }
-        
+
         gameManager.uuid = parsedData.data.session;
     }
 
@@ -207,12 +235,19 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public remotePacmanUpdate(parsedData: any) {
-        const workingPacman = gameManager.remotePlayers[parsedData["from-session"] as keyof typeof gameManager.remotePlayers].pacman;
-        
+        const workingPacman =
+            gameManager.remotePlayers[
+                parsedData[
+                    "from-session"
+                ] as keyof typeof gameManager.remotePlayers
+            ].pacman;
+
         // pacman just revived
         if (workingPacman.isDead && parsedData.data.isAlive) {
             workingPacman.animationManager.animations.killAnimation.reset();
-            workingPacman.animationManager.animations.killAnimation.setActive(false);
+            workingPacman.animationManager.animations.killAnimation.setActive(
+                false
+            );
         }
 
         // pacman just powered up
@@ -226,14 +261,20 @@ class EventHandler {
         }
 
         workingPacman.isPoweredUp = parsedData.data.poweredUp;
-        workingPacman.powerupExpiresAt = parsedData.data.powerupTimer ? performance.now() + parsedData.data.powerupTimer : null;
+        workingPacman.powerupExpiresAt = parsedData.data.powerupTimer
+            ? performance.now() + parsedData.data.powerupTimer
+            : null;
         workingPacman.isDead = !parsedData.data.isAlive;
 
         if (!parsedData.data.no_pos) {
             workingPacman.x = parsedData.data.x;
             workingPacman.y = parsedData.data.y;
-            workingPacman.facingDirection = Direction.fromEnum(parsedData.data.facingDirection) as Direction;
-            workingPacman.queuedDirection = Direction.fromEnum(parsedData.data.queuedDirection) as Direction;
+            workingPacman.facingDirection = Direction.fromEnum(
+                parsedData.data.facingDirection
+            ) as Direction;
+            workingPacman.queuedDirection = Direction.fromEnum(
+                parsedData.data.queuedDirection
+            ) as Direction;
             workingPacman.shouldMove = parsedData.data.shouldMove;
         }
     }
@@ -249,7 +290,9 @@ class EventHandler {
             new Pacman(
                 60,
                 100,
-                PACMAN_COLORS[parsedData.data.color as keyof typeof PACMAN_COLORS],
+                PACMAN_COLORS[
+                    parsedData.data.color as keyof typeof PACMAN_COLORS
+                ],
                 directions.DOWN,
                 directions.DOWN,
                 false,
@@ -259,7 +302,9 @@ class EventHandler {
         );
 
         // add 1 to the infoboard
-        gameManager.infoBoard.setPlayerCount(Object.keys(gameManager.remotePlayers).length + 1);
+        gameManager.infoBoard.setPlayerCount(
+            Object.keys(gameManager.remotePlayers).length + 1
+        );
 
         // update the pacman's location
         if (parsedData.data["last-location"] != undefined)
@@ -272,6 +317,8 @@ class EventHandler {
      */
     public playerLeave(parsedData: any) {
         delete gameManager.remotePlayers[parsedData.data.session];
-        gameManager.infoBoard.setPlayerCount(Object.keys(gameManager.remotePlayers).length + 1);
+        gameManager.infoBoard.setPlayerCount(
+            Object.keys(gameManager.remotePlayers).length + 1
+        );
     }
 }

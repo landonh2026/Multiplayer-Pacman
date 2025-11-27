@@ -84,12 +84,14 @@ export class Player {
 
     /**
      * Publish this player's location to other players
+     * @argument attach_position Should we attach the player's position to the packet
+     * @argument send_socket_message Should we actually send the packet, or should we just make it?
      */
     public publishLocation(
-        send_position: boolean = true,
-        send: boolean = true
-    ) {
-        const position_data = send_position
+        attach_position: boolean = true,
+        send_socket_message: boolean = true
+    ): any {
+        const position_data = attach_position
             ? this.pacman.lastLocation
             : { no_pos: true };
 
@@ -111,9 +113,9 @@ export class Player {
         );
         posData["from-session"] = this.session;
 
-        if (send)
+        if (send_socket_message)
             this.ws.publish(this.room.topics.event, JSON.stringify(posData));
-        else return posData;
+        return posData;
     }
 
     /**

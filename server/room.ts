@@ -104,7 +104,11 @@ export class Room {
         this.topics = this.makeTopics();
 
         for (let i = 0; i < 1; i++) {
-            const ghost = new Ghost(this.gameBoard.ghostHome[0], this.gameBoard.ghostHome[1], this);
+            const ghost = new Ghost(
+                this.gameBoard.ghostHome[0],
+                this.gameBoard.ghostHome[1],
+                this
+            );
             this.ghosts[ghost.id] = ghost;
             ghost.startPathing();
         }
@@ -156,6 +160,11 @@ export class Room {
                     id: p.id,
                     type: p.type,
                     directions: p.directions,
+                    tunnelConnection: !p.tunnelConnection ? null : {
+                        x: p.tunnelConnection.x,
+                        y: p.tunnelConnection.y,
+                        id: p.tunnelConnection.id
+                    }
                 };
             }),
         };
@@ -302,6 +311,7 @@ export class Room {
 
         if (passedNode == null) {
             // reject
+            // TOOD: add rejection for warp tunnel use
             console.warn("should reject thing here");
             return;
         }
@@ -319,7 +329,7 @@ export class Room {
             return;
         }
 
-        const warpTo = passedNode.connection;
+        const warpTo = passedNode.tunnelConnection;
         if (warpTo == null)
             throw new Error(
                 "No connection on warp path intersection: " +
@@ -331,6 +341,8 @@ export class Room {
         player.pacman.lastLocation.x = warpTo.x * globals.tile_size;
         player.pacman.lastLocation.y = warpTo.y * globals.tile_size;
         player.sendLocalPlayerState(true, true);
+
+        player.publishLocation();
     }
 
     /**
@@ -531,7 +543,10 @@ export class Room {
         }
 
         // get the pellet position and the distance the pacman is from the pellet, reject the pellet if the player is too far
-        const pellet_pos = [pellet.x * globals.tile_size, pellet.y * globals.tile_size];
+        const pellet_pos = [
+            pellet.x * globals.tile_size,
+            pellet.y * globals.tile_size,
+        ];
         const distance_from_pellet = [
             Math.abs(player.pacman.lastLocation.x - pellet_pos[0]),
             Math.abs(player.pacman.lastLocation.y - pellet_pos[1]),

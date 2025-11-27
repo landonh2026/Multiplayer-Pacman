@@ -290,8 +290,8 @@ export class GameBoard {
         nodes: Array<[PathIntersection, PathIntersection]>
     ): Array<PathIntersection> {
         for (let tunnelGroup of nodes) {
-            tunnelGroup[0].connection = tunnelGroup[1];
-            tunnelGroup[1].connection = tunnelGroup[0];
+            tunnelGroup[0].tunnelConnection = tunnelGroup[1];
+            tunnelGroup[1].tunnelConnection = tunnelGroup[0];
         }
 
         return nodes.flat();
@@ -311,7 +311,7 @@ export class PathIntersection {
     id: number;
     directions: [boolean, boolean, boolean, boolean];
     type: PATH_INTERSECTION_TYPES;
-    connection: PathIntersection | null;
+    tunnelConnection: PathIntersection | null;
 
     constructor(
         x: number,
@@ -325,7 +325,7 @@ export class PathIntersection {
         this.id = PathIntersection.globalID++;
         this.directions = directions;
         this.type = type;
-        this.connection = connection;
+        this.tunnelConnection = connection;
     }
 }
 

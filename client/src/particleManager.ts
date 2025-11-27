@@ -47,12 +47,10 @@ class Particle {
     }
 
 
-    // TODO: use deltatime
     public step(deltaTime: number): boolean {
         this.lastX = this.x;
         this.lastY = this.y;
 
-        console.log(deltaTime);
         this.x += this.dx * deltaTime * 2.5;
         this.y += this.dy * deltaTime * 2.5;
 

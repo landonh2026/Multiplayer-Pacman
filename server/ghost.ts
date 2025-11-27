@@ -192,7 +192,7 @@ export class Ghost {
     }
 
     /**
-     * Ghost isn't frightened anymore
+     * Exit ghost frightened state
      */
     public exitFrightened() {
         if (this.eaten) return;
@@ -323,7 +323,6 @@ export class Ghost {
         if (this.facingDirection != null) {
             if (this.path.nodes[0]?.type == PATH_INTERSECTION_TYPES.WARP_TUNNEL) {
                 // does this ever trigger?
-                console.log("IT TRIGGERD AHHH");
                 const connectionNode = this.path.nodes[0].tunnelConnection;
                 if (connectionNode != null) {
                     [this.x, this.y] = [connectionNode.x, connectionNode.y];
@@ -374,7 +373,7 @@ export class Ghost {
      * Continue chasing the current target player
      */
     private chaseTurn() {
-        if (!this.followPathTurn()) {
+        if (this.path == null || !this.followPathTurn()) {
             this.setPathToPlayerTarget();
             this.setFallbackTimeout();
             return;
