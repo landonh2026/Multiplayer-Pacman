@@ -530,7 +530,7 @@ class Pacman {
             return;
         }
 
-        console.log(this.lastQueuedDirectionNode.node);
+        // console.log(this.lastQueuedDirectionNode.node);
 
         // we passed a warp tunnel node, warp through it instead
         if (this.isLocal) {

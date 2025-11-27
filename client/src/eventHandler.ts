@@ -102,8 +102,7 @@ class EventHandler {
      * @param parsedData The parsed data from the server
      */
     public scoreUpdate(parsedData: any) {
-        gameManager.infoBoard.score = parsedData.data.score;
-        gameManager.infoBoard.refreshScore();
+        gameManager.infoBoard.setScore(parsedData.data.score);
     }
 
     /**
@@ -126,8 +125,7 @@ class EventHandler {
 
             // if this is our local player, refresh the scoreboard
             if (key == gameManager.uuid) {
-                gameManager.infoBoard.score = value;
-                gameManager.infoBoard.refreshScore();
+                gameManager.infoBoard.setScore(value);
                 continue;
             }
 

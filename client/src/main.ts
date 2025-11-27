@@ -18,13 +18,9 @@ window.addEventListener('load', function() {
     gameManager.beginGame();
 });
 
-// setInterval(draw, ms_per_frame);
-
 function fitCanvas() {
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
-
-    // canvas.width = 
 }
 
 // fit the canvas when the window resizes

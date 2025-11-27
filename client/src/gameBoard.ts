@@ -26,11 +26,9 @@ class GameBoard {
             dist: number;
         }
     >;
-    /** The pathfinder object for this gameboard */
-    pathfinder: Pathfinder;
 
     constructor(
-        rawBlockPositions: Array<[number, number, number, number]>,
+        blockPositions: Array<[number, number, number, number]>,
         rawPellets: Array<Pellet>,
         pathIntersections: Array<{
             x: number;
@@ -45,11 +43,11 @@ class GameBoard {
         // ^ TODO: change in the future to calc at render time or to remake tiles at their pos when resizing
         // Maybe cache in draw manager?
 
-        // duplicate the rawBlockPositions argument into the rawBlockPositions attriute
+        // duplicate the blockPositions argument into the blockPositions attribute
         this.blockPositions = [
-            ...rawBlockPositions.map((innerArray) => [...innerArray]),
+            ...blockPositions.map((innerArray) => [...innerArray]),
         ] as Array<[number, number, number, number]>;
-        this.pixelBlockPositions = rawBlockPositions;
+        this.pixelBlockPositions = blockPositions;
         this.bottomRight = [0, 0];
         this.pathIntersections = this.makePathIntersections(
             pathIntersections,
@@ -113,8 +111,6 @@ class GameBoard {
                 };
             },
         ];
-
-        this.pathfinder = new Pathfinder(this);
     }
 
     public findDrawLines(
@@ -125,31 +121,13 @@ class GameBoard {
         for (let i = 0; i < blockPositions.length; i++) {
             const [x, y, width, height] = blockPositions[i];
 
+            type x_y_width_height = [number, number, number, number];
+
             // get the 4 sides of this block
-            const top = [x, y, x + width, y] as [
-                number,
-                number,
-                number,
-                number
-            ];
-            const bottom = [x, y + height, x + width, y + height] as [
-                number,
-                number,
-                number,
-                number
-            ];
-            const left = [x, y, x, y + height] as [
-                number,
-                number,
-                number,
-                number
-            ];
-            const right = [x + width, y, x + width, y + height] as [
-                number,
-                number,
-                number,
-                number
-            ];
+            const top = [x, y, x + width, y] as x_y_width_height;
+            const bottom = [x, y + height, x + width, y + height] as x_y_width_height;
+            const left = [x, y, x, y + height] as x_y_width_height;
+            const right = [x + width, y, x + width, y + height] as x_y_width_height;
 
             // get the segments for each of the sides
             let remainingTop = [top];
@@ -354,16 +332,11 @@ class GameBoard {
      * @param offset
      * @returns
      */
-    public getWallAtPosition(
-        position: [number, number],
-        offset: Array<number> = [0, 0]
-    ): [number, number, number, number] | null {
-        // TODO: why are we using an offset?
-
+    public getWallAtPosition(position: [number, number]): [number, number, number, number] | null {
         // get the position given a location
         const tilePosition = this.getTileCoordinatesFromPosition([
-            position[0] + offset[0],
-            position[1] + offset[1],
+            position[0],
+            position[1],
         ]);
 
         // offset the given tile location so it will be in the center of the wall
@@ -394,11 +367,8 @@ class GameBoard {
      * @param offset
      * @returns Is this position a wall?
      */
-    public isPositionWall(
-        position: [number, number],
-        offset: Array<number> = [0, 0]
-    ) {
-        return this.getWallAtPosition(position, offset) == null;
+    public isPositionWall(position: [number, number]): boolean {
+        return this.getWallAtPosition(position) == null;
     }
 
     /**

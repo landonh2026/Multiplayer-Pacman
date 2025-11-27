@@ -2,14 +2,14 @@
  * Handles the info board that is above the canvas
  */
 class InfoBoard {
-    fpsDisplay: HTMLElement;
-    playerCountDisplay: HTMLElement;
-    scoreDisplay: HTMLElement;
+    private fpsDisplay: HTMLElement;
+    private playerCountDisplay: HTMLElement;
+    private scoreDisplay: HTMLElement;
     
-    score: number;
+    private score: number;
 
-    last_fps_update: number;
-    fps_update_time: number;
+    private last_fps_update: number;
+    private fps_update_time: number;
 
     constructor() {
         this.fpsDisplay = document.getElementById("fps") as HTMLElement;
@@ -53,19 +53,8 @@ class InfoBoard {
         this.playerCountDisplay.innerText = playerCount.toString();
     }
 
-    /**
-     * Add this score to the display
-     * @param score The score to add to the current score
-     */
-    public addScore(score: number) {
-        this.score += score;
-        this.refreshScore();
-    }
-
-    /**
-     * Refresh the infoboard's display of the score
-     */
-    public refreshScore() {
-        this.scoreDisplay.innerText = this.score.toString();
+    public setScore(newScore: number) {
+        this.score = newScore;
+        this.scoreDisplay.innerText = newScore.toString();
     }
 }
